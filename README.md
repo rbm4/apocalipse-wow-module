@@ -1,7 +1,7 @@
 # apocalipse-wow-module
 
 AzerothCore module for the **Apocalipse WoW** private server (WotLK 3.3.5a).  
-It handles three custom gameplay systems compiled as a single static or dynamic AzerothCore module.
+It handles four custom gameplay systems compiled as a single static or dynamic AzerothCore module.
 
 ---
 
@@ -45,6 +45,24 @@ Two stacking layers applied to every player-vs-player damage event (melee, spell
 
 1. **Fixed % reduction** — applied at all levels, configured via `Apocalipse.PvPDamageReductionPct`.
 2. **Bracket resilience floor** — for levels 10–79 only. If the victim's current resilience is below the configured target for their 10-level bracket, extra reduction simulates the missing resilience. Level 80+ players are excluded.
+
+---
+
+### Battleground Stamina Assistance (`src/battleground_stamina/`)
+
+Level 10-79 characters in non-arena battlegrounds receive a configurable
+true-stamina grant based on the gap between their unbuffed equipment baseline
+and a class/bracket health threshold. Partial gap coverage makes assistance
+taper to zero while better equipment always continues to improve final health.
+
+Gear changes are blocked for the complete battleground stay. The aura is
+applied on entry, reconstructed after resurrection or map/login recovery, and
+removed on exit without granting current health.
+
+Set `Apocalipse.BattlegroundStamina.AuraSpellId` only after allocating and
+creating the required stamina aura through the spell backend. The complete
+spell contract and initial tuning values are in
+`conf/BattlegroundStamina.conf.dist`.
 
 ---
 

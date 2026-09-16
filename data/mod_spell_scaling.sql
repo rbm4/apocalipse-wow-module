@@ -68,7 +68,8 @@ INSERT IGNORE INTO `mod_spell_scaling` (`spell_id`, `scale_type`, `scale_factor`
 (44425, 'DAMAGE',   1.0, 'Arcane Barrage - flat arcane damage'),
 (44457, 'DAMAGE',   1.0, 'Living Bomb (explosion)'),
 (44457, 'PERIODIC', 1.0, 'Living Bomb (DoT ticks)'),
-(11426, 'ABSORB',   1.0, 'Ice Barrier - absorb shield');
+(11426, 'ABSORB',   1.0, 'Ice Barrier - absorb shield'),
+(901001, 'ABSORB',  1.0, 'Blazing Barrier - absorb shield');
 
 -- ── Warlock ──────────────────────────────────────────────────────────────────
 INSERT IGNORE INTO `mod_spell_scaling` (`spell_id`, `scale_type`, `scale_factor`, `description`) VALUES

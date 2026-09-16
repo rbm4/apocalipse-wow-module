@@ -1,0 +1,109 @@
+# Battleground stamina assistance
+#
+# The aura spell is intentionally not assigned here until its ID has been
+# allocated through the Apocalipse spell backend. Effect 0 must be:
+#   SPELL_EFFECT_APPLY_AURA / SPELL_AURA_MOD_STAT / STAT_STAMINA
+# It must be a non-passive generic spell targeting TARGET_UNIT_CASTER, with
+# EffectDieSides 0 or 1 and no level or combo-point amount scaling.
+# The spell should also be non-dispellable, non-cancellable, death-persistent,
+# and marked SPELL_ATTR0_CU_AURA_CANNOT_BE_SAVED in spell_custom_attr.
+
+Apocalipse.BattlegroundStamina.Enable = 1
+Apocalipse.BattlegroundStamina.LockGear = 1
+Apocalipse.BattlegroundStamina.AuraSpellId = 0
+
+# Percentage of the gap between unbuffed baseline health and the configured
+# threshold converted into bonus stamina. Values are clamped to 0-99 so that
+# better gear always increases assisted health. At 50%, gaining 100 baseline
+# health still gains 50 assisted health while the assistance falls by 50.
+Apocalipse.BattlegroundStamina.GapCoveragePct = 50.0
+
+# Safety cap for malformed or experimental threshold values.
+Apocalipse.BattlegroundStamina.MaxBonusStamina = 5000
+
+# Initial tuning values. A threshold of 0 disables assistance for that
+# class/bracket. Death knights are disabled below their normal starting range.
+
+# 10-19
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Warrior = 1800
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Paladin = 1750
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Hunter = 1600
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Rogue = 1550
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Priest = 1400
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.DeathKnight = 0
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Shaman = 1600
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Mage = 1350
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Warlock = 1500
+Apocalipse.BattlegroundStamina.HealthThreshold.1019.Druid = 1550
+
+# 20-29
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Warrior = 3000
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Paladin = 2900
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Hunter = 2700
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Rogue = 2600
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Priest = 2350
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.DeathKnight = 0
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Shaman = 2700
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Mage = 2250
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Warlock = 2500
+Apocalipse.BattlegroundStamina.HealthThreshold.2029.Druid = 2600
+
+# 30-39
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Warrior = 4800
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Paladin = 4600
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Hunter = 4300
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Rogue = 4100
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Priest = 3700
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.DeathKnight = 0
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Shaman = 4300
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Mage = 3550
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Warlock = 3950
+Apocalipse.BattlegroundStamina.HealthThreshold.3039.Druid = 4100
+
+# 40-49
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Warrior = 7500
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Paladin = 7200
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Hunter = 6700
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Rogue = 6400
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Priest = 5750
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.DeathKnight = 0
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Shaman = 6700
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Mage = 5550
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Warlock = 6150
+Apocalipse.BattlegroundStamina.HealthThreshold.4049.Druid = 6400
+
+# 50-59
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Warrior = 11000
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Paladin = 10600
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Hunter = 9800
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Rogue = 9400
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Priest = 8400
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.DeathKnight = 11000
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Shaman = 9800
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Mage = 8100
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Warlock = 9000
+Apocalipse.BattlegroundStamina.HealthThreshold.5059.Druid = 9400
+
+# 60-69
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Warrior = 16500
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Paladin = 15900
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Hunter = 14700
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Rogue = 14100
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Priest = 12600
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.DeathKnight = 16500
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Shaman = 14700
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Mage = 12100
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Warlock = 13500
+Apocalipse.BattlegroundStamina.HealthThreshold.6069.Druid = 14100
+
+# 70-79
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Warrior = 26000
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Paladin = 25000
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Hunter = 23200
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Rogue = 22200
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Priest = 19900
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.DeathKnight = 26000
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Shaman = 23200
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Mage = 19100
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Warlock = 21300
+Apocalipse.BattlegroundStamina.HealthThreshold.7079.Druid = 22200

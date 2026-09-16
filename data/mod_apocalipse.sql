@@ -9,6 +9,13 @@
 
 USE acore_world;
 
+DELETE FROM `spell_script_names`
+WHERE `spell_id` = 901001
+  AND `ScriptName` = 'spell_apoc_mage_blazing_barrier';
+
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`) VALUES
+(901001, 'spell_apoc_mage_blazing_barrier');
+
 -- Spec spell definitions.  Managed via the admin panel.
 CREATE TABLE IF NOT EXISTS `mod_spec_spells` (
   `id`          INT UNSIGNED     NOT NULL AUTO_INCREMENT,
