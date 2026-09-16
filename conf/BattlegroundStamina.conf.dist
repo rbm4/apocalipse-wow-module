@@ -1,7 +1,8 @@
 # Battleground stamina assistance
 #
-# The aura spell is intentionally not assigned here until its ID has been
-# allocated through the Apocalipse spell backend. Effect 0 must be:
+# Aura spell 901002 is installed by data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql.
+# Before production deployment, verify that the ID is free in the live world
+# database and selected client Spell.dbc. Effect 0 must be:
 #   SPELL_EFFECT_APPLY_AURA / SPELL_AURA_MOD_STAT / STAT_STAMINA
 # It must be a non-passive generic spell targeting TARGET_UNIT_CASTER, with
 # EffectDieSides 0 or 1 and no level or combo-point amount scaling.
@@ -9,8 +10,11 @@
 # and marked SPELL_ATTR0_CU_AURA_CANNOT_BE_SAVED in spell_custom_attr.
 
 Apocalipse.BattlegroundStamina.Enable = 1
+# Locks non-combat-swappable equipment for human players in battlegrounds.
+# Native weapon, offhand, projectile and relic swaps remain available.
+# Playerbot sessions are exempt from this lock.
 Apocalipse.BattlegroundStamina.LockGear = 1
-Apocalipse.BattlegroundStamina.AuraSpellId = 0
+Apocalipse.BattlegroundStamina.AuraSpellId = 901002
 
 # Percentage of the gap between unbuffed baseline health and the configured
 # threshold converted into bonus stamina. Values are clamped to 0-99 so that

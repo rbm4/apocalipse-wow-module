@@ -55,13 +55,18 @@ true-stamina grant based on the gap between their unbuffed equipment baseline
 and a class/bracket health threshold. Partial gap coverage makes assistance
 taper to zero while better equipment always continues to improve final health.
 
-Gear changes are blocked for the complete battleground stay. The aura is
-applied on entry, reconstructed after resurrection or map/login recovery, and
-removed on exit without granting current health.
+Armor and other non-combat-swappable equipment changes are blocked for human
+players throughout the battleground stay. Native weapon/offhand/projectile/
+relic swaps remain available, and playerbots are exempt from the lock. The aura
+is applied on entry, reconstructed after resurrection or map/login recovery,
+and removed on exit without granting current health.
 
-Set `Apocalipse.BattlegroundStamina.AuraSpellId` only after allocating and
-creating the required stamina aura through the spell backend. The complete
-spell contract and initial tuning values are in
+World update `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql`
+installs aura spell `901002` on the next worldserver startup when module/world
+database updates are enabled. Check that ID against the live database and the
+client DBC before deployment; the local base Spell.dbc does not contain it.
+The module defaults to that ID, but an installed conf value of `0` must be
+changed. The spell contract and tuning values are in
 `conf/BattlegroundStamina.conf.dist`.
 
 ---
@@ -77,6 +82,14 @@ SOURCE data/mod_apocalipse.sql;
 -- Spell scaling table + initial spell list
 SOURCE data/mod_spell_scaling.sql;
 ```
+
+The battleground stamina spell uses the AzerothCore module updater instead:
+its SQL is under `data/sql/db-world/`. It runs once during worldserver startup
+when world database updates are enabled, this module is present in the
+compiled module list, and its source directory is available to the updater.
+It requires the backend's `wotlk_spells_full` and `wotlk_spells` tables.
+Compiling alone does not apply it. Do not also import this file manually if
+the updater will apply it on the next startup.
 
 ---
 

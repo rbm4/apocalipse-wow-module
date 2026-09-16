@@ -56,7 +56,7 @@ struct Settings
 {
     bool Enabled = true;
     bool LockGear = true;
-    uint32 AuraSpellId = 0;
+    uint32 AuraSpellId = 901002;
     float GapCoveragePct = 50.0f;
     uint32 MaxBonusStamina = 5000;
     std::array<std::array<uint32, MAX_CLASSES>, BracketCount> HealthThresholds = {};
@@ -263,7 +263,7 @@ void LoadConfig()
 {
     g_settings.Enabled = sConfigMgr->GetOption<bool>("Apocalipse.BattlegroundStamina.Enable", true);
     g_settings.LockGear = sConfigMgr->GetOption<bool>("Apocalipse.BattlegroundStamina.LockGear", true);
-    g_settings.AuraSpellId = sConfigMgr->GetOption<uint32>("Apocalipse.BattlegroundStamina.AuraSpellId", 0);
+    g_settings.AuraSpellId = sConfigMgr->GetOption<uint32>("Apocalipse.BattlegroundStamina.AuraSpellId", 901002);
     g_settings.GapCoveragePct = std::clamp(
         sConfigMgr->GetOption<float>("Apocalipse.BattlegroundStamina.GapCoveragePct", 50.0f), 0.0f, 99.0f);
     g_settings.MaxBonusStamina = std::max<uint32>(
