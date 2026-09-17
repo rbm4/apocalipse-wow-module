@@ -12,6 +12,10 @@ Feature pages preserve end-to-end context for behavior that spans source code, h
 | Level-based spell scaling | `src/mod_spell_scaling.cpp`, `data/mod_spell_scaling.sql` | Implemented, source reviewed | [`../mod_spell_scaling.md`](../mod_spell_scaling.md) |
 | PvP damage balancing | `src/mod_apocalipse_pvp.cpp` | Implemented, source reviewed | [`../mod_apocalipse_pvp.md`](../mod_apocalipse_pvp.md) |
 | Blazing Barrier | `src/mod_apocalipse_mage_spells.cpp`, `data/2026_09_16_01_blazing_barrier.sql` | Implemented in source, runtime not verified | [`../custom-spells/blazing-barrier.md`](../custom-spells/blazing-barrier.md) |
+| Pyroclastic Chain Reaction | `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`, `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | Implemented in source, runtime not verified | [`../custom-spells/pyroclastic-chain-reaction.md`](../custom-spells/pyroclastic-chain-reaction.md) |
+| Missile Barrage Overload | `src/mod_apocalipse_mage_missile_barrage_overload.cpp`, `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Implemented in source, runtime not verified | [`../custom-spells/missile-barrage-overload.md`](../custom-spells/missile-barrage-overload.md) |
+| Hypernova | `src/mod_apocalipse_mage_hypernova.cpp`, `data/sql/db-world/2026_09_17_01_hypernova.sql` | Implemented in source, runtime not verified | [`../custom-spells/hypernova.md`](../custom-spells/hypernova.md) |
+| Prismatic Barrier | `src/mod_apocalipse_mage_prismatic_barrier.cpp`, `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | Implemented in source, runtime not verified | [`../custom-spells/prismatic-barrier.md`](../custom-spells/prismatic-barrier.md) |
 | Battleground stamina assistance | `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`, `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | Implemented in source, runtime not verified | [`../custom-spells/battleground-stamina-assistance.md`](../custom-spells/battleground-stamina-assistance.md) |
 
 ## Adding a feature page

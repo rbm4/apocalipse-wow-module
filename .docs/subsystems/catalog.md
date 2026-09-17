@@ -15,6 +15,10 @@ This catalog identifies the owner, entry points, state, and interactions for eac
 | Spell Scaling | `src/mod_spell_scaling.cpp`, `data/mod_spell_scaling.sql` | World custom-table load and UnitScript damage/heal/periodic/aura hooks | Four process maps keyed by spell ID | Stacks with PvP damage hooks; scales Blazing Barrier absorb |
 | PvP Balancing | `src/mod_apocalipse_pvp.cpp` | Startup/config reload and UnitScript damage hooks | Process config globals | Stacks with direct and periodic spell scaling; includes bots and player-owned units |
 | Blazing Barrier | `src/mod_apocalipse_mage_spells.cpp`, `data/2026_09_16_01_blazing_barrier.sql`, `data/mod_apocalipse.sql` | Spell 901001 cast, aura calculation, and absorb | Aura-local state and spell data | Uses mage talents and then participates in ABSORB scaling |
+| Pyroclastic Chain Reaction | `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`, `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | Pyroblast and Living Bomb explosion scripts | Per-cast state and spell 901003 | Reuses normal Living Bomb ranks, damage, and periodic paths |
+| Missile Barrage Overload | `src/mod_apocalipse_mage_missile_barrage_overload.cpp`, `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Missile Barrage aura apply/reapply and proc preparation | Aura-local count plus spell 901004 | Changes Arcane Missiles duration, preserves core proc/set-bonus paths, and remains binary to bot AI |
+| Hypernova | `src/mod_apocalipse_mage_hypernova.cpp`, `data/sql/db-world/2026_09_17_01_hypernova.sql` | Spell 901005 cast and target-centered area effects | Per-cast state plus Arcane Blast aura 36032 | Uses normal Arcane damage, PvP, AoE, knockback, and playerbot movement paths |
+| Prismatic Barrier | `src/mod_apocalipse_mage_prismatic_barrier.cpp`, `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | Spell 901006 self-cast script effect | No custom runtime state | Triggered casts reuse Mana Shield, Ice Barrier, and Blazing Barrier scripts |
 | Battleground Stamina | `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`, `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | Startup/config reload, player lifecycle/equipment hooks, battleground add/remove hooks | Process settings plus aura 901002 on eligible players | Bot equipment-lock exemption, talent/equipment recalculation, client/server custom spell contract |
 
 ## Shared surfaces
@@ -31,8 +35,12 @@ Spell Scaling and PvP Balancing overlap on direct and periodic damage. Both muta
 
 - 901001: Blazing Barrier, code constant, manual world migration, script binding, scaling row, and client DBC.
 - 901002: Battleground stamina aura, config default, automatic world migration, runtime validator, and client DBC.
+- 901003: Pyroclastic Chain Reaction, code constant, automatic world migration, two rank-chain bindings, and client DBC.
+- 901004: Missile Barrage Overload, code constant, automatic world migration, 44401 and passive bindings, and client DBC.
+- 901005: Hypernova, code constant, automatic world migration, script binding, damage coefficient, and client DBC.
+- 901006: Prismatic Barrier, code constant, automatic world migration, script binding, three child spells, and client DBC.
 
-Changing either ID requires an atomic update across every listed surface.
+Changing any ID requires an atomic update across every listed surface.
 
 ### Configuration
 

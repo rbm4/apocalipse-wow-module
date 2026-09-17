@@ -55,6 +55,9 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/battleground-stamina-assistance.md`](custom-spells/battleground-stamina-assistance.md)
 - [`custom-spells/blazing-barrier.md`](custom-spells/blazing-barrier.md)
 - [`custom-spells/pyroclastic-chain-reaction.md`](custom-spells/pyroclastic-chain-reaction.md)
+- [`custom-spells/hypernova.md`](custom-spells/hypernova.md)
+- [`custom-spells/missile-barrage-overload.md`](custom-spells/missile-barrage-overload.md)
+- [`custom-spells/prismatic-barrier.md`](custom-spells/prismatic-barrier.md)
 
 ## Source-of-truth order
 

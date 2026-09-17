@@ -34,6 +34,9 @@ Do not replace this with account-name, security-level, online-state, or `Playerb
 | PvP Balancing | Damage to player victims is reduced | Same, whether attacker or victim is a bot-backed player | None |
 | Blazing Barrier | Same spell and talent behavior | Same | None |
 | Pyroclastic Chain Reaction | Passive-gated Pyroblast and Living Bomb interaction | Same when the bot has learned passive 901003 | None; talent acquisition remains external |
+| Missile Barrage Overload | Accumulated proc count extends Arcane Missiles | Same when the bot has learned passive 901004 | Existing AI checks aura presence but does not wait for a higher count; acquisition remains external |
+| Hypernova | Target-centered Arcane burst grants four Arcane Blast stacks | Same when the bot has learned spell 901005 | Knockback packets use the existing playerbot spline path; acquisition remains external |
+| Prismatic Barrier | Activates Mana Shield, Ice Barrier, and Blazing Barrier together | Same when the bot has learned spell 901006 | None; acquisition and rotation policy remain external |
 | Battleground Stamina | Eligible players receive assistance; non-combat-swappable gear is locked | Eligible bots receive assistance | Equipment lock is bypassed so bot auto-gearing can continue |
 
 Player-owned pets and guardians are treated as player attackers by PvP balancing through `GetCharmerOrOwnerPlayerOrPlayerItself()`. This applies whether the owning player is human-controlled or bot-controlled.
@@ -77,6 +80,8 @@ Before adding work to a bot-related hook:
 | Bot or bot-owned pet damages a player | PvP modifiers apply | Not run in this review |
 | Bot changes talents while in a battleground | Spec layer and stamina assistance both reconcile without recursion | Not run in this review |
 | Bot with passive 901003 casts Pyroblast into its own Living Bomb | Same 20 percent proc, refresh, explosion, and bounded spread as a human | Not run in this review |
+| Bot with passive 901004 accumulates and releases Missile Barrage | Same charge count, added missiles, visual, and aggregate consumption as a human | Not run in this review |
+| Bot casts Hypernova 901005 | Same damage, charge grant, target area, and spline knockback result as a human cast | Not run in this review |
 
 ## Related repository context
 

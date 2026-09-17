@@ -20,12 +20,15 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_apocalipse_pvp.cpp` | Fixed PvP reduction and level-bracket resilience floor |
 | `src/mod_apocalipse_mage_spells.cpp` | Custom Blazing Barrier spell and talent interactions |
 | `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp` | Pyroblast and Living Bomb passive interaction for spell 901003 |
+| `src/mod_apocalipse_mage_missile_barrage_overload.cpp` | Missile Barrage accumulation and Arcane Missiles extension for spell 901004 |
+| `src/mod_apocalipse_mage_hypernova.cpp` | Target-centered Arcane burst, visual, and four-stack reward for spell 901005 |
+| `src/mod_apocalipse_mage_prismatic_barrier.cpp` | Three-barrier orchestration for spell 901006 |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
 | `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
-| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 and 901003 |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002, 901003, 901004, 901005, and 901006 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -37,7 +40,10 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 3. `AddModApocalipsePvPScripts()`
 4. `AddModApocalipseMageSpellScripts()`
 5. `AddModApocalipseMagePyroclasticChainReactionScripts()`
-6. `AddModApocalipseBattlegroundStaminaScripts()`
+6. `AddModApocalipseMageMissileBarrageOverloadScripts()`
+7. `AddModApocalipseMageHypernovaScripts()`
+8. `AddModApocalipseMagePrismaticBarrierScripts()`
+9. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -50,6 +56,9 @@ The entry-point name is derived from the module directory `apocalipse-wow-module
 | PvP Balancing | Damage reduction when a player or player-owned unit damages a player | Healing, absorb creation, battleground stamina, or arena matchmaking |
 | Blazing Barrier | Spell 901001 amount, recast rule, and selected mage talent procs | Spell row installation, client DBC distribution, or level scaling |
 | Pyroclastic Chain Reaction | Spell 901003 proc gate, Living Bomb refresh, triggered explosion, and bounded spread | Talent acquisition, custom client data, or changing normal Living Bomb expiration |
+| Missile Barrage Overload | Spell 901004 gate, aura-local proc count, Arcane Missiles duration adjustment, aggregate consumption, and release visual | Talent acquisition, playerbot rotation policy, or client visual scaling |
+| Hypernova | Spell 901005 target-centered damage, knockback, visual placement, and Arcane Blast stack reward | Acquisition, custom client assets, or playerbot rotation policy |
+| Prismatic Barrier | Spell 901006 orchestration of three existing barrier spells | Acquisition, child aura mechanics, client assets, or playerbot rotation policy |
 | Battleground Stamina | Spell 901002 validation, unbuffed baseline, assistance aura, and human gear lock | Bot gearing decisions, matchmaking, or arenas |
 
 ## Dependency direction
@@ -74,6 +83,18 @@ Pyroblast with passive 901003
   -> same-caster Living Bomb refresh and matching-rank explosion
      -> up to two matching-rank Living Bomb applications
 
+Missile Barrage with passive 901004
+  -> aura-local proc count exposed as charges
+     -> longer Arcane Missiles channel and aggregate consumption
+
+Hypernova 901005
+  -> target-centered Arcane damage and destination knockback
+     -> Arcane Explosion visual and four Arcane Blast stacks
+
+Prismatic Barrier 901006
+  -> triggered Mana Shield, Ice Barrier, and Blazing Barrier casts
+     -> existing child AuraScripts and absorb paths
+
 Battleground and player hooks
   -> Battleground Stamina
      -> bot session check only for equipment-lock exemption
@@ -86,7 +107,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001, 901002, and 901003 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001, 901002, 901003, 901004, 901005, and 901006 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

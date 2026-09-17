@@ -11,6 +11,9 @@ void AddModSpellScalingScripts();
 void AddModApocalipsePvPScripts();
 void AddModApocalipseMageSpellScripts();
 void AddModApocalipseMagePyroclasticChainReactionScripts();
+void AddModApocalipseMageMissileBarrageOverloadScripts();
+void AddModApocalipseMageHypernovaScripts();
+void AddModApocalipseMagePrismaticBarrierScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -20,5 +23,8 @@ void Addapocalipse_wow_moduleScripts()
     AddModApocalipsePvPScripts();
     AddModApocalipseMageSpellScripts();
     AddModApocalipseMagePyroclasticChainReactionScripts();
+    AddModApocalipseMageMissileBarrageOverloadScripts();
+    AddModApocalipseMageHypernovaScripts();
+    AddModApocalipseMagePrismaticBarrierScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

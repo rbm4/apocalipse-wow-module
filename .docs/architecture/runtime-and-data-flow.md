@@ -8,7 +8,7 @@ Last source review: 2026-09-17
 
 ```text
 AzerothCore discovers Addapocalipse_wow_moduleScripts()
-  -> registers six gameplay systems
+  -> registers nine gameplay systems
   -> database custom-table hooks load spec and scaling caches
   -> startup/config hooks load PvP and battleground settings
   -> spell scripts are available when their SQL bindings and spell rows exist
@@ -84,6 +84,38 @@ Pyroblast effect 0 hit
 
 Normal Living Bomb expiration and dispel explosions do not spread. The spread script requires the explosion cast to identify passive 901003 as its triggering spell.
 
+```text
+Missile Barrage proc aura 44401 with passive 901004
+  -> count applications and reapplications up to 20
+  -> expose the count through proc charges
+  -> add 500 ms of channel duration for each proc after the first
+  -> Arcane Missiles starts with normal interval and mana modifiers
+  -> multi-proc release plays visual-only spell 35426 on the target
+  -> existing proc pipeline removes the complete accumulated aura
+```
+
+The overload script changes channel duration but does not change missile damage. Each added periodic trigger continues through the normal Arcane Missiles damage, threat, crit, scaling, and PvP paths.
+
+```text
+Hypernova 901005 cast on an enemy unit
+  -> play Arcane Explosion Visual 35426 at the selected target
+  -> damage enemies within 10 yards through the Arcane direct-damage path
+  -> displace eligible enemies through destination knockback effect 144
+  -> schedule four stacks of Arcane Blast aura 36032 after current cast procs
+```
+
+Hypernova uses the Arcane Explosion family bit, so appropriate Arcane talents and the normal 36032 consumption contract apply. Its 2.856 coefficient and base range are four times Arcane Blast rank 4. The Spell Scaling table does not modify it, while PvP balancing and the core AoE cap remain active.
+
+```text
+Prismatic Barrier 901006 cast on self
+  -> trigger Mana Shield rank 9, spell 43020
+  -> trigger Ice Barrier rank 8, spell 43039
+  -> trigger Blazing Barrier, spell 901001
+  -> each child aura continues through its existing core or module scripts
+```
+
+The parent charges 42 percent base mana and owns the 45 second cooldown. Triggered child casts add no cost or cooldown. The parent stores no aura state and the three child spells retain their normal absorb, talent, duration, dispel, and visual paths.
+
 ### Melee, healing, and absorbs
 
 - Melee damage is changed only by PvP balancing.
@@ -95,7 +127,7 @@ Normal Living Bomb expiration and dispel explosions do not spread. The spread sc
 
 | Database | Objects | Access |
 |---|---|---|
-| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creature 900001, `spell_dbc`, `spell_script_names`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
+| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creature 900001, `spell_dbc`, `spell_script_names`, `spell_bonus_data`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
 | `acore_characters` | `mod_player_spec`, `mod_player_spec_talent_budget`, currently unused `mod_player_spec_talent_grant` | `CharacterDatabase` |
 
 `data/mod_apocalipse.sql` explicitly switches from `acore_world` to `acore_characters` before creating the per-character tables. Keep that boundary intact.
@@ -107,6 +139,9 @@ Normal Living Bomb expiration and dispel explosions do not spread. The spread sc
 | 901001 Blazing Barrier | Manual `data/2026_09_16_01_blazing_barrier.sql` | `spell_apoc_mage_blazing_barrier` from `data/mod_apocalipse.sql` or the manual migration | `ABSORB` row in `mod_spell_scaling` | Matching client `Spell.dbc` and patch |
 | 901002 Battleground Stamina Assistance | Automatic module world update under `data/sql/db-world/` | No `spell_script_names` binding | Not in spell scaling | Matching client `Spell.dbc` and patch |
 | 901003 Pyroclastic Chain Reaction | Automatic `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | Pyroblast `-11366` and explosion `-44461` bindings | Reuses normal Pyroblast and Living Bomb paths | Matching client `Spell.dbc` and separate talent data |
+| 901004 Missile Barrage Overload | Automatic `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Exact 44401 and 901004 bindings | Extends normal Arcane Missiles periodic duration without changing missile damage | Matching client `Spell.dbc` and separate talent data |
+| 901005 Hypernova | Automatic `data/sql/db-world/2026_09_17_01_hypernova.sql` | `spell_apoc_mage_hypernova` on 901005 | Native Arcane damage, destination knockback, and coefficient 2.856 | Matching client `Spell.dbc`; acquisition is separate |
+| 901006 Prismatic Barrier | Automatic `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | `spell_apoc_mage_prismatic_barrier` on 901006 | Reuses Mana Shield 43020, Ice Barrier 43039, and Blazing Barrier 901001 | Matching client `Spell.dbc`; acquisition is separate |
 
 A server-only row can provide mechanics but not complete client presentation. A client-only row cannot provide server mechanics.
 
@@ -119,6 +154,11 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing spell 901001 or binding | Blazing Barrier cannot load or validate correctly | Check `spell_dbc` and `spell_script_names` before startup |
 | Missing spell 901003 or rank bindings | Pyroclastic Chain Reaction cannot load or does not affect Pyroblast | Check the module updater and `spell_script_names` entries `-11366` and `-44461` |
 | Missing talent data for 901003 | The passive exists but cannot be acquired through the intended talent | Deploy matching server and client talent data separately |
+| Missing spell 901004 or overload bindings | Missile Barrage remains normal or passive cleanup is absent | Check the module updater and exact 44401 and 901004 script bindings |
+| Missing talent data for 901004 | The passive exists but cannot be acquired through the intended talent | Deploy matching server and client talent data separately |
+| Missing spell 901005, binding, aura 36032, or visual 35426 | Hypernova cannot load fully or loses its script behavior | Check the Hypernova updater, base DBC, script validation, and client patch |
+| Missing spell 901006, binding, or child barrier | Prismatic Barrier cannot load fully or spends its cost without activating barriers | Check the Prismatic Barrier updater, child spell rows, script bindings, and client patch |
+| Missing acquisition data for 901005 | Hypernova exists but cannot be learned normally | Add acquisition through its separately owned workflow |
 | Config reload during active battleground | New values are cached but existing auras are not immediately swept | Re-enter battleground, trigger an application hook, or restart according to operator plan |
 | Bot lacks a valid session | Bot exception is not detected | Fix bot lifecycle; do not add heuristic fallback |
 | Custom spell ID collision | Guarded migration should fail instead of overwriting another spell | Allocate a new ID and update code, SQL, config, scaling data, and docs together |

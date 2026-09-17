@@ -27,7 +27,10 @@ The function name must continue to match the parent core's module discovery conv
 | 3 | `AddModApocalipsePvPScripts()` | `src/mod_apocalipse_pvp.cpp` |
 | 4 | `AddModApocalipseMageSpellScripts()` | `src/mod_apocalipse_mage_spells.cpp` |
 | 5 | `AddModApocalipseMagePyroclasticChainReactionScripts()` | `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp` |
-| 6 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
+| 6 | `AddModApocalipseMageMissileBarrageOverloadScripts()` | `src/mod_apocalipse_mage_missile_barrage_overload.cpp` |
+| 7 | `AddModApocalipseMageHypernovaScripts()` | `src/mod_apocalipse_mage_hypernova.cpp` |
+| 8 | `AddModApocalipseMagePrismaticBarrierScripts()` | `src/mod_apocalipse_mage_prismatic_barrier.cpp` |
+| 9 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
 
 The loader contains no gameplay state. Its order affects script registration and can affect the rounding sequence when multiple UnitScripts mutate the same damage value.
 

@@ -2,14 +2,17 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module registers six systems:
+The module registers nine systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
 3. PvP damage balancing
 4. Blazing Barrier custom mage spell
 5. Pyroclastic Chain Reaction custom mage passive
-6. Battleground stamina assistance and equipment control
+6. Missile Barrage Overload custom mage passive
+7. Hypernova custom mage spell
+8. Prismatic Barrier custom mage spell
+9. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -42,7 +45,10 @@ apocalipse-wow-module/
 |   |-- 2026_09_16_01_blazing_barrier.sql
 |   `-- sql/db-world/
 |       |-- 2026_09_16_00_battleground_stamina_spell.sql
-|       `-- 2026_09_17_00_pyroclastic_chain_reaction.sql
+|       |-- 2026_09_17_00_pyroclastic_chain_reaction.sql
+|       |-- 2026_09_17_01_hypernova.sql
+|       |-- 2026_09_17_01_missile_barrage_overload.sql
+|       `-- 2026_09_17_02_prismatic_barrier.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -50,6 +56,9 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_pvp.cpp
 |   |-- mod_apocalipse_mage_spells.cpp
 |   |-- mod_apocalipse_mage_pyroclastic_chain_reaction.cpp
+|   |-- mod_apocalipse_mage_missile_barrage_overload.cpp
+|   |-- mod_apocalipse_mage_hypernova.cpp
+|   |-- mod_apocalipse_mage_prismatic_barrier.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/
@@ -129,6 +138,32 @@ The automatic module world update installs the passive and binds all Pyroblast a
 
 Detailed contract: [`.docs/custom-spells/pyroclastic-chain-reaction.md`](.docs/custom-spells/pyroclastic-chain-reaction.md)
 
+### Missile Barrage Overload
+
+Owner: `src/mod_apocalipse_mage_missile_barrage_overload.cpp`
+
+Custom passive spell 901004 lets Missile Barrage accumulate up to 20 procs. The first proc retains normal behavior, every additional proc adds one missile to the next Arcane Missiles channel, and a successful cast consumes the complete accumulated proc. Multi-proc releases play the existing visual-only Arcane Explosion spell 35426 on the target.
+
+The automatic module world update installs the passive and binds its behavior to spells 44401 and 901004. Acquisition is intentionally external. Human and bot-controlled mages use identical mechanics, although existing bot AI does not deliberately wait for more procs.
+
+Detailed contract: [`.docs/custom-spells/missile-barrage-overload.md`](.docs/custom-spells/missile-barrage-overload.md)
+
+### Hypernova
+
+Owner: `src/mod_apocalipse_mage_hypernova.cpp`
+
+Custom active spell 901005 detonates at an enemy target, deals Arcane area damage, applies destination knockback, and grants the caster four Arcane Blast stacks. Its automatic world update and matching client spell row are required, while acquisition remains external.
+
+Detailed contract: [`.docs/custom-spells/hypernova.md`](.docs/custom-spells/hypernova.md)
+
+### Prismatic Barrier
+
+Owner: `src/mod_apocalipse_mage_prismatic_barrier.cpp`
+
+Custom active spell 901006 costs 42 percent base mana and has a 45 second cooldown. It triggers Mana Shield rank 9, Ice Barrier rank 8, and custom Blazing Barrier together, preserving each child spell's existing scripts and absorb behavior. Its automatic world update and matching client spell row are required, while acquisition remains external.
+
+Detailed contract: [`.docs/custom-spells/prismatic-barrier.md`](.docs/custom-spells/prismatic-barrier.md)
+
 ### Battleground Stamina Assistance
 
 Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
@@ -149,8 +184,8 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001, 901002, and 901003
-- Matching talent data when passive spell 901003 is granted through a custom talent
+- Server and client custom-spell data for spells 901001, 901002, 901003, 901004, 901005, and 901006
+- Matching talent data when passive spell 901003 or 901004 is granted through a custom talent
 
 Stock AzerothCore compatibility has not been validated.
 
@@ -169,9 +204,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 update installs Pyroclastic Chain Reaction and its rank-chain script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003, 901004, 901005, and 901006 updates install the custom mage spells and their script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001, 901002, and 901003 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001, 901002, 901003, 901004, 901005, and 901006 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 
