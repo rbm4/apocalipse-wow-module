@@ -1,83 +1,99 @@
-# mod_spell_scaling.cpp
+# Level-based spell scaling
+
+Status: Implemented, source reviewed; runtime not verified in this review
+
+Owners: `src/mod_spell_scaling.cpp`, `data/mod_spell_scaling.sql`
+
+Last source review: 2026-09-16
 
 ## Purpose
 
-Implements **level-proportional scaling** for a configurable set of spells. It prevents high-level signature spells (granted by the Spec Manager) from being full-power in the hands of low-level players, preserving the difficulty of levelling content.
+This subsystem scales selected high-level spells when cast by players below level 80. The spell list and scale factors come from `acore_world.mod_spell_scaling`.
 
----
+NPC casters are not scaled. Bot-controlled players are scaled exactly like human-controlled players.
 
 ## Formula
 
+```text
+multiplier = min((casterLevel / 80.0) * scaleFactor, 1.0)
 ```
-multiplier = min( (playerLevel / 80.0) * scaleFactor, 1.0 )
-```
 
-| Level | scaleFactor 1.0 | scaleFactor 0.5 |
-|---|---|---|
-| 10 | 12.5 % | 56.25 % |
-| 40 | 50.0 % | 75.0 % |
-| 60 | 75.0 % | 87.5 % |
-| 80 | 100 % (no change) | 100 % (no change) |
+The code does not clamp negative scale factors. Operational data should use positive values.
 
-- `scaleFactor 1.0` — full linear ramp; use for spells that have no natural weakening at low level.
-- `scaleFactor 0.5` — gentler ramp; use when the spell already scales down naturally (e.g. through lower weapon DPS or spell power).
-- Only **player** casters are affected. NPC casters always use `m = 1.0`.
+| Level | Factor 0.5 | Factor 1.0 | Factor 2.0 |
+|---:|---:|---:|---:|
+| 10 | 6.25% | 12.5% | 25% |
+| 40 | 25% | 50% | 100% |
+| 60 | 37.5% | 75% | 100% |
+| 80+ | 100% | 100% | 100% |
 
----
+A smaller factor produces a smaller final effect, not a gentler reduction. Existing SQL comments that describe factor 0.5 as 50 percent power at level 1 do not match the implemented formula; use the C++ formula as current behavior.
 
 ## Scale types
 
-| Type | Hook | Use case |
+| Type | Hook | Actual coverage |
 |---|---|---|
-| `DAMAGE` | `ModifySpellDamageTaken` | Direct-hit nuke spells |
-| `HEAL` | `ModifyHealReceived` | Direct heals |
-| `PERIODIC` | `ModifyPeriodicDamageAurasTick` | DoT / HoT ticks |
-| `ABSORB` | `OnAuraApply` | Absorb shields (e.g. Ice Barrier) |
+| `DAMAGE` | `ModifySpellDamageTaken` | Direct spell damage |
+| `HEAL` | `ModifyHealReceived` | Healing events delivered through this core hook |
+| `PERIODIC` | `ModifyPeriodicDamageAurasTick` | Periodic damage only in this implementation |
+| `ABSORB` | `OnAuraApply` | School absorbs and mana shields on aura application |
 
-For `ABSORB`, the scaling is applied once when the aura lands by recalculating the effect base amount via `CalculateAmount`, then pushing the scaled value with `ChangeAmount`. This avoids double-applying the multiplier on aura refreshes and keeps future recalculations possible.
+Do not document `PERIODIC` as a generic HoT path unless the implementation gains a periodic healing hook.
 
----
+## Startup and cache
 
-## Data flow
+`SpellScalingWorld::OnLoadCustomDatabaseTable()` clears and loads four process maps keyed by spell ID. Unknown `scale_type` strings are ignored but still contribute to the logged row count.
 
-```
-worldserver startup
-  └─ SpellScalingWorld::OnLoadCustomDatabaseTable()
-       └─ LoadScalingSpells()  ← reads mod_spell_scaling (acore_world)
-            ├─ gDamageSpells   [spellId → scaleFactor]
-            ├─ gHealSpells     [spellId → scaleFactor]
-            ├─ gPeriodicSpells [spellId → scaleFactor]
-            └─ gAbsorbSpells   [spellId → scaleFactor]
+There is no dedicated runtime database reload command. Table changes require restart or another supported invocation of the custom-table hook.
 
-damage/heal/tick/absorb event
-  └─ SpellScalingUnit hook
-       ├─ look up spellInfo->Id in the relevant map
-       ├─ if found: compute multiplier via GetLevelMultiplier()
-       └─ if m < 1.0: apply reduction to damage / heal / amount
+## Event flow
+
+```text
+spell event
+  -> choose map from hook type
+  -> look up exact spellInfo or aura ID
+  -> return unchanged when ID is absent
+  -> return unchanged for NPC or level-80+ caster
+  -> multiply mutable value and truncate to integer
 ```
 
----
+For absorb auras, the handler iterates all effects, selects school absorb and mana shield effects, recalculates from the effect base through `CalculateAmount(caster)`, and applies the multiplier with `ChangeAmount()`. This is intended to avoid multiplying an already scaled refresh value.
 
 ## Database table
 
-### `acore_world.mod_spell_scaling`
+| Column | Meaning |
+|---|---|
+| `spell_id` | Exact spell entry ID |
+| `scale_type` | `DAMAGE`, `HEAL`, `PERIODIC`, or `ABSORB` |
+| `scale_factor` | Positive multiplier factor used by the formula |
+| `description` | Operator-facing label only |
 
-| Column | Type | Description |
+Primary key `(spell_id, scale_type)` allows one spell to participate in several hook families.
+
+## Interactions
+
+- Direct and periodic damage may also pass through PvP Balancing. The loader registers Spell Scaling before PvP Balancing, and integer truncation occurs at each stage.
+- Blazing Barrier 901001 is seeded as `ABSORB` factor 1.0. It is currently a level-80 spell, where scaling returns 1.0.
+- Spec Manager is a major source of high-level spells granted to low-level characters, but the systems communicate only through shared spell IDs.
+
+## Failure modes
+
+| Failure | Result | Diagnostic |
 |---|---|---|
-| `spell_id` | INT UNSIGNED | Spell entry ID |
-| `scale_type` | ENUM | `DAMAGE`, `HEAL`, `PERIODIC`, or `ABSORB` |
-| `scale_factor` | FLOAT | Scaling aggressiveness (see formula above) |
-| `description` | VARCHAR(255) | Human-readable label (optional) |
+| Missing/empty table | All caches remain empty | `[ModSpellScaling] mod_spell_scaling is empty or missing` |
+| Wrong spell rank/trigger ID | Intended effect is not found | Compare combat spell ID to table row |
+| Wrong scale type | Event is not intercepted | Trace the actual AzerothCore hook |
+| Negative factor | Signed direct damage/heal can become invalid; unsigned paths can wrap | Validate SQL before restart |
+| Absorb script recalculates unexpectedly | Custom amount may be applied more than once | Focused custom-spell runtime test |
 
-A spell can have multiple rows with different `scale_type` values (e.g. Holy Shock has both a `DAMAGE` and a `HEAL` row).
+## Adding a row
 
-To add a new spell: `INSERT` a row and restart the worldserver. No recompile needed.
+1. Identify the exact final spell or triggered spell ID seen by the hook.
+2. Choose the hook family matching the actual effect.
+3. Calculate expected values at representative levels from the implemented formula.
+4. Insert or update the row.
+5. Restart the worldserver.
+6. Test human and bot casters, PvE and PvP where applicable, and every relevant rank/trigger.
+7. Update this page, the owning feature/custom-spell page, README if user-visible, and the history index.
 
----
-
-## Registered scripts
-
-| Script class | Base class | Hook used |
-|---|---|---|
-| `SpellScalingWorld` | `WorldScript` | `OnLoadCustomDatabaseTable` |
-| `SpellScalingUnit` | `UnitScript` | `ModifySpellDamageTaken`, `ModifyHealReceived`, `ModifyPeriodicDamageAurasTick`, `OnAuraApply` |
+No build, database load, or runtime scaling scenario was run during the 2026-09-16 documentation review.

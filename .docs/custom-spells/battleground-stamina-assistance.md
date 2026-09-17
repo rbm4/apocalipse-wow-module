@@ -1,137 +1,135 @@
 # Battleground Stamina Assistance
 
-## Intent and state
+Status: Implemented in source, build and runtime not verified
 
-- Gives undergeared level 10-79 characters additional true stamina in
-  battlegrounds, never arenas.
-- Uses a diminishing grant rather than normalizing everyone to identical
-  health: `bonus health = gap coverage * max(threshold - baseline health, 0)`.
-- Better equipment always improves final health because gap coverage is
-  clamped below 100%.
-- Module behavior and configuration are implemented locally.
-- Spell `901002` is defined in a module world update and is the configured
-  default. It was absent from the local base Spell.dbc and local module
-  references, but live database and deployed client DBC availability remain
-  unverified. The SQL has not been applied here, and no client artifact has
-  been built or distributed for this spell.
-- Runtime validation has not been performed.
+Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`, `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql`
 
-## Gameplay contract
+Last source review: 2026-09-16
 
-- Eligible levels: 10-79, grouped into 10-19 through 70-79 brackets.
-- Each class/bracket combination has an independent configurable health
-  threshold. A zero threshold disables that combination.
-- Default gap coverage is 50% and is configurable from 0-99%.
-- At a 10,000-health threshold and 50% coverage, unbuffed baselines of 4,000,
-  6,000, 8,000 and 10,000 produce assisted targets of approximately 7,000,
-  8,000, 9,000 and 10,000 respectively.
-- Baseline health excludes active aura-based flat stamina, flat health,
-  stamina percentages and health percentages. It retains native class/level
-  values, equipment stats, direct enchant contributions, and passive
-  class/talent modifiers.
-- The grant is converted back into the minimum whole stamina amount that
-  supplies the intended unbuffed bonus health, including the native first-20
-  stamina rule.
-- Human players cannot equip or unequip non-combat-swappable equipment for the
-  entire non-arena battleground stay. The core's native combat-swappable group
-  (weapons, offhands, projectiles, relics) remains usable, subject to its usual
-  combat and weapon-swap rules. Playerbot sessions are exempt from the lock.
-  Loading equipment from the character database is not blocked. Allowed
-  equipment changes (including human weapon swaps and bot auto-gearing) and
-  talent/spec changes trigger assistance recalculation.
-- The aura is applied on battleground entry and reconstructed on resurrection,
-  level change, login or map recovery. It is removed on battleground exit.
-- Applying or changing assistance never raises current health. Lowering or
-  removing maximum health may clamp current health normally.
+## Intent
 
-## Spell graph and integration
+The feature gives undergeared level 10 through 79 characters additional true stamina in non-arena battlegrounds. It covers only part of the gap to a class/bracket health threshold so better equipment continues to improve final assisted health.
 
-| ID / allocation state | Role | Learned / visible | Effects | Owner / lifecycle |
-| --- | --- | --- | --- | --- |
-| `901002`; local definition prepared | Battleground stamina aura | Not learned; visible buff | Effect 0 applies `SPELL_AURA_MOD_STAT`, `STAT_STAMINA` | Self-cast by battleground module; removed on exit |
+Human players cannot change most equipment during the battleground stay. Bot sessions bypass that lock so `mod-playerbots` auto-gearing continues to work. Both humans and bots receive the same stamina calculation.
 
-Required spell properties:
+## Eligibility
 
-- Effect 0: `SPELL_EFFECT_APPLY_AURA` / `SPELL_AURA_MOD_STAT` /
-  `STAT_STAMINA`.
-- Positive, non-passive, infinite-duration aura targeting
-  `TARGET_UNIT_CASTER`, with no resource, cooldown, proc, family or spell-group
-  interaction.
-- Effect die sides is 0 or 1, and real-points-per-level and
-  points-per-combo-point are zero, so the custom server amount remains exact.
-- `Dispel = DISPEL_NONE`.
-- `SPELL_ATTR0_NO_AURA_CANCEL`.
-- `SPELL_ATTR3_ALLOW_AURA_WHILE_DEAD`.
-- World `spell_custom_attr` includes
-  `SPELL_ATTR0_CU_AURA_CANNOT_BE_SAVED`.
-- Generic client wording; it must not display a fixed `$s1` because the server
-  supplies a different amount for each character.
+Assistance requires all of these:
 
-The battleground lifecycle is code-only and does not need a
-`spell_script_names` binding. The world record and custom attribute bit are
-defined in `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql`.
-The visible aura still needs a matching client Spell.dbc record through the
-existing backend/export/release flow.
+- Feature enabled.
+- Player is in a `Battleground` that reports `isBattleground()` and not `isArena()`.
+- Level maps to brackets 10-19 through 70-79.
+- The player's class/bracket threshold is non-zero.
+- The validated custom aura exists and is ready.
+- Calculated unbuffed baseline health is below the threshold.
 
-### Spell definition and release
+Level 80 or above, arenas, and threshold-zero combinations receive no aura.
 
-1. Before deploying, verify ID `901002` is free in live `spell_dbc`, imported
-   `wotlk_spells_full`, and the actual selected client/server base Spell.dbc.
-   The local base DBC has no such ID. An occupied ID in live `spell_dbc`,
-   backend `wotlk_spells_full`, or its `wotlk_spells` name cache makes the
-   migration fail rather than overwrite
-   another spell. This guard requires `wotlk_spells_full` to exist.
-2. The migration sets `SpellIconID = 685` (Fortitude icon),
-   `Name_Lang_enUS = Battleground Stamina Assistance`, and generic
-   descriptions. Do not put a fixed `$s1` value in the text, since the server
-   supplies a per-character amount.
-3. Set `Effect_1 = 6` (apply aura), `EffectAura_1 = 29` (modify stat),
-   `EffectMiscValue_1 = 2` (Stamina), `ImplicitTargetA_1 = 1` (caster),
-   `EffectBasePoints_1 = 1`, `EffectDieSides_1 = 0`,
-   `EffectRealPointsPerLevel_1 = 0`, and
-   `EffectPointsPerCombo_1 = 0`. Leave effects 2 and 3 unused. The effect's
-   stored +1 base point is only a positive placeholder; the module overrides it.
-   This must be a real stamina aura, not `SPELL_AURA_DUMMY`.
-4. Set `DispelType = 0`, `SpellClassSet = 0`, no cost/cooldown/proc or learned
-   acquisition, and choose a `DurationIndex` whose loaded duration is -1.
-   In the attribute editor set `Attributes` bit `0x80000000` (cannot cancel)
-   and `AttributesEx3` bit `0x00100000` (persists through death). Keep the
-   spell non-passive and positive.
-5. The migration also sets world `spell_custom_attr.attributes` bit
-   `0x01000000` (`SPELL_ATTR0_CU_AURA_CANNOT_BE_SAVED`) without erasing any
-   existing custom bits. The character should never persist this
-   battleground-only aura in `character_aura`. It also syncs the
-   `wotlk_spells` name cache used by the backend spell picker.
-6. Ensure the module updater applies the world SQL at server startup, then
-   export/deploy a client Spell.dbc containing the same row through the
-   existing backend/patch flow. The module defaults
-   `Apocalipse.BattlegroundStamina.AuraSpellId` to `901002`; any installed
-   config still setting it to `0` must be updated. Confirm the startup
-   validator accepts the spell before testing in a BG.
+## Calculation
 
-The backend's `spell_dbc` row is a full server-side spell override, not an
-incremental patch. A server-only row cannot supply the name/icon/tooltip to
-the client. Conversely, a client-only DBC entry will not give the server a
-working stamina effect. The code sets the dynamic stamina amount and the
-combat/map lifecycle; the spell record supplies both the real aura mechanic
-and its visible presentation.
+```text
+missing health = max(threshold - unbuffed baseline health, 0)
+desired bonus health = ceil(missing health * gap coverage percent / 100)
+bonus stamina = minimum whole stamina that supplies desired bonus health
+```
+
+Gap coverage is clamped to 0 through 99 percent. The default is 50 percent. This prevents assistance from normalizing all characters to one health value.
+
+For a 10,000 threshold at 50 percent coverage, baselines of 4,000, 6,000, 8,000, and 10,000 target approximately 7,000, 8,000, 9,000, and 10,000 assisted health.
+
+The stamina conversion preserves WotLK's first-20 rule: the first 20 stamina gives one health each, and later stamina gives ten health each before passive multipliers.
+
+A binary search from zero through `MaxBonusStamina` finds the minimum whole stamina amount that reaches the desired health contribution.
+
+## Unbuffed baseline
+
+`CalculateUnbuffedBaseline()` reconstructs health from native character values while excluding active temporary stamina and health buffs.
+
+Included:
+
+- Class/level create health and stamina.
+- Base and equipment values.
+- Direct enchant-style totals.
+- Passive flat and percentage stamina/health effects.
+
+Excluded:
+
+- Active flat stamina buffs.
+- Active flat health buffs.
+- Active stamina percentage buffs.
+- Active health percentage buffs.
+- The existing assistance aura.
+
+This logic is sensitive to AzerothCore stat-modifier semantics. Changes to aura filtering require tests with Fortitude, Kings, food, talents, forms, enchants, and temporary maximum-health cooldowns.
+
+## Lifecycle
+
+`ApplyAssistance()` is invoked on:
+
+- Player login.
+- Player level change.
+- Player map change.
+- Equipment equip and unequip.
+- Active spec slot change.
+- Talent learn.
+- Player resurrection.
+- Non-arena battleground add-player.
+
+`RemoveAssistance()` is invoked on explicit battleground leave and whenever an application finds the player unsupported or the aura unready.
+
+The aura is updated in place with `ChangeAmount()` or cast through `CastCustomSpell()`. Application stores current health first and restores it if the maximum-health increase raised current health. Assistance must never act as a free heal.
+
+## Equipment lock and bots
+
+When enabled, can-equip and can-unequip hooks block human changes to equipment that `ItemTemplate::CanChangeEquipStateInCombat()` does not permit. Database loading is not blocked, and AzerothCore's combat-swappable item group remains allowed.
+
+A session for which `WorldSession::IsBot()` is true bypasses the lock. Bot equipment changes still invoke post-equip hooks and recalculate assistance.
+
+Do not broaden this exemption to humans and do not disable the assistance aura for bots.
 
 ## Configuration
 
-`conf/BattlegroundStamina.conf.dist` owns:
+`conf/BattlegroundStamina.conf.dist` defines:
 
-- Feature enable and human battleground non-weapon gear lock.
-- Allocated aura spell ID.
-- Gap coverage percentage and maximum stamina safety cap.
-- Seventy class/bracket health thresholds.
+| Key family | Default/meaning |
+|---|---|
+| `Apocalipse.BattlegroundStamina.Enable` | `1` |
+| `Apocalipse.BattlegroundStamina.LockGear` | `1` |
+| `Apocalipse.BattlegroundStamina.AuraSpellId` | `901002` |
+| `Apocalipse.BattlegroundStamina.GapCoveragePct` | `50.0`, clamped 0-99 |
+| `Apocalipse.BattlegroundStamina.MaxBonusStamina` | `5000`, minimum 1 |
+| `Apocalipse.BattlegroundStamina.HealthThreshold.<bracket>.<class>` | 70 class/bracket thresholds; zero disables the combination |
 
-Configuration reload updates values for future applications. Restart or a
-new battleground entry is the intended way to reconcile already-active auras
-after tuning.
+Known drift: distributed 10-19 thresholds are higher than the compiled fallback values in `BattlegroundStamina.cpp`. If the config file is not loaded, the code fallbacks apply. Synchronize both surfaces in a dedicated behavior change.
 
-## Validation and release
+Modern AzerothCore module CMake discovers `conf/*.conf.dist` automatically, copies it as `BattlegroundStamina.conf`, and includes module configs in `sConfigMgr`. Confirm the file appears in the target custom core's CMake module config list and deployed config directory.
 
-Production preflight (read-only, on the live world database):
+Config reload updates cached settings and aura validation but does not immediately iterate active battleground players. Use re-entry, another application event, or restart for deterministic reconciliation.
+
+## Custom spell 901002
+
+The module world update defines spell 901002. The runtime validator requires:
+
+- Effect 0 is `SPELL_EFFECT_APPLY_AURA`.
+- Aura type is `SPELL_AURA_MOD_STAT` with `STAT_STAMINA`.
+- Target is `TARGET_UNIT_CASTER`.
+- Spell is positive, non-passive, generic family, infinite duration, and non-dispellable.
+- Effect amount has no random die other than 0 or 1, no per-level scaling, and no combo-point scaling.
+- `SPELL_ATTR0_NO_AURA_CANCEL` is set.
+- `SPELL_ATTR3_ALLOW_AURA_WHILE_DEAD` is set.
+- `SPELL_ATTR0_CU_AURA_CANNOT_BE_SAVED` is set through `spell_custom_attr`.
+
+Separately, the server and client spell contract sets `EquippedItemClass` to `-1`, with both equipped-item masks set to `0`, because the aura has no equipment requirement. The runtime validator does not currently check these three fields.
+
+The world `spell_dbc` row currently uses `Name_Lang_enUS = 'Battleground inspiration'`. The backend `wotlk_spells` cache uses `Battleground Stamina Assistance`. Keep server and client presentation deliberately synchronized if renaming.
+
+No `spell_script_names` binding is required because the lifecycle and dynamic amount are implemented through player and battleground hooks.
+
+## Server and client deployment
+
+`data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` is an automatic module world update. It runs at worldserver startup only when module update discovery and world database updates are enabled. Compiling alone does not apply it.
+
+Before first deployment:
 
 ```sql
 SELECT `ID` FROM `spell_dbc` WHERE `ID` = 901002;
@@ -139,25 +137,42 @@ SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` = 901002;
 SELECT `ID` FROM `wotlk_spells` WHERE `ID` = 901002;
 ```
 
-Both queries must return no rows before the first deployment. Check the base
-Spell.dbc selected by the live patch/export process separately. The first
-worldserver restart with the compiled module/source and world updates enabled
-applies the SQL before DBC/spell loading. Confirm `updates` records the file,
-then inspect `spell_dbc`, `spell_custom_attr`, `wotlk_spells`, startup validator
-logs, and a matching client MPQ. A running worldserver does not hot-load this
-new spell merely because the source was compiled or SQL was inserted.
+All three must be clear, and the actual selected base client/server `Spell.dbc` must be checked separately. On first execution, the SQL collision guard intentionally fails before mutation if any world table already uses the ID. On later executions, an existing row is accepted as module-owned only when its name and stamina-effect signature match this spell.
 
-Pending runtime cases:
+The update is idempotent for a module-owned 901002 row. Re-execution repairs `EquippedItemClass` to `-1`, resets both equipped-item masks to `0`, preserves other custom-attribute bits, and resynchronizes the backend name. This repairs installations created by the earlier definition that inherited the table default `EquippedItemClass = 0` and caused `HasItemFitToSpellRequirements` errors.
 
-- One below-threshold and one above-threshold character for every bracket.
-- Two characters of the same class with different gear; the better-geared
-  character must retain higher assisted health.
-- Fortitude, Kings, stamina food and temporary maximum-health cooldowns must
-  not change the baseline-selected grant.
-- Human armor/trinket/ring equip, unequip and equipment-manager swaps must fail
-  from preparation through battleground exit; weapon/offhand/projectile/relic
-  swaps must follow native rules and work, and recompute assistance. Bot
-  equipment changes must remain available and recompute assistance.
-- Death/resurrection, disconnect/reconnect, late join, normal exit, deserter
-  exit and server restart must not leak the aura outside the battleground.
-- Aura application and reconstruction must not increase current health.
+After the update:
+
+1. Confirm the world `updates` table records the file.
+2. Inspect `spell_dbc`, `spell_custom_attr`, and `wotlk_spells`.
+3. Confirm `[BattlegroundStamina]` startup validation has no error.
+4. Export and distribute a client `Spell.dbc` row through the existing patch flow.
+5. Confirm the installed config does not override `AuraSpellId` with zero.
+
+A server-only row cannot provide correct client icon/name/tooltip presentation. A client-only row cannot provide the server aura mechanic.
+
+## Failure modes
+
+| Failure | Result | Recovery |
+|---|---|---|
+| Aura ID zero or missing | Assistance disabled; gear lock can still be enabled because it depends on feature config, not `AuraReady` | Install/allocate spell and correct config |
+| Aura contract invalid | Assistance disabled with detailed module error | Fix server spell row and restart/reload config |
+| `EquippedItemClass` is `0` | Cast checks log `HasItemFitToSpellRequirements` errors and can reject aura application | Re-execute the module-owned 901002 updater and restart worldserver |
+| Config not installed | Compiled defaults apply, including different 10-19 values | Merge `.conf.dist` into effective config |
+| Aura survives an unexpected path | Player may retain assistance outside battleground until another cleanup hook | Reproduce map/leave path and add focused cleanup coverage |
+| Client patch missing | Server mechanic may work with broken presentation | Deploy matching client data |
+| Max stamina cap too low | Search returns cap without necessarily reaching target bonus | Tune cap and test high-threshold cases |
+
+## Runtime validation matrix
+
+- Below-threshold and above-threshold characters in every bracket.
+- Same class/bracket with different gear; better gear must retain higher assisted health.
+- Fortitude, Kings, food, forms, talents, enchants, and maximum-health cooldowns.
+- Human armor/accessory lock and allowed weapon/offhand/projectile/relic swaps.
+- Bot auto-gearing and recalculation while in battleground.
+- Talent and active-spec changes.
+- Death, resurrection, disconnect, reconnect, late join, normal leave, deserter leave, and server restart.
+- Aura application, update, and removal without increasing current health.
+- Arena and level-80 exclusion.
+
+No runtime cases, live database migration, client patch build, or full custom-core build were performed during the 2026-09-16 documentation review.

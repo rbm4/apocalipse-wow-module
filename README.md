@@ -1,133 +1,220 @@
 # apocalipse-wow-module
 
-AzerothCore module for the **Apocalipse WoW** private server (WotLK 3.3.5a).  
-It handles four custom gameplay systems compiled as a single static or dynamic AzerothCore module.
+AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
----
+The module registers five systems:
+
+1. Specialization signature spell management
+2. Level-based spell scaling
+3. PvP damage balancing
+4. Blazing Barrier custom mage spell
+5. Battleground stamina assistance and equipment control
+
+The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
+
+## Documentation first
+
+Engineering context is maintained as part of every change:
+
+- Agent rules and mandatory documentation workflow: [`AGENTS.md`](AGENTS.md)
+- Documentation index: [`.docs/README.md`](.docs/README.md)
+- Architecture and subsystem interactions: [`.docs/architecture/overview.md`](.docs/architecture/overview.md)
+- Runtime and data flow: [`.docs/architecture/runtime-and-data-flow.md`](.docs/architecture/runtime-and-data-flow.md)
+- Playerbot integration: [`.docs/integrations/playerbots.md`](.docs/integrations/playerbots.md)
+- Build, SQL, config, and release operations: [`.docs/development/operations.md`](.docs/development/operations.md)
+- Dated engineering history: [`.docs/history/README.md`](.docs/history/README.md)
+
+Future features must update their owner documentation, this README when public behavior changes, and the dated history without requiring a separate request.
 
 ## Project structure
 
-```
+```text
 apocalipse-wow-module/
-├── CMakeLists.txt              # Minimal — sources are auto-collected from src/
-├── data/
-│   ├── mod_apocalipse.sql      # One-time DDL + seed data for the spec system
-│   └── mod_spell_scaling.sql   # One-time DDL + seed data for spell scaling
-└── src/
-    ├── mod_apocalipse_loader.cpp   # Module entry-point / script registration
-    ├── mod_apocalipse.cpp          # Spec Manager: NPC + talent grant system
-    ├── mod_spell_scaling.cpp       # Level-proportional spell scaling
-    └── mod_apocalipse_pvp.cpp      # PvP damage balancing
+|-- AGENTS.md
+|-- CMakeLists.txt
+|-- README.md
+|-- conf/
+|   `-- BattlegroundStamina.conf.dist
+|-- data/
+|   |-- mod_apocalipse.sql
+|   |-- mod_spell_scaling.sql
+|   |-- 2026_09_16_01_blazing_barrier.sql
+|   `-- sql/db-world/2026_09_16_00_battleground_stamina_spell.sql
+|-- src/
+|   |-- mod_apocalipse_loader.cpp
+|   |-- mod_apocalipse.cpp
+|   |-- mod_spell_scaling.cpp
+|   |-- mod_apocalipse_pvp.cpp
+|   |-- mod_apocalipse_mage_spells.cpp
+|   `-- battleground_stamina/
+`-- .docs/
+    |-- architecture/
+    |-- custom-spells/
+    |-- development/
+    |-- features/
+    |-- history/
+    |-- integrations/
+    |-- subsystems/
+    `-- templates/
 ```
 
----
+`CMakeLists.txt` is intentionally minimal. The parent AzerothCore module build auto-collects source files under `src/`.
 
 ## Systems
 
-### Spec Manager (`mod_apocalipse.cpp`)
+### Spec Manager
 
-Players visit a custom NPC (entry `900001`) to choose a specialisation.  (CURRENTLY UNUSED IN-GAME)
-On login and on save the module inspects which WotLK talent tree has the most points, then grants or revokes the matching signature spells defined in the `mod_spec_spells` table (`acore_world`). Per-player state is persisted in `mod_player_spec` (`acore_characters`).
+Owner: `src/mod_apocalipse.cpp`
 
-### Spell Scaling (`mod_spell_scaling.cpp`)
+The system detects the dominant talent tree on player login and talent changes. It grants configured signature spells and managed talents, removes non-dominant layers, and persists the selected tree plus a six-point hidden talent budget in `acore_characters`.
 
-High-level spells granted to low-level players are scaled down proportionally so they do not trivialise levelling content.
+Creature 900001 provides an explicit Spec Master gossip interface, but it is currently not part of normal gameplay. A later talent reconciliation can replace an NPC-selected tree based on actual talent points.
 
-Formula: `multiplier = min((playerLevel / 80) * scaleFactor, 1.0)`
+Bots receive the same grants and persistence. Spec success/reset chat messages are suppressed for bot sessions.
 
-The list of spells and their scale factors is fully data-driven — rows are read once from the `mod_spell_scaling` table (`acore_world`) at world startup. No recompile is needed to add or remove a spell from the list.
+Detailed contract: [`.docs/mod_apocalipse.md`](.docs/mod_apocalipse.md)
 
-Scale types: `DAMAGE`, `HEAL`, `PERIODIC`, `ABSORB`.
+### Spell Scaling
 
-### PvP Damage Balancing (`mod_apocalipse_pvp.cpp`)
+Owner: `src/mod_spell_scaling.cpp`
 
-Two stacking layers applied to every player-vs-player damage event (melee, spells, and DoT ticks):
+Selected player-cast spells below level 80 are scaled from `acore_world.mod_spell_scaling`:
 
-1. **Fixed % reduction** — applied at all levels, configured via `Apocalipse.PvPDamageReductionPct`.
-2. **Bracket resilience floor** — for levels 10–79 only. If the victim's current resilience is below the configured target for their 10-level bracket, extra reduction simulates the missing resilience. Level 80+ players are excluded.
+```text
+multiplier = min((casterLevel / 80.0) * scaleFactor, 1.0)
+```
 
----
+Supported hook families are direct damage, direct healing, periodic damage, and absorb/mana-shield auras. NPCs are not scaled; bot-controlled players are scaled like humans.
 
-### Battleground Stamina Assistance (`src/battleground_stamina/`)
+A factor below 1.0 makes the final low-level effect smaller. For example, factor 0.5 at level 40 produces 25 percent, not 75 percent.
 
-Level 10-79 characters in non-arena battlegrounds receive a configurable
-true-stamina grant based on the gap between their unbuffed equipment baseline
-and a class/bracket health threshold. Partial gap coverage makes assistance
-taper to zero while better equipment always continues to improve final health.
+Detailed contract: [`.docs/mod_spell_scaling.md`](.docs/mod_spell_scaling.md)
 
-Armor and other non-combat-swappable equipment changes are blocked for human
-players throughout the battleground stay. Native weapon/offhand/projectile/
-relic swaps remain available, and playerbots are exempt from the lock. The aura
-is applied on entry, reconstructed after resurrection or map/login recovery,
-and removed on exit without granting current health.
+### PvP Damage Balancing
 
-World update `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql`
-installs aura spell `901002` on the next worldserver startup when module/world
-database updates are enabled. Check that ID against the live database and the
-client DBC before deployment; the local base Spell.dbc does not contain it.
-The module defaults to that ID, but an installed conf value of `0` must be
-changed. The spell contract and tuning values are in
-`conf/BattlegroundStamina.conf.dist`.
+Owner: `src/mod_apocalipse_pvp.cpp`
 
----
+Eligible player-versus-player damage receives two multiplicative layers:
+
+1. A fixed reduction at every level, default 15 percent.
+2. For victim levels 10 through 79, the shortfall between current melee crit chance reduction and the configured bracket target.
+
+Player-owned pets and guardians qualify as player attackers. Human and bot-controlled players use the same rules.
+
+Direct and periodic configured spells can pass through both Spell Scaling and PvP Balancing. Integer conversion at each hook means callback order can affect rounding.
+
+Detailed contract: [`.docs/mod_apocalipse_pvp.md`](.docs/mod_apocalipse_pvp.md)
+
+### Blazing Barrier
+
+Owner: `src/mod_apocalipse_mage_spells.cpp`
+
+Custom spell 901001 is a level-80 mage absorb with base absorb plus 80.68 percent fire spell-power contribution. Its scripts reject replacing a stronger matching barrier with a weaker cast and integrate Blazing Speed, Fiery Payback, and Incanter's Absorption behavior.
+
+The server spell row is installed by manual migration `data/2026_09_16_01_blazing_barrier.sql`. The script binding and scaling seed also appear in the baseline SQL. A matching client `Spell.dbc` and patch are required.
+
+Detailed contract: [`.docs/custom-spells/blazing-barrier.md`](.docs/custom-spells/blazing-barrier.md)
+
+### Battleground Stamina Assistance
+
+Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
+
+Eligible level 10 through 79 characters in non-arena battlegrounds receive a configurable true-stamina grant based on part of the gap between unbuffed baseline health and a class/bracket threshold.
+
+Human players cannot change most non-combat-swappable equipment while in the battleground. Bot sessions bypass the equipment lock so automatic gearing can continue. Both humans and bots receive the same assistance calculation, and allowed equipment changes recalculate the aura.
+
+Custom aura 901002 is installed by the AzerothCore module world updater. The runtime validator requires a positive, infinite, non-cancellable, death-persistent, non-saved generic stamina aura. A matching client `Spell.dbc` and patch are required.
+
+Known config drift: distributed 10-19 thresholds differ from compiled fallbacks. Ensure `conf/BattlegroundStamina.conf.dist` is loaded into the effective server config until this is synchronized.
+
+Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.docs/custom-spells/battleground-stamina-assistance.md)
+
+## Requirements
+
+- The custom playerbot AzerothCore WotLK branch used by the deployed `mod-playerbots` version
+- `mod-playerbots` enabled in the parent core deployment
+- World and character database access through AzerothCore
+- Effective module/worldserver configuration containing desired overrides
+- Server and client custom-spell data for spells 901001 and 901002
+
+Stock AzerothCore compatibility has not been validated.
 
 ## Database setup
 
-Run each SQL file once against the appropriate database before starting the worldserver for the first time:
+Manual baseline and migration files are outside the automatic updater path. Run them only against the named database while following the server's backup and migration procedure.
 
 ```sql
--- Spec system tables + creature template + sample spells
+-- Switches between acore_world and acore_characters internally.
 SOURCE data/mod_apocalipse.sql;
 
--- Spell scaling table + initial spell list
+-- acore_world
 SOURCE data/mod_spell_scaling.sql;
+
+-- acore_world, while worldserver is stopped
+SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-The battleground stamina spell uses the AzerothCore module updater instead:
-its SQL is under `data/sql/db-world/`. It runs once during worldserver startup
-when world database updates are enabled, this module is present in the
-compiled module list, and its source directory is available to the updater.
-It requires the backend's `wotlk_spells_full` and `wotlk_spells` tables.
-Compiling alone does not apply it. Do not also import this file manually if
-the updater will apply it on the next startup.
+`data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` is different: it is an automatic module world update. It runs on worldserver startup only when world database updates and module update discovery are enabled. Do not also import it manually when the updater will apply it. The file is idempotent for its recognized 901002 spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment.
 
----
+Before the first custom-spell deployment, verify IDs 901001 and 901002 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
-## Configuration (`worldserver.conf`)
+See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
+
+## Configuration
+
+### PvP keys
 
 ```ini
-# PvP Balancing
-Apocalipse.PvPDamageReductionPct      = 15.0
-
-Apocalipse.PvPBracketResilience.1019  = 8.0
-Apocalipse.PvPBracketResilience.2029  = 10.0
-Apocalipse.PvPBracketResilience.3039  = 12.0
-Apocalipse.PvPBracketResilience.4049  = 14.0
-Apocalipse.PvPBracketResilience.5059  = 16.0
-Apocalipse.PvPBracketResilience.6069  = 18.0
-Apocalipse.PvPBracketResilience.7079  = 20.0
+Apocalipse.PvPDamageReductionPct = 15.0
+Apocalipse.PvPBracketResilience.1019 = 8.0
+Apocalipse.PvPBracketResilience.2029 = 10.0
+Apocalipse.PvPBracketResilience.3039 = 12.0
+Apocalipse.PvPBracketResilience.4049 = 14.0
+Apocalipse.PvPBracketResilience.5059 = 16.0
+Apocalipse.PvPBracketResilience.6069 = 18.0
+Apocalipse.PvPBracketResilience.7079 = 20.0
 ```
 
-All keys have sensible defaults and are optional.
+These values reload on config reload and default in code. Keep production percentages in a safe 0 through 100 range.
 
----
+### Battleground stamina keys
+
+`conf/BattlegroundStamina.conf.dist` contains the complete contract:
+
+- `Apocalipse.BattlegroundStamina.Enable`
+- `Apocalipse.BattlegroundStamina.LockGear`
+- `Apocalipse.BattlegroundStamina.AuraSpellId`
+- `Apocalipse.BattlegroundStamina.GapCoveragePct`
+- `Apocalipse.BattlegroundStamina.MaxBonusStamina`
+- 70 `Apocalipse.BattlegroundStamina.HealthThreshold.<bracket>.<class>` entries
+
+Modern AzerothCore module CMake discovers `conf/*.conf.dist` without an `AC_ADD_CONFIG_FILE` call, copies it as a module config, and loads it through `sConfigMgr`. Confirm `BattlegroundStamina.conf` appears in the CMake module config list and deployed config directory for the target custom-core revision.
 
 ## Building
 
-The module follows the standard AzerothCore module layout. Place (or symlink) the directory under `modules/` in the AzerothCore source tree, then configure and build normally:
+Place or link the repository under the custom core's `modules/` directory, preserving the name `apocalipse-wow-module` because the loader entry point depends on it.
+
+Typical parent-core build:
 
 ```bash
-cmake .. -DMODULES=static   # or dynamic
-make -j$(nproc)
+cmake .. -DMODULES=static
+cmake --build . --parallel
 ```
 
----
+Use `-DMODULES=dynamic` only when supported by the deployment core. Build with both this module and `mod-playerbots` enabled.
 
-## Detailed documentation
+## Verification status
 
-See [`.docs/`](.docs/) for per-file deep-dives:
+No standalone test harness exists in this repository. During the 2026-09-16 documentation update, sources, SQL, configuration, and sibling playerbot documentation were reviewed. The following were not run:
 
-- [mod_apocalipse_loader.cpp](.docs/mod_apocalipse_loader.md)
-- [mod_apocalipse.cpp](.docs/mod_apocalipse.md)
-- [mod_spell_scaling.cpp](.docs/mod_spell_scaling.md)
-- [mod_apocalipse_pvp.cpp](.docs/mod_apocalipse_pvp.md)
+- Full custom-core build
+- Worldserver startup
+- Live database migrations
+- Client DBC export or patch build
+- In-game human or bot scenarios
+
+Feature pages contain focused runtime matrices for future validation.
+
+## Safety note
+
+`deploy.ps1` only stages all files, creates a generic commit, and pushes. It does not build, test, inspect the branch, or validate deployment. Do not use it as a production deployment workflow.

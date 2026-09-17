@@ -1,74 +1,123 @@
-# mod_apocalipse.cpp
+# Spec Manager
+
+Status: Implemented, source reviewed; runtime not verified in this review
+
+Owners: `src/mod_apocalipse.cpp`, `data/mod_apocalipse.sql`
+
+Last source review: 2026-09-16
 
 ## Purpose
 
-Implements the **Spec Manager** system for Apocalipse WoW. It allows players to select a specialisation through an in-game NPC and automatically grants or revokes the signature spells of that specialisation as the player's talent investment changes.
+The Spec Manager detects a player's dominant WotLK talent tree and grants the configured signature spells for that tree. It also exposes creature 900001, the Spec Master, for explicit selection or refresh.
 
----
+The system applies to human players and playerbots. Bot sessions receive the same talents, spells, budget, and persistence but do not receive the Spec Manager chat messages.
 
-## How it works
+## Configuration and constants
 
-### NPC interaction
+| Contract | Value |
+|---|---:|
+| Spec Master creature entry | `900001` |
+| Minimum points for a dominant tree | `1` |
+| Hidden talent budget per spec | `6` |
+| Talent reset throttle per GUID | `1000 ms` |
 
-A custom creature (entry `900001`, named *Spec Master*) opens a gossip menu listing all specs available to the player's class. Selecting one immediately triggers a spec reconciliation for that player.
+The spell list is data-driven through `acore_world.mod_spec_spells`. There is no worldserver config family for this subsystem.
 
-Spawn the NPC in-world with: `.npc add 900001`
+## Startup and cache
 
-### Spec detection
+`ModApocalipseWorld::OnLoadCustomDatabaseTable()` loads all `(class, spec_index, spell_id)` rows into process memory as `g_specSpells`.
 
-On each relevant event (login, save, talent reset, explicit NPC selection) the module reads the player's current talent point distribution across the three WotLK talent trees. The tree with the most invested points — provided it meets the `MIN_POINTS_FOR_SPEC` threshold — is treated as the active spec.
+Changes to `mod_spec_spells` do not have a dedicated config reload path. Restart the worldserver or explicitly invoke the matching database-table lifecycle through supported core behavior.
 
-### Spell grant / revoke
+## Reconciliation flow
 
-1. The module loads the full spell list for the new spec from the in-memory cache (`g_specSpells`), originally read from `mod_spec_spells` (`acore_world`).
-2. Spells belonging to the *previous* spec are removed (`removeSpell`).
-3. Spells belonging to the *new* spec are learned (`learnSpell`).
-4. For spells that are also talents, `GrantManagedTalent` is used instead, which spends the player's available talent points correctly and validates class-mask compatibility before granting.
+```text
+player login or talent learn
+  -> ReconcileSpecFromTalentPoints
+     -> synchronize persisted hidden budget with Player bonus points
+     -> reject recursive work for the same GUID
+     -> read current persisted granted spec
+     -> count points in all three talent trees
+     -> prefer current spec on an equal-point tie
+     -> if no tree has at least one point: clear all managed layers
+     -> if stored spec already equals dominant: EnsureSpecLayer repairs missing grants
+     -> otherwise: GrantSpec(dominant)
+```
 
-### Hidden talent budget
+For each non-dominant tree, `GrantSpec()` calls `RevokeManagedTalents()` to remove configured talent ranks and their auras, then `RemoveSpecLayer()` to remove signature spells and revoke that tree's hidden budget. It then ensures the dominant layer, persists the selected index, and sends updated talent information.
 
-Each spec is allowed up to `HIDDEN_TALENT_BUDGET_PER_SPEC` (6) talent-point-based spells granted silently, so core signature talents are learned without consuming the player's own points.
+## Managed spells and talents
 
-### Anti-spam protection
+Each configured spell follows one of two paths:
 
-A per-player timestamp (`g_lastTalentsResetMs`) ensures `OnPlayerTalentsReset` cannot trigger a full reconciliation more frequently than once every `TALENTS_RESET_MIN_INTERVAL_MS` (1 000 ms).
+- Non-talent spell: learned directly if absent.
+- Talent spell: validated against talent DBC data, class mask, tree, rank, current learned rank, free points, and the six-point hidden budget.
 
----
+Talent grants are sorted by rank and spell ID for deterministic processing. The module uses bonus talent points to fund configured managed talents. Revocation removes configured talent ranks and their auras/spells, then removes the persisted hidden budget for that tree.
 
-## Database tables
+The current implementation does not persist individual talent grant rows. `mod_player_spec_talent_grant` is created by SQL but has no C++ reader or writer.
 
-### `acore_world.mod_spec_spells`
+## NPC behavior
 
-Stores the spell list per class/spec. Editable from the admin panel without recompiling.
+Creature 900001 uses script name `ModSpecNPC`.
 
-| Column | Description |
-|---|---|
-| `class` | WoW class ID (1=Warrior, 2=Paladin, …, 11=Druid) |
-| `spec_index` | 0 = leftmost tree, 1 = middle, 2 = rightmost |
-| `spell_id` | Spell to grant when this spec is active |
-| `description` | Human-readable label (optional) |
+- `Choose my specialization` displays the three class tree names and calls `GrantSpec()` directly.
+- `Refresh my current spec spells` clears the persisted current value and grants it again.
+- A later login or talent event reconciles from actual talent points and can replace an NPC-selected tree if another tree is dominant.
 
-### `acore_characters.mod_player_spec`
+Spawn in a controlled environment with:
 
-Persists the last known spec index per player GUID so the module can detect spec changes across sessions.
+```text
+.npc add 900001
+```
 
----
+The README marks the NPC as currently unused in normal gameplay. Do not remove its schema or script without confirming operator and GM workflows.
+
+## Talent reset
+
+`OnPlayerTalentsReset()` is limited to one execution per GUID per second. When a stored spec exists, it removes that spec's configured spells, revokes managed talents and hidden budgets from all trees, and persists `granted_spec = -1`. When no stored spec exists, it still revokes residual managed talents and hidden budgets but returns without another persistence write.
+
+The in-memory reset timestamp map has process lifetime and no logout cleanup. Its entry count grows with distinct reset GUIDs until restart.
+
+## Database model
+
+| Database | Table | Purpose |
+|---|---|---|
+| `acore_world` | `mod_spec_spells` | Authoritative class/spec signature spell list |
+| `acore_world` | `creature_template` | Spec Master 900001 |
+| `acore_characters` | `mod_player_spec` | Last granted spec per character GUID |
+| `acore_characters` | `mod_player_spec_talent_budget` | Hidden bonus points granted per character and spec |
+| `acore_characters` | `mod_player_spec_talent_grant` | Created but currently unused |
+
+`data/mod_apocalipse.sql` switches to `acore_characters` before creating character-owned tables. Preserve this database boundary.
 
 ## Registered scripts
 
-| Script class | Base class | Hook used |
+| Script | Base | Hooks |
 |---|---|---|
 | `ModSpecNPC` | `CreatureScript` | `OnGossipHello`, `OnGossipSelect` |
-| `ModApocalipsePlayerScript` | `PlayerScript` | `OnLogin`, `OnSave`, `OnPlayerTalentsReset` |
-| `ModApocalipseWorldScript` | `WorldScript` | `OnAfterConfigLoad`, `OnLoadCustomDatabaseTable` |
+| `ModSpecPlayer` | `PlayerScript` | `OnPlayerLogin`, `OnPlayerLearnTalents`, `OnPlayerTalentsReset` |
+| `ModApocalipseWorld` | `WorldScript` | `OnLoadCustomDatabaseTable`, `OnStartup` |
 
----
+There is no `OnSave` or `OnAfterConfigLoad` handler in the current source.
 
-## Constants
+## Interactions
 
-| Constant | Value | Meaning |
+- Granted spell IDs can be scaled by `mod_spell_scaling` when matching rows exist.
+- Talent changes also trigger Battleground Stamina recalculation.
+- Bot AI may observe newly learned spells and talents, but this module does not update playerbot strategies or contexts.
+- Blazing Barrier's script binding is also seeded in `data/mod_apocalipse.sql`.
+
+## Failure modes
+
+| Failure | Result | Diagnostic |
 |---|---|---|
-| `NPC_SPEC_SELECTOR` | `900001` | Creature entry for the spec-selector NPC |
-| `MIN_POINTS_FOR_SPEC` | `1` | Minimum talent points in a tree to consider it dominant |
-| `HIDDEN_TALENT_BUDGET_PER_SPEC` | `6` | Max talent-backed spells silently granted per spec |
-| `TALENTS_RESET_MIN_INTERVAL_MS` | `1000` | Debounce window for `OnPlayerTalentsReset` (ms) |
+| Missing `mod_spec_spells` | Cache is empty and no configured spells are granted | `[ModApocalipse] mod_spec_spells is empty or missing` |
+| Missing character tables | Spec and hidden budget queries fail | Character database errors |
+| Invalid talent spell/class/tree | Row is skipped | Module warning with GUID, spec, and spell |
+| Hidden budget exhausted | Remaining grant plan stops | Module warning/info logs |
+| Recursive talent hook | Same-GUID nested reconciliation returns | `g_reconcileInProgress` guard |
+
+## Verification
+
+Test human and bot login, first talent point, equal-point tie, tree transition, dual-spec replay, full reset, NPC selection/refresh, restart persistence, missing table behavior, and representative six-point talent plans. No runtime scenarios were run during the 2026-09-16 documentation review.
