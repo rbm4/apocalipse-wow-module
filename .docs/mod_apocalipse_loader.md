@@ -4,7 +4,7 @@ Status: Active
 
 Owner: `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-16
+Last source review: 2026-09-17
 
 ## Purpose
 
@@ -26,7 +26,8 @@ The function name must continue to match the parent core's module discovery conv
 | 2 | `AddModSpellScalingScripts()` | `src/mod_spell_scaling.cpp` |
 | 3 | `AddModApocalipsePvPScripts()` | `src/mod_apocalipse_pvp.cpp` |
 | 4 | `AddModApocalipseMageSpellScripts()` | `src/mod_apocalipse_mage_spells.cpp` |
-| 5 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
+| 5 | `AddModApocalipseMagePyroclasticChainReactionScripts()` | `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp` |
+| 6 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
 
 The loader contains no gameplay state. Its order affects script registration and can affect the rounding sequence when multiple UnitScripts mutate the same damage value.
 

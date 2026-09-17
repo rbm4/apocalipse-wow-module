@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last source review: 2026-09-16 on local `main`
+Last source review: 2026-09-17 on local `main`
 
 ## System context
 
@@ -19,12 +19,13 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_spell_scaling.cpp` | Data-driven level scaling for selected damage, healing, periodic, and absorb effects |
 | `src/mod_apocalipse_pvp.cpp` | Fixed PvP reduction and level-bracket resilience floor |
 | `src/mod_apocalipse_mage_spells.cpp` | Custom Blazing Barrier spell and talent interactions |
+| `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp` | Pyroblast and Living Bomb passive interaction for spell 901003 |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
-| `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration, currently untracked at this review |
-| `data/sql/db-world/` | AzerothCore module world-database updates |
+| `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 and 901003 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -35,7 +36,8 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 2. `AddModSpellScalingScripts()`
 3. `AddModApocalipsePvPScripts()`
 4. `AddModApocalipseMageSpellScripts()`
-5. `AddModApocalipseBattlegroundStaminaScripts()`
+5. `AddModApocalipseMagePyroclasticChainReactionScripts()`
+6. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -47,6 +49,7 @@ The entry-point name is derived from the module directory `apocalipse-wow-module
 | Spell Scaling | Final value scaling for spell IDs listed in `mod_spell_scaling` | Spell acquisition, PvP eligibility, or custom spell definitions |
 | PvP Balancing | Damage reduction when a player or player-owned unit damages a player | Healing, absorb creation, battleground stamina, or arena matchmaking |
 | Blazing Barrier | Spell 901001 amount, recast rule, and selected mage talent procs | Spell row installation, client DBC distribution, or level scaling |
+| Pyroclastic Chain Reaction | Spell 901003 proc gate, Living Bomb refresh, triggered explosion, and bounded spread | Talent acquisition, custom client data, or changing normal Living Bomb expiration |
 | Battleground Stamina | Spell 901002 validation, unbuffed baseline, assistance aura, and human gear lock | Bot gearing decisions, matchmaking, or arenas |
 
 ## Dependency direction
@@ -67,6 +70,10 @@ Blazing Barrier AuraScript
   -> final absorb aura
      -> Spell Scaling ABSORB hook
 
+Pyroblast with passive 901003
+  -> same-caster Living Bomb refresh and matching-rank explosion
+     -> up to two matching-rank Living Bomb applications
+
 Battleground and player hooks
   -> Battleground Stamina
      -> bot session check only for equipment-lock exemption
@@ -79,7 +86,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001 and 901002 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001, 901002, and 901003 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

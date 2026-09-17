@@ -21,5 +21,6 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-17 | Pyroclastic Chain Reaction | Partial | [`2026-09-17-pyroclastic-chain-reaction.md`](2026-09-17-pyroclastic-chain-reaction.md) |
 | 2026-09-16 | Battleground stamina spell migration repair | Completed | [`2026-09-16-battleground-stamina-spell-migration-repair.md`](2026-09-16-battleground-stamina-spell-migration-repair.md) |
 | 2026-09-16 | Persistent documentation foundation | Completed | [`2026-09-16-documentation-foundation.md`](2026-09-16-documentation-foundation.md) |

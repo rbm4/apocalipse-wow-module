@@ -2,13 +2,14 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module registers five systems:
+The module registers six systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
 3. PvP damage balancing
 4. Blazing Barrier custom mage spell
-5. Battleground stamina assistance and equipment control
+5. Pyroclastic Chain Reaction custom mage passive
+6. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -39,13 +40,16 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse.sql
 |   |-- mod_spell_scaling.sql
 |   |-- 2026_09_16_01_blazing_barrier.sql
-|   `-- sql/db-world/2026_09_16_00_battleground_stamina_spell.sql
+|   `-- sql/db-world/
+|       |-- 2026_09_16_00_battleground_stamina_spell.sql
+|       `-- 2026_09_17_00_pyroclastic_chain_reaction.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
 |   |-- mod_spell_scaling.cpp
 |   |-- mod_apocalipse_pvp.cpp
 |   |-- mod_apocalipse_mage_spells.cpp
+|   |-- mod_apocalipse_mage_pyroclastic_chain_reaction.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/
@@ -115,6 +119,16 @@ The server spell row is installed by manual migration `data/2026_09_16_01_blazin
 
 Detailed contract: [`.docs/custom-spells/blazing-barrier.md`](.docs/custom-spells/blazing-barrier.md)
 
+### Pyroclastic Chain Reaction
+
+Owner: `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`
+
+Custom passive spell 901003 gives Pyroblast hits a 20 percent chance to detonate and refresh the caster's Living Bomb on the target. The matching-rank explosion preserves its normal damage targets and spreads the source Living Bomb rank to up to two random surviving enemies hit by the explosion that do not already have that caster's Living Bomb.
+
+The automatic module world update installs the passive and binds all Pyroblast and Living Bomb explosion ranks. Talent acquisition is intentionally external and requires matching server and client talent data. Human and bot-controlled mages use identical combat behavior.
+
+Detailed contract: [`.docs/custom-spells/pyroclastic-chain-reaction.md`](.docs/custom-spells/pyroclastic-chain-reaction.md)
+
 ### Battleground Stamina Assistance
 
 Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
@@ -135,7 +149,8 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001 and 901002
+- Server and client custom-spell data for spells 901001, 901002, and 901003
+- Matching talent data when passive spell 901003 is granted through a custom talent
 
 Stock AzerothCore compatibility has not been validated.
 
@@ -154,9 +169,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-`data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` is different: it is an automatic module world update. It runs on worldserver startup only when world database updates and module update discovery are enabled. Do not also import it manually when the updater will apply it. The file is idempotent for its recognized 901002 spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 update installs Pyroclastic Chain Reaction and its rank-chain script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001 and 901002 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001, 901002, and 901003 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

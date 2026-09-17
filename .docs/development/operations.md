@@ -1,6 +1,6 @@
 # Build, configuration, database, and release operations
 
-Last source review: 2026-09-16
+Last source review: 2026-09-17
 
 ## Supported context
 
@@ -60,6 +60,7 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/mod_spell_scaling.sql` | `acore_world` | Manual, one-time baseline | Scaling table and seed rows |
 | `data/2026_09_16_01_blazing_barrier.sql` | `acore_world` | Manual while worldserver is stopped | Spell 901001, binding, scaling row, and backend name cache |
 | `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | `acore_world` | AzerothCore module updater; idempotent for its recognized spell row | Spell 901002, equipped-item requirement repair, custom non-save attribute, and backend name cache |
+| `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901003, Pyroblast and Living Bomb explosion bindings, and backend name cache |
 
 `data/mod_apocalipse.sql` correctly issues `USE acore_characters` before creating `mod_player_spec`, `mod_player_spec_talent_budget`, and `mod_player_spec_talent_grant`. Do not remove that switch.
 
@@ -69,13 +70,13 @@ The `mod_player_spec_talent_grant` table is currently created but not used by th
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 and 901002 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001, 901002, and 901003 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 module update can run.
-8. Confirm the updater record and module startup logs.
-9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 and 901003 module updates can run.
+8. Confirm both updater records and module startup logs.
+9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells, plus the separate talent data that teaches 901003.
 10. Run focused human and bot in-game scenarios.
 
 Do not manually import the 901002 updater file on a first deployment if the normal module updater will apply it. Do not execute any production SQL without explicit operator approval.
@@ -98,12 +99,12 @@ The expected equipped-item values are `-1`, `0`, and `0`. Confirm the `HasItemFi
 
 ## Custom spell preflight
 
-Before first deployment, verify both custom IDs are unallocated in:
+Before first deployment, verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` IN (901001, 901002);
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` IN (901001, 901002);
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` IN (901001, 901002);
+SELECT `ID` FROM `spell_dbc` WHERE `ID` IN (901001, 901002, 901003);
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` IN (901001, 901002, 901003);
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` IN (901001, 901002, 901003);
 ```
 
 Also inspect the actual client/server base `Spell.dbc`; it is not represented fully by these SQL queries.
@@ -126,6 +127,7 @@ At minimum test:
 - Configured direct, periodic, healing, and absorb scaling below and at level 80.
 - PvP direct, periodic, melee, pet-owned, low-bracket, and level-80 damage.
 - Blazing Barrier cast, weaker/stronger recast, absorb, and mage talent procs.
+- Pyroclastic Chain Reaction explosion rank speed validation, passive gating, 20 percent proc, source refresh, rank preservation, normal explosion isolation, and zero/one/two-target spread.
 - Battleground stamina below/above threshold, buff isolation, gear swaps, bot auto-gearing, death, reconnect, and exit cleanup.
 
 Record observed results in the relevant feature page and history entry. If a scenario was not run, mark it `Not run`.

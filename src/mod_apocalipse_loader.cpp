@@ -10,6 +10,7 @@ void AddModApocalipseScripts();
 void AddModSpellScalingScripts();
 void AddModApocalipsePvPScripts();
 void AddModApocalipseMageSpellScripts();
+void AddModApocalipseMagePyroclasticChainReactionScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -18,5 +19,6 @@ void Addapocalipse_wow_moduleScripts()
     AddModSpellScalingScripts();
     AddModApocalipsePvPScripts();
     AddModApocalipseMageSpellScripts();
+    AddModApocalipseMagePyroclasticChainReactionScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

@@ -1,6 +1,6 @@
 # Apocalipse WoW module engineering documentation
 
-Last source review: 2026-09-16
+Last source review: 2026-09-17
 
 ## Purpose
 
@@ -54,6 +54,7 @@ Existing deep dives remain valid entry points:
 - [`mod_spell_scaling.md`](mod_spell_scaling.md)
 - [`custom-spells/battleground-stamina-assistance.md`](custom-spells/battleground-stamina-assistance.md)
 - [`custom-spells/blazing-barrier.md`](custom-spells/blazing-barrier.md)
+- [`custom-spells/pyroclastic-chain-reaction.md`](custom-spells/pyroclastic-chain-reaction.md)
 
 ## Source-of-truth order
 

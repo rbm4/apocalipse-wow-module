@@ -2,13 +2,13 @@
 
 Status: Active
 
-Last source review: 2026-09-16
+Last source review: 2026-09-17
 
 ## Startup
 
 ```text
 AzerothCore discovers Addapocalipse_wow_moduleScripts()
-  -> registers five gameplay systems
+  -> registers six gameplay systems
   -> database custom-table hooks load spec and scaling caches
   -> startup/config hooks load PvP and battleground settings
   -> spell scripts are available when their SQL bindings and spell rows exist
@@ -69,6 +69,21 @@ The reductions are multiplicative, but each stage converts to an integer. Regist
 
 Configured `PERIODIC` scaling and PvP balancing both mutate periodic tick damage. A missing attacker skips both modules' periodic behavior. Document and test any new periodic hook against both systems.
 
+Pyroclastic Chain Reaction reuses normal Living Bomb ranks for its spread applications. Their ticks continue through the existing periodic scaling and PvP paths. Its special explosion reuses the matching Living Bomb explosion rank and retains the existing direct-damage hook composition.
+
+### Mage proc interaction
+
+```text
+Pyroblast effect 0 hit
+  -> passive 901003 and same-caster Living Bomb guards
+  -> 20 percent roll from passive effect amount
+  -> source Living Bomb refresh
+  -> matching-rank Living Bomb explosion
+  -> up to two random unbombed explosion-hit survivors receive the source rank
+```
+
+Normal Living Bomb expiration and dispel explosions do not spread. The spread script requires the explosion cast to identify passive 901003 as its triggering spell.
+
 ### Melee, healing, and absorbs
 
 - Melee damage is changed only by PvP balancing.
@@ -91,6 +106,7 @@ Configured `PERIODIC` scaling and PvP balancing both mutate periodic tick damage
 |---|---|---|---|---|
 | 901001 Blazing Barrier | Manual `data/2026_09_16_01_blazing_barrier.sql` | `spell_apoc_mage_blazing_barrier` from `data/mod_apocalipse.sql` or the manual migration | `ABSORB` row in `mod_spell_scaling` | Matching client `Spell.dbc` and patch |
 | 901002 Battleground Stamina Assistance | Automatic module world update under `data/sql/db-world/` | No `spell_script_names` binding | Not in spell scaling | Matching client `Spell.dbc` and patch |
+| 901003 Pyroclastic Chain Reaction | Automatic `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | Pyroblast `-11366` and explosion `-44461` bindings | Reuses normal Pyroblast and Living Bomb paths | Matching client `Spell.dbc` and separate talent data |
 
 A server-only row can provide mechanics but not complete client presentation. A client-only row cannot provide server mechanics.
 
@@ -101,6 +117,8 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing custom table | Related cache remains empty | Module warning log; apply manual schema and restart |
 | Invalid spell 901002 contract | Battleground assistance is disabled | `[BattlegroundStamina]` error at config load |
 | Missing spell 901001 or binding | Blazing Barrier cannot load or validate correctly | Check `spell_dbc` and `spell_script_names` before startup |
+| Missing spell 901003 or rank bindings | Pyroclastic Chain Reaction cannot load or does not affect Pyroblast | Check the module updater and `spell_script_names` entries `-11366` and `-44461` |
+| Missing talent data for 901003 | The passive exists but cannot be acquired through the intended talent | Deploy matching server and client talent data separately |
 | Config reload during active battleground | New values are cached but existing auras are not immediately swept | Re-enter battleground, trigger an application hook, or restart according to operator plan |
 | Bot lacks a valid session | Bot exception is not detected | Fix bot lifecycle; do not add heuristic fallback |
 | Custom spell ID collision | Guarded migration should fail instead of overwriting another spell | Allocate a new ID and update code, SQL, config, scaling data, and docs together |

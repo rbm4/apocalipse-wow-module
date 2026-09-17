@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last source review: 2026-09-16 against the sibling `mod-playerbots` checkout
+Last source review: 2026-09-17 against the sibling `mod-playerbots` checkout
 
 ## Boundary
 
@@ -33,6 +33,7 @@ Do not replace this with account-name, security-level, online-state, or `Playerb
 | Spell Scaling | Selected spells scale by player caster level | Same | None |
 | PvP Balancing | Damage to player victims is reduced | Same, whether attacker or victim is a bot-backed player | None |
 | Blazing Barrier | Same spell and talent behavior | Same | None |
+| Pyroclastic Chain Reaction | Passive-gated Pyroblast and Living Bomb interaction | Same when the bot has learned passive 901003 | None; talent acquisition remains external |
 | Battleground Stamina | Eligible players receive assistance; non-combat-swappable gear is locked | Eligible bots receive assistance | Equipment lock is bypassed so bot auto-gearing can continue |
 
 Player-owned pets and guardians are treated as player attackers by PvP balancing through `GetCharmerOrOwnerPlayerOrPlayerItself()`. This applies whether the owning player is human-controlled or bot-controlled.
@@ -75,6 +76,7 @@ Before adding work to a bot-related hook:
 | Bot casts a configured low-level scaling spell | Same level multiplier as a human player caster | Not run in this review |
 | Bot or bot-owned pet damages a player | PvP modifiers apply | Not run in this review |
 | Bot changes talents while in a battleground | Spec layer and stamina assistance both reconcile without recursion | Not run in this review |
+| Bot with passive 901003 casts Pyroblast into its own Living Bomb | Same 20 percent proc, refresh, explosion, and bounded spread as a human | Not run in this review |
 
 ## Related repository context
 
