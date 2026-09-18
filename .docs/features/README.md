@@ -16,6 +16,9 @@ Feature pages preserve end-to-end context for behavior that spans source code, h
 | Missile Barrage Overload | `src/mod_apocalipse_mage_missile_barrage_overload.cpp`, `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Implemented in source, runtime not verified | [`../custom-spells/missile-barrage-overload.md`](../custom-spells/missile-barrage-overload.md) |
 | Hypernova | `src/mod_apocalipse_mage_hypernova.cpp`, `data/sql/db-world/2026_09_17_01_hypernova.sql` | Implemented in source, runtime not verified | [`../custom-spells/hypernova.md`](../custom-spells/hypernova.md) |
 | Prismatic Barrier | `src/mod_apocalipse_mage_prismatic_barrier.cpp`, `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | Implemented in source, runtime not verified | [`../custom-spells/prismatic-barrier.md`](../custom-spells/prismatic-barrier.md) |
+| Frost Bomb | `src/mod_apocalipse_mage_frost_bomb.cpp`, `data/sql/db-world/2026_09_17_03_frost_bomb.sql` | Implemented in source, runtime not verified | [`../custom-spells/frost-bomb.md`](../custom-spells/frost-bomb.md) |
+| Automatic Ice Lance | `src/mod_apocalipse_mage_automatic_ice_lance.cpp`, `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | Implemented in source, runtime not verified | [`../custom-spells/automatic-ice-lance.md`](../custom-spells/automatic-ice-lance.md) |
+| Frozen Retaliation | `src/mod_apocalipse_mage_frozen_retaliation.cpp`, `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | Implemented in source, runtime not verified | [`../custom-spells/frozen-retaliation.md`](../custom-spells/frozen-retaliation.md) |
 | Battleground stamina assistance | `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`, `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | Implemented in source, runtime not verified | [`../custom-spells/battleground-stamina-assistance.md`](../custom-spells/battleground-stamina-assistance.md) |
 
 ## Adding a feature page

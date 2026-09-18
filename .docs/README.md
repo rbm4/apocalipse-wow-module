@@ -58,6 +58,9 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/hypernova.md`](custom-spells/hypernova.md)
 - [`custom-spells/missile-barrage-overload.md`](custom-spells/missile-barrage-overload.md)
 - [`custom-spells/prismatic-barrier.md`](custom-spells/prismatic-barrier.md)
+- [`custom-spells/frost-bomb.md`](custom-spells/frost-bomb.md)
+- [`custom-spells/automatic-ice-lance.md`](custom-spells/automatic-ice-lance.md)
+- [`custom-spells/frozen-retaliation.md`](custom-spells/frozen-retaliation.md)
 
 ## Source-of-truth order
 

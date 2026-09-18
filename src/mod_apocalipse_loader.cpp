@@ -14,6 +14,9 @@ void AddModApocalipseMagePyroclasticChainReactionScripts();
 void AddModApocalipseMageMissileBarrageOverloadScripts();
 void AddModApocalipseMageHypernovaScripts();
 void AddModApocalipseMagePrismaticBarrierScripts();
+void AddModApocalipseMageFrostBombScripts();
+void AddModApocalipseMageAutomaticIceLanceScripts();
+void AddModApocalipseMageFrozenRetaliationScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -26,5 +29,8 @@ void Addapocalipse_wow_moduleScripts()
     AddModApocalipseMageMissileBarrageOverloadScripts();
     AddModApocalipseMageHypernovaScripts();
     AddModApocalipseMagePrismaticBarrierScripts();
+    AddModApocalipseMageFrostBombScripts();
+    AddModApocalipseMageAutomaticIceLanceScripts();
+    AddModApocalipseMageFrozenRetaliationScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

@@ -21,6 +21,10 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-17 | Persistent Blizzard migration | Reverted | [`2026-09-17-persistent-blizzard.md`](2026-09-17-persistent-blizzard.md) |
+| 2026-09-17 | Frozen Retaliation | Partial | [`2026-09-17-frozen-retaliation.md`](2026-09-17-frozen-retaliation.md) |
+| 2026-09-17 | Automatic Ice Lance | Partial | [`2026-09-17-automatic-ice-lance.md`](2026-09-17-automatic-ice-lance.md) |
+| 2026-09-17 | Frost Bomb | Partial | [`2026-09-17-frost-bomb.md`](2026-09-17-frost-bomb.md) |
 | 2026-09-17 | Prismatic Barrier | Partial | [`2026-09-17-prismatic-barrier.md`](2026-09-17-prismatic-barrier.md) |
 | 2026-09-17 | Hypernova | Partial | [`2026-09-17-hypernova.md`](2026-09-17-hypernova.md) |
 | 2026-09-17 | Missile Barrage Overload | Partial | [`2026-09-17-missile-barrage-overload.md`](2026-09-17-missile-barrage-overload.md) |

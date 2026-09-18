@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module registers nine systems:
+The module registers twelve systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -12,7 +12,10 @@ The module registers nine systems:
 6. Missile Barrage Overload custom mage passive
 7. Hypernova custom mage spell
 8. Prismatic Barrier custom mage spell
-9. Battleground stamina assistance and equipment control
+9. Frost Bomb custom mage spell
+10. Automatic Ice Lance custom mage passive
+11. Frozen Retaliation custom mage passive
+12. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -48,7 +51,10 @@ apocalipse-wow-module/
 |       |-- 2026_09_17_00_pyroclastic_chain_reaction.sql
 |       |-- 2026_09_17_01_hypernova.sql
 |       |-- 2026_09_17_01_missile_barrage_overload.sql
-|       `-- 2026_09_17_02_prismatic_barrier.sql
+|       |-- 2026_09_17_02_prismatic_barrier.sql
+|       |-- 2026_09_17_03_frost_bomb.sql
+|       |-- 2026_09_17_04_automatic_ice_lance.sql
+|       `-- 2026_09_17_05_frozen_retaliation.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -59,6 +65,9 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_mage_missile_barrage_overload.cpp
 |   |-- mod_apocalipse_mage_hypernova.cpp
 |   |-- mod_apocalipse_mage_prismatic_barrier.cpp
+|   |-- mod_apocalipse_mage_frost_bomb.cpp
+|   |-- mod_apocalipse_mage_automatic_ice_lance.cpp
+|   |-- mod_apocalipse_mage_frozen_retaliation.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/
@@ -164,6 +173,34 @@ Custom active spell 901006 costs 42 percent base mana and has a 45 second cooldo
 
 Detailed contract: [`.docs/custom-spells/prismatic-barrier.md`](.docs/custom-spells/prismatic-barrier.md)
 
+### Frost Bomb
+
+Owner: `src/mod_apocalipse_mage_frost_bomb.cpp`
+
+Custom active spell 901007 places a four-second Frost Bomb on one enemy with a 1.5 second cast and 16 second cooldown. Expiration, enemy dispel, or target death triggers spell 901008 for target-centered Frost area damage, then spell 901009 slows each living damage victim according to the caster's Permafrost rank. Its automatic world update and matching client spell rows are required, while acquisition remains external.
+
+Detailed contract: [`.docs/custom-spells/frost-bomb.md`](.docs/custom-spells/frost-bomb.md)
+
+### Automatic Ice Lance
+
+Owner: `src/mod_apocalipse_mage_automatic_ice_lance.cpp`
+
+Custom passive spell 901010 gives direct, non-triggered Frost spell damage a 10 percent chance, with a one-second internal cooldown, to trigger existing Ice Lance 30455 on the damaged target. Each proc also grants an independently expiring 1 percent spell-haste contribution for 10 seconds through non-persistent aura 901011, capped at 20 percent. The automatic Ice Lance retains proc events so it consumes Fingers of Frost normally.
+
+The automatic module world update installs both custom rows, proc metadata, script bindings, and temporary-aura cleanup metadata. Acquisition remains external, and matching client spell rows are required. Human and bot-controlled mages use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/automatic-ice-lance.md`](.docs/custom-spells/automatic-ice-lance.md)
+
+### Frozen Retaliation
+
+Owner: `src/mod_apocalipse_mage_frozen_retaliation.cpp`
+
+Custom passive ranks 901012 and 901013 give positive incoming combat damage a 1.5 percent or 3 percent chance to grant existing Fingers of Frost aura 44544. Both ranks belong to the same `spell_ranks` chain, and the core's normal Fingers of Frost indicator, four-charge refresh, and consumption behavior remain active.
+
+The automatic module world update installs both custom rows, rank relationships, floating-point proc chances, rank-chain script binding, and backend names. Acquisition remains external, matching client spell rows with rank labels are required, and human and bot-controlled mages use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/frozen-retaliation.md`](.docs/custom-spells/frozen-retaliation.md)
+
 ### Battleground Stamina Assistance
 
 Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
@@ -184,8 +221,8 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001, 901002, 901003, 901004, 901005, and 901006
-- Matching talent data when passive spell 901003 or 901004 is granted through a custom talent
+- Server and client custom-spell data for spells 901001 through 901013
+- Matching talent data when a custom passive is granted through a talent
 
 Stock AzerothCore compatibility has not been validated.
 
@@ -204,9 +241,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003, 901004, 901005, and 901006 updates install the custom mage spells and their script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901013 updates install the custom mage spells and their script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001, 901002, 901003, 901004, 901005, and 901006 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001 through 901013 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

@@ -8,7 +8,7 @@ Last source review: 2026-09-17
 
 ```text
 AzerothCore discovers Addapocalipse_wow_moduleScripts()
-  -> registers nine gameplay systems
+  -> registers gameplay systems
   -> database custom-table hooks load spec and scaling caches
   -> startup/config hooks load PvP and battleground settings
   -> spell scripts are available when their SQL bindings and spell rows exist
@@ -116,6 +116,37 @@ Prismatic Barrier 901006 cast on self
 
 The parent charges 42 percent base mana and owns the 45 second cooldown. Triggered child casts add no cost or cooldown. The parent stores no aura state and the three child spells retain their normal absorb, talent, duration, dispel, and visual paths.
 
+```text
+Frost Bomb 901007 cast on an enemy
+  -> four-second dummy aura
+  -> expiration, enemy dispel, or target death
+     -> target-centered Frost damage 901008 within 10 yards
+     -> Permafrost-scaled slow 901009 on each living damage victim
+```
+
+Frost Bomb's explosion uses the Mage Frostbolt family bit for the existing Frost proc and frozen-target paths. Its triggered explosion permits proc events and deliberately does not copy Living Bomb's target-proc suppression or damage-does-not-break-auras correction. Spell 901009 reads Permafrost effects from rank chain 11175 and triggers existing healing-reduction aura 68391.
+
+```text
+Automatic Ice Lance passive 901010
+  -> spell_proc selects Mage-family direct Frost damage hits at 10 percent with a 1000 ms cooldown
+  -> AuraScript rejects periodic, triggered, Ice Lance, Frost Bomb Explosion, invalid-target, and blocked-line-of-sight events
+  -> trigger Ice Lance 30455 with proc events enabled for Fingers of Frost consumption
+  -> add one 10-second expiration to haste aura 901011
+  -> periodic cleanup sets spell haste to active expiration count, capped at 20
+```
+
+The expiration queue belongs to aura 901011 and is memory-only. Its timestamps are not refreshed together, the aura is non-save, and removing passive 901010 removes the haste aura. Humans and bots follow the same bounded combat path.
+
+```text
+Frozen Retaliation rank 1 901012 or rank 2 901013
+  -> positive incoming combat damage enters PROC_FLAG_TAKEN_DAMAGE
+  -> spell_proc rolls 1.5 percent or 3 percent for the active rank
+  -> AuraScript casts existing Fingers of Frost aura 44544 on the owner
+  -> core Fingers of Frost handling creates or refreshes indicator 74396
+```
+
+The proc has no attacker, school, family, class, or phase filter. Melee, ranged, direct spell, periodic, and triggered combat damage can qualify when positive damage remains. Fully prevented damage and the separate environmental damage path do not dispatch the required positive combat-damage proc event. Humans and bots follow the same path.
+
 ### Melee, healing, and absorbs
 
 - Melee damage is changed only by PvP balancing.
@@ -127,7 +158,7 @@ The parent charges 42 percent base mana and owns the 45 second cooldown. Trigger
 
 | Database | Objects | Access |
 |---|---|---|
-| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creature 900001, `spell_dbc`, `spell_script_names`, `spell_bonus_data`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
+| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creature 900001, `spell_dbc`, `spell_ranks`, `spell_proc`, `spell_script_names`, `spell_bonus_data`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
 | `acore_characters` | `mod_player_spec`, `mod_player_spec_talent_budget`, currently unused `mod_player_spec_talent_grant` | `CharacterDatabase` |
 
 `data/mod_apocalipse.sql` explicitly switches from `acore_world` to `acore_characters` before creating the per-character tables. Keep that boundary intact.
@@ -142,6 +173,9 @@ The parent charges 42 percent base mana and owns the 45 second cooldown. Trigger
 | 901004 Missile Barrage Overload | Automatic `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Exact 44401 and 901004 bindings | Extends normal Arcane Missiles periodic duration without changing missile damage | Matching client `Spell.dbc` and separate talent data |
 | 901005 Hypernova | Automatic `data/sql/db-world/2026_09_17_01_hypernova.sql` | `spell_apoc_mage_hypernova` on 901005 | Native Arcane damage, destination knockback, and coefficient 2.856 | Matching client `Spell.dbc`; acquisition is separate |
 | 901006 Prismatic Barrier | Automatic `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | `spell_apoc_mage_prismatic_barrier` on 901006 | Reuses Mana Shield 43020, Ice Barrier 43039, and Blazing Barrier 901001 | Matching client `Spell.dbc`; acquisition is separate |
+| 901007-901009 Frost Bomb graph | Automatic `data/sql/db-world/2026_09_17_03_frost_bomb.sql` | Application, explosion, and slow scripts on their exact IDs | Native Frost direct damage with 0.4 coefficient and Permafrost rank effects | Three matching client `Spell.dbc` rows; acquisition is separate |
+| 901010-901011 Automatic Ice Lance graph | Automatic `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | Passive proc and haste scripts on their exact IDs | Reuses Ice Lance 30455 and native spell-haste aura handling | Two matching client `Spell.dbc` rows; passive acquisition is separate |
+| 901012-901013 Frozen Retaliation rank chain | Automatic `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | Negative -901012 binding covers both `spell_ranks` rows | Rank-specific taken-damage proc chance reuses Fingers of Frost aura 44544 | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
 
 A server-only row can provide mechanics but not complete client presentation. A client-only row cannot provide server mechanics.
 
@@ -158,6 +192,8 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing talent data for 901004 | The passive exists but cannot be acquired through the intended talent | Deploy matching server and client talent data separately |
 | Missing spell 901005, binding, aura 36032, or visual 35426 | Hypernova cannot load fully or loses its script behavior | Check the Hypernova updater, base DBC, script validation, and client patch |
 | Missing spell 901006, binding, or child barrier | Prismatic Barrier cannot load fully or spends its cost without activating barriers | Check the Prismatic Barrier updater, child spell rows, script bindings, and client patch |
+| Missing Frost Bomb spell, binding, Permafrost rank chain, or aura 68391 | Frost Bomb fails script validation or loses explosion and slow behavior | Check the Frost Bomb updater, all three bindings, base mage spell data, and client patch |
+| Missing Frozen Retaliation rank, `spell_ranks` row, `spell_proc` row, binding, or aura 44544 | One or both ranks fail to load, use the wrong chance, or cannot grant Fingers of Frost | Check both custom rows, the 901012 rank chain, separate proc rows, -901012 binding, base mage spell data, and client patch |
 | Missing acquisition data for 901005 | Hypernova exists but cannot be learned normally | Add acquisition through its separately owned workflow |
 | Config reload during active battleground | New values are cached but existing auras are not immediately swept | Re-enter battleground, trigger an application hook, or restart according to operator plan |
 | Bot lacks a valid session | Bot exception is not detected | Fix bot lifecycle; do not add heuristic fallback |

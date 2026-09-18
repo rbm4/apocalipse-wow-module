@@ -37,6 +37,9 @@ Do not replace this with account-name, security-level, online-state, or `Playerb
 | Missile Barrage Overload | Accumulated proc count extends Arcane Missiles | Same when the bot has learned passive 901004 | Existing AI checks aura presence but does not wait for a higher count; acquisition remains external |
 | Hypernova | Target-centered Arcane burst grants four Arcane Blast stacks | Same when the bot has learned spell 901005 | Knockback packets use the existing playerbot spline path; acquisition remains external |
 | Prismatic Barrier | Activates Mana Shield, Ice Barrier, and Blazing Barrier together | Same when the bot has learned spell 901006 | None; acquisition and rotation policy remain external |
+| Frost Bomb | Delayed target-centered Frost damage and Permafrost-scaled slow | Same when the bot has learned spell 901007 | None; acquisition and rotation policy remain external |
+| Automatic Ice Lance | Direct Frost damage can trigger Ice Lance and independently expiring haste | Same when the bot has learned passive 901010 | None; acquisition remains external and the existing rotation needs no special cast action |
+| Frozen Retaliation | Incoming combat damage can grant Fingers of Frost at the known rank's chance | Same when the bot has learned rank 901012 or 901013 | None; acquisition remains external and no cast action is needed |
 | Battleground Stamina | Eligible players receive assistance; non-combat-swappable gear is locked | Eligible bots receive assistance | Equipment lock is bypassed so bot auto-gearing can continue |
 
 Player-owned pets and guardians are treated as player attackers by PvP balancing through `GetCharmerOrOwnerPlayerOrPlayerItself()`. This applies whether the owning player is human-controlled or bot-controlled.
@@ -82,6 +85,10 @@ Before adding work to a bot-related hook:
 | Bot with passive 901003 casts Pyroblast into its own Living Bomb | Same 20 percent proc, refresh, explosion, and bounded spread as a human | Not run in this review |
 | Bot with passive 901004 accumulates and releases Missile Barrage | Same charge count, added missiles, visual, and aggregate consumption as a human | Not run in this review |
 | Bot casts Hypernova 901005 | Same damage, charge grant, target area, and spline knockback result as a human cast | Not run in this review |
+| Bot casts Frost Bomb 901007 | Same detonation causes, area damage, proc behavior, and Permafrost-scaled slow as a human cast | Not run in this review |
+| Bot with passive 901010 deals eligible Frost damage | Same automatic Ice Lance, Fingers of Frost consumption, and independent haste expirations as a human | Not run in this review |
+| Bot with Frozen Retaliation 901012 or 901013 takes positive combat damage | Same rank-specific chance and Fingers of Frost refresh as a human | Not run in this review |
+| Bot casts any learned Blizzard rank | Same 1.5 second cast and 12 second persistent ground effect as a human | Not run in this review |
 
 ## Related repository context
 
