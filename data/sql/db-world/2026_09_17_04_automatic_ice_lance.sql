@@ -9,7 +9,7 @@ SET @automatic_ice_lance_owned := (
       AND `SpellClassSet` = 3
       AND `EquippedItemClass` = -1
       AND `Effect_1` = 6
-      AND `EffectBasePoints_1` = 10
+      AND `EffectBasePoints_1` = 9
       AND `ImplicitTargetA_1` = 1
       AND `EffectAura_1` = 4
 );
@@ -110,7 +110,7 @@ SET @automatic_ice_lance_managed := (
       AND `SpellClassSet` = 3
       AND `EquippedItemClass` = -1
       AND `Effect_1` = 6
-      AND `EffectBasePoints_1` = 10
+      AND `EffectBasePoints_1` = 9
       AND `ImplicitTargetA_1` = 1
       AND `EffectAura_1` = 4
 );
