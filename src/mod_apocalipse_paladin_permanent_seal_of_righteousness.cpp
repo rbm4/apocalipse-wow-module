@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "SpellScript.h"
 #include "SpellScriptLoader.h"
 #include "Unit.h"
@@ -77,7 +78,7 @@ public:
             if (!caster->ToPlayer() || eventInfo.GetActor() != caster ||
                 !target || !target->IsAlive() || !damageInfo ||
                 (!damageInfo->GetDamage() &&
-                    !(eventInfo.GetHitMask() & PROC_EX_ABSORB)) ||
+                    !(eventInfo.GetHitMask() & PROC_HIT_ABSORB)) ||
                 (HasSealOfRighteousness(caster) && !divineTollJudgement) ||
                 (procSpellInfo && procSpellInfo->Id ==
                     SPELL_PALADIN_SEAL_OF_RIGHTEOUSNESS_DAMAGE))

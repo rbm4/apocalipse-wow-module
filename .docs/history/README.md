@@ -21,6 +21,7 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-18 | Custom-core API compatibility | Partial | [`2026-09-18-custom-core-api-compatibility.md`](2026-09-18-custom-core-api-compatibility.md) |
 | 2026-09-18 | Divine Toll | Partial | [`2026-09-18-divine-toll.md`](2026-09-18-divine-toll.md) |
 | 2026-09-18 | Extended Arsenal | Partial | [`2026-09-18-extended-arsenal.md`](2026-09-18-extended-arsenal.md) |
 | 2026-09-18 | Paladin Vengeance variants | Partial | [`2026-09-18-paladin-vengeance-variants.md`](2026-09-18-paladin-vengeance-variants.md) |

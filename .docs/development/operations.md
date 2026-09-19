@@ -23,6 +23,17 @@ cmake --build . --parallel
 
 Dynamic modules may use `-DMODULES=dynamic` when supported by the target core. A successful standalone C++ compile is not sufficient; verify against the exact custom core and `mod-playerbots` branch used in deployment.
 
+## Custom-core C++ API compatibility
+
+Module source must follow the declarations and include dependencies of the deployed custom core, even when a similar API exists in another AzerothCore revision.
+
+- Include the header that directly declares every core symbol used by a module source. Do not rely on the precompiled header or incidental transitive includes.
+- Include `Define.h` before a direct `SpellAuras.h` include. In the deployment core, `SpellAuraDefines.h` uses aliases such as `uint8` but does not include their declaration itself. An include order that starts with `SpellAuras.h` therefore fails when module sources compile outside a precompiled-header context.
+- Include `SpellMgr.h` when using proc masks. `ProcEventInfo::GetHitMask()` uses the `PROC_HIT_*` contract, so use `PROC_HIT_ABSORB` rather than the legacy `PROC_EX_ABSORB` name when filtering absorbed hits.
+- Access a spell category through `SpellInfo::GetCategory()`. This custom core stores the category through `CategoryEntry` and does not expose a public `SpellInfo::Category` member.
+- Before adding or copying spell code, search the matching custom core for the exact symbol and a current call site. Treat code from stock AzerothCore, TrinityCore, or another branch as a behavioral reference only.
+- Keep module builds valid with and without core or script precompiled headers when the deployment build supports both modes. Missing direct includes often remain hidden until a non-PCH translation unit or a different build configuration compiles the file.
+
 ## Configuration
 
 ### PvP balancing

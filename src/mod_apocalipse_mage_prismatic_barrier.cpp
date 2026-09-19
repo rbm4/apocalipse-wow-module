@@ -1,3 +1,4 @@
+#include "Define.h"
 #include "SpellAuras.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"

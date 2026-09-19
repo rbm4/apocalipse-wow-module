@@ -51,7 +51,7 @@ Every accepted impact:
 2. Applies or refreshes Judgement of Justice 20184.
 3. Adds or refreshes a real Holy Vengeance 31803 or Blood Corruption 53742 stack before Vengeance or Corruption Judgement damage.
 4. Casts the active seal's existing Judgement damage spell with normal proc events enabled.
-5. Clears the shared normal Judgement cooldown category on the first successful impact only.
+5. Clears the shared normal Judgement cooldown category on the first successful impact only, resolving that category through `SpellInfo::GetCategory()` as required by the deployment core.
 6. Executes the stock Seal of Command JotJ cleave when applicable.
 
 Scripts bound to the existing Judgement and seal damage spells reduce positive hit damage to 50 percent only while marker 901025 is present. The multiplier is applied to raw hit damage before critical bonus, PvP reduction, resistance, and absorbs because the deployment core exposes no module hook between resistance and absorb processing. This preserves normal downstream damage handling with possible integer-rounding differences from a post-resistance multiplier.

@@ -78,6 +78,7 @@ The migration does not add acquisition data or a scaling row. Mana Shield, Ice B
 | Child rank-chain binding missing | The corresponding original barrier loses scripted calculations or talent behavior | Restore the base `spell_script_names` rows |
 | Foreign 901006 collision | Automatic update fails before related rows are written | Allocate a new ID and update source, SQL, client data, and docs together |
 | Client spell row missing | The client cannot present or cast Prismatic Barrier normally | Export and deploy the matching client `Spell.dbc` |
+| `uint8` is unknown while compiling `SpellAuraDefines.h` | `SpellAuras.h` was included before the deployment core type aliases | Include `Define.h` before the direct `SpellAuras.h` include |
 
 ## Runtime verification matrix
 

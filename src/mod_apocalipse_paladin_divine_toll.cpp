@@ -160,8 +160,8 @@ void ResetJudgementCooldown(Player* caster, AuraEffect* stateEffect)
 
     SpellInfo const* justice =
         sSpellMgr->GetSpellInfo(SPELL_PALADIN_JUDGEMENT_OF_JUSTICE);
-    if (justice->Category)
-        caster->RemoveCategoryCooldown(justice->Category);
+    if (justice->GetCategory())
+        caster->RemoveCategoryCooldown(justice->GetCategory());
     else
     {
         caster->RemoveSpellCooldown(SPELL_PALADIN_JUDGEMENT_OF_LIGHT, true);
@@ -357,8 +357,8 @@ public:
                 visual->Effects[EFFECT_0].IsEffect(SPELL_EFFECT_DUMMY) &&
                 visual->Effects[EFFECT_0].TargetA.GetTarget() ==
                     TARGET_UNIT_TARGET_ENEMY &&
-                justice->Category == light->Category &&
-                justice->Category == wisdom->Category;
+                justice->GetCategory() == light->GetCategory() &&
+                justice->GetCategory() == wisdom->GetCategory();
         }
 
         SpellCastResult CheckCast()
