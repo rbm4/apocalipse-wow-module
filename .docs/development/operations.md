@@ -1,12 +1,12 @@
 # Build, configuration, database, and release operations
 
-Last source review: 2026-09-17
+Last source review: 2026-09-18
 
 ## Supported context
 
 This repository is not standalone. Build it under `modules/apocalipse-wow-module` in the custom AzerothCore WotLK branch required by the deployed `mod-playerbots` version. `CMakeLists.txt` is intentionally minimal because the parent module build collects sources under `src/`.
 
-No complete AzerothCore checkout is present in this workspace, so the commands below were not run during this documentation review.
+The matching custom AzerothCore checkout is available under `../wowlk-core/apocalipse-azerothcore-wotlk`. Builds remain opt-in under that core's repository instructions.
 
 ## Install and build
 
@@ -61,26 +61,37 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/2026_09_16_01_blazing_barrier.sql` | `acore_world` | Manual while worldserver is stopped | Spell 901001, binding, scaling row, and backend name cache |
 | `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | `acore_world` | AzerothCore module updater; idempotent for its recognized spell row | Spell 901002, equipped-item requirement repair, custom non-save attribute, and backend name cache |
 | `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901003, Pyroblast and Living Bomb explosion bindings, and backend name cache |
+| `data/sql/db-world/2026_09_18_01_pyroclastic_chain_reaction_propagated_damage.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Living Bomb aura rank binding for propagated 30 percent periodic and explosion damage |
 | `data/sql/db-world/2026_09_17_01_hypernova.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active spell row | Spell 901005, script binding, damage coefficient, and backend name cache |
 | `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901004, Missile Barrage and passive cleanup bindings, and backend name cache |
 | `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active spell row | Spell 901006, script binding, and backend name cache |
 | `data/sql/db-world/2026_09_17_03_frost_bomb.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized three-spell graph | Spells 901007 through 901009, script bindings, coefficient, and backend names |
-| `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and haste rows | Spells 901010 and 901011, proc metadata, script bindings, non-save haste metadata, and backend names |
+| `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for its recognized passive and haste rows | Spells 901010 and 901011, proc metadata, script bindings, non-save haste metadata, and backend names |
 | `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized two-rank passive chain | Spells 901012 and 901013, rank relationships, incoming-damage proc metadata, script binding, and backend names |
+| `data/sql/db-world/2026_09_18_02_divine_storm_echo.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and echo rows | Spells 901014 and 901015, Divine Storm scheduling and healing bindings, and backend names |
+| `data/sql/db-world/2026_09_18_03_permanent_seal_of_righteousness.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901016, melee and judgement proc metadata, script binding, and backend name |
+| `data/sql/db-world/2026_09_18_04_divine_steed.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901017, display lifecycle binding, non-save attribute, and backend name |
+| `data/sql/db-world/2026_09_18_04_paladin_vengeance_variants.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized four-spell graph | Spells 901018 through 901021, critical-event proc metadata, non-save timed buffs, and backend names |
+| `data/sql/db-world/2026_09_18_05_extended_arsenal.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized two-rank passive chain | Spells 901022 and 901023, range and jump-target modifiers, rank relationships, and backend names |
+| `data/sql/db-world/2026_09_18_05_divine_toll.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized three-spell active graph | Spells 901024 through 901026, parent and additive stock-spell bindings, non-save markers, and backend names |
+| `data/sql/db-world/2026_09_18_01_automatic_ice_lance_proc_eligibility.sql` | `acore_world` | AzerothCore module updater; guarded for the recognized passive row | Updates installed spell 901010 for direct, periodic, and triggered Frost damage eligibility and current descriptions |
+| `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized explosion row | Removes caster-attached visual 17 from spell 901008 so C++ can emit the same visual from the bombed target through existing spell 34326 |
 
 `data/mod_apocalipse.sql` correctly issues `USE acore_characters` before creating `mod_player_spec`, `mod_player_spec_talent_budget`, and `mod_player_spec_talent_grant`. Do not remove that switch.
 
 The `mod_player_spec_talent_grant` table is currently created but not used by the C++ implementation. Treat it as reserved/dead schema until code establishes an owner.
 
+Custom-spell updater files require the externally managed `wotlk_spells_full` and `wotlk_spells` tables in `acore_world`. They use those tables for collision guards, stock spell metadata, backend names, and client-export ownership. Missing tables are a hard migration failure and must be restored through the backend schema workflow before worldserver startup.
+
 ## First deployment sequence
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 through 901013 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001 through 901026 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901013 module updates can run.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901026 module updates can run.
 8. Confirm all updater records and module startup logs.
 9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells. Deploy the separate talent and acquisition data through their owned workflows.
 10. Run focused human and bot in-game scenarios.
@@ -108,9 +119,9 @@ The expected equipped-item values are `-1`, `0`, and `0`. Confirm the `HasItemFi
 Before first deployment, verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901013;
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901013;
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901013;
+SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901026;
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901026;
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901026;
 ```
 
 Also inspect the actual client/server base `Spell.dbc`; it is not represented fully by these SQL queries.
@@ -133,13 +144,17 @@ At minimum test:
 - Configured direct, periodic, healing, and absorb scaling below and at level 80.
 - PvP direct, periodic, melee, pet-owned, low-bracket, and level-80 damage.
 - Blazing Barrier cast, weaker/stronger recast, absorb, and mage talent procs.
-- Pyroclastic Chain Reaction explosion rank speed validation, passive gating, 20 percent proc, source refresh, rank preservation, normal explosion isolation, and zero/one/two-target spread.
+- Pyroclastic Chain Reaction explosion rank speed validation, passive gating, 20 percent proc, source refresh, rank preservation, normal explosion isolation, zero/one/two-target spread, and 30 percent propagated tick and explosion damage.
 - Missile Barrage Overload one/two/twenty-proc channels, cap refresh, release visual, aggregate consumption, passive cleanup, Clearcasting, T8, and T10 behavior.
 - Hypernova target range, 22 percent base mana cost, 45 second cooldown, 4x Arcane Blast damage and coefficient, Arcane modifiers, 10-yard target area, four-stack reward, knockback immunities, and human/playerbot movement.
 - Prismatic Barrier 42 percent base mana cost, 45 second cooldown, all three child auras, child script behavior, existing stronger barriers, child cooldown isolation, and identical human/playerbot results.
 - Frost Bomb cast cost and cooldown, expiration/dispel/death detonation, cleanup exclusions, dead-target center, 10-yard damage, primary inclusion, Permafrost ranks, Fingers of Frost, Brain Freeze, Shatter, crowd-control breaking, damage procs, and identical human/playerbot results.
-- Automatic Ice Lance direct/periodic/triggered filters, 10 percent chance, one-second cooldown, wall and pillar line-of-sight rejection, target guards, Fingers of Frost consumption, independent 10-second expirations, 20 percent cap, passive removal cleanup, and identical human/playerbot results.
+- Automatic Ice Lance direct, periodic, and triggered Mage Frost eligibility, Ice Lance recursion exclusion, 10 percent chance, one-second cooldown, wall and pillar line-of-sight rejection, target guards, Fingers of Frost consumption, independent 10-second expirations, 20 percent cap, passive removal cleanup, and identical human/playerbot results.
 - Frozen Retaliation ranks 1 and 2, 1.5 and 3 percent chances, melee, ranged, direct spell, periodic, triggered, fully prevented, environmental, existing Fingers of Frost, rank upgrade, and identical human/playerbot results.
+- Divine Storm Echo without the passive, one-second timing, death, logout, passive removal, movement, 12-target selection, normalized 55 percent weapon damage, independent hit and critical strike results, normal procs, proportional healing, recursion prevention, and identical human/playerbot results.
+- Divine Steed Alliance/Horde display selection, four-second duration, 100 percent run speed, 20-second cooldown, combat and indoor use, ordinary attacks and casts, pet retention, death/cancel/logout/map cleanup, real mount replacement, enabled race and sex rider attachments, and identical human/playerbot results.
+- Extended Arsenal ranks 1 and 2, 3 and 6 yard cast-range increases, one and two added targets, Hammer melee hop radius and frontal restrictions, Avenger's Shield daze, silence, and secondary behavior on every added target, unrelated Paladin spell isolation, and identical human/playerbot results.
+- Divine Toll no-seal rejection, 10 percent base mana cost, 60-second cooldown, uniform one-through-five roll, immediate and 500 ms timing, invalid-target retargeting, caster cancellation states, every stock seal, half damage, independent critical strikes, immunity and absorb behavior, shared Judgement reset, JotW once, per-impact talent and generic procs, real-SoR overlay exception, and identical human/playerbot results.
 - Battleground stamina below/above threshold, buff isolation, gear swaps, bot auto-gearing, death, reconnect, and exit cleanup.
 
 Record observed results in the relevant feature page and history entry. If a scenario was not run, mark it `Not run`.

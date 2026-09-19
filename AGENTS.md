@@ -39,6 +39,10 @@ Use executed code in the matching custom core as the final source of truth. When
 | `src/mod_apocalipse_mage_frost_bomb.cpp` | Frost Bomb removal, explosion, proc, and Permafrost slow behavior |
 | `src/mod_apocalipse_mage_automatic_ice_lance.cpp` | Automatic Ice Lance proc filtering and independent haste expirations |
 | `src/mod_apocalipse_mage_frozen_retaliation.cpp` | Two-rank incoming-damage proc that grants Fingers of Frost |
+| `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo |
+| `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR proc behavior beside another real seal |
+| `src/mod_apocalipse_paladin_divine_toll.cpp` | Sequenced half-damage Judgement impacts and proc controls |
+| `src/mod_apocalipse_paladin_divine_steed.cpp` | Display-only paladin horse sprint and lifecycle cleanup |
 | `src/battleground_stamina/` | Battleground stamina calculation, aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/` | Manual SQL baselines/migrations and automatic module updater SQL |
@@ -53,7 +57,7 @@ Use executed code in the matching custom core as the final source of truth. When
 5. **State bot behavior explicitly.** Every gameplay feature must say whether it applies identically to bots, suppresses output, bypasses a restriction, or requires separate logic.
 6. **Use the correct database.** World definitions use `WorldDatabase`; per-character grant state uses `CharacterDatabase`. Preserve explicit `USE` boundaries in manual SQL.
 7. **Keep SQL mode clear.** Files outside `data/sql/db-world/` are manual unless documented otherwise. Files inside that directory are automatic world updates. Never apply production SQL without explicit approval.
-8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901013 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
+8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901026 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
 9. **Keep config defaults synchronized.** A setting's code fallback, distributed `.conf.dist`, validation, and documented default must agree. If they do not, record the drift until fixed.
 10. **Preserve gameplay cleanup.** Battleground-only state must be removed on unsupported maps/leave. Managed talents and hidden budgets must be revoked on tree transitions/reset. Do not add persistent auras accidentally.
 11. **Keep event work bounded.** Bot populations multiply login, talent, equipment, and combat-hook cost. Do not add database queries to combat or per-tick paths.

@@ -1,3 +1,4 @@
+#include "SpellAuras.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
 #include "SpellScriptLoader.h"
@@ -53,7 +54,13 @@ public:
                 return;
 
             caster->CastSpell(caster, SPELL_MAGE_MANA_SHIELD_R9, true);
-            caster->CastSpell(caster, SPELL_MAGE_ICE_BARRIER_R8, true);
+
+            if (Aura* iceBarrier = caster->GetAuraOfRankedSpell(
+                    SPELL_MAGE_ICE_BARRIER_R8, caster->GetGUID()))
+                iceBarrier->RefreshDuration();
+            else
+                caster->CastSpell(caster, SPELL_MAGE_ICE_BARRIER_R8, true);
+
             caster->CastSpell(caster, SPELL_APOC_MAGE_BLAZING_BARRIER, true);
         }
 

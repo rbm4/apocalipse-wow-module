@@ -13,7 +13,6 @@ enum ApocalipseMageAutomaticIceLanceSpells
 {
     SPELL_APOC_MAGE_AUTOMATIC_ICE_LANCE = 901010,
     SPELL_APOC_MAGE_ICE_LANCE_HASTE     = 901011,
-    SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION = 901008,
     SPELL_MAGE_ICE_LANCE                 = 30455
 };
 
@@ -47,19 +46,15 @@ public:
         bool CheckProc(ProcEventInfo& eventInfo)
         {
             Unit* caster = GetTarget();
-            Spell const* procSpell = eventInfo.GetProcSpell();
             SpellInfo const* procSpellInfo = eventInfo.GetSpellInfo();
             DamageInfo const* damageInfo = eventInfo.GetDamageInfo();
             if (!caster || !caster->ToPlayer() ||
-                eventInfo.GetActor() != caster || !procSpell ||
-                procSpell->IsTriggered() || !procSpellInfo || !damageInfo)
+                eventInfo.GetActor() != caster || !procSpellInfo || !damageInfo)
                 return false;
 
             if (procSpellInfo->Id == SPELL_MAGE_ICE_LANCE ||
-                procSpellInfo->Id == SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION ||
                 procSpellInfo->SpellFamilyName != SPELLFAMILY_MAGE ||
-                !(procSpellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FROST) ||
-                damageInfo->GetDamageType() != SPELL_DIRECT_DAMAGE)
+                !(procSpellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FROST))
                 return false;
 
             Unit* target = eventInfo.GetProcTarget();

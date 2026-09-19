@@ -2,9 +2,9 @@
 
 Status: Implemented in source, build and runtime not verified
 
-Owners: `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`, `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`, `data/sql/db-world/2026_09_17_00_pyroclastic_chain_reaction.sql`, `data/sql/db-world/2026_09_18_01_pyroclastic_chain_reaction_propagated_damage.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-17
+Last source review: 2026-09-18
 
 ## Purpose
 
@@ -49,9 +49,11 @@ Pyroblast effect 0 hits a unit
      -> collect surviving unbombed units from completed hit callbacks
      -> choose up to two collected units randomly after the explosion
      -> apply the source Living Bomb rank
+        -> mark the aura as propagated through passive 901003
+        -> reduce its periodic damage and its explosions to 30 percent
 ```
 
-The source Living Bomb is not removed to cause the special explosion. It remains active and receives a full duration refresh. The normal Living Bomb expiration and dispel path is unchanged.
+The source Living Bomb is not removed to cause the special explosion. It remains active and receives a full duration refresh. The normal Living Bomb expiration and dispel path is unchanged. Only bombs applied by the spread step receive the 30 percent modifier; a manually applied source bomb remains at full damage.
 
 ## Eligibility and rank preservation
 
@@ -81,9 +83,11 @@ Normal Living Bomb explosions do not spread. The explosion script requires `GetT
 
 ## Combat-system interactions
 
-The triggered explosion reuses the normal Living Bomb explosion spell and therefore retains its normal base damage, spell-power coefficient, threat, resist, and PvP processing. Spread Living Bomb applications use normal aura and periodic-damage paths.
+The special explosion from the manually applied source Living Bomb reuses the normal Living Bomb explosion spell at full damage. A propagated aura is identified by its passive 901003 trigger metadata. Its calculated periodic amount is reduced to 30 percent on application, and every matching-rank explosion originating from that aura is reduced to 30 percent before the normal direct-damage hooks complete.
 
-Pyroclastic Chain Reaction adds no independent damage amount. Existing Spell Scaling and PvP Balancing hooks can still affect the reused Living Bomb spell IDs according to their configured rows and eligibility guards.
+The propagated marker is keyed by caster and bomb carrier so different mages remain independent. Expiration and enemy-dispel removal marks the entry for cleanup, and the synchronous Living Bomb explosion clears it after damage is processed. A generation-aware next-update fallback also clears the entry if that explosion cast fails. Refreshing or recasting the propagated aura recalculates and reapplies the 30 percent periodic amount without creating a second marker.
+
+Spell Scaling and PvP Balancing remain active after the 30 percent modifier. Integer conversion at each stage can produce rounding differences from multiplying the final displayed damage by exactly 0.30.
 
 ## Server spell contract
 
@@ -96,7 +100,7 @@ The automatic world update defines spell 901003 as:
 - No item requirement.
 - English description documenting the proc, refresh, and two-target spread.
 
-The update also binds all Pyroblast and Living Bomb explosion ranks through negative first-rank IDs and synchronizes the backend spell picker name.
+The initial update binds all Pyroblast and Living Bomb explosion ranks through negative first-rank IDs and synchronizes the backend spell picker name. The follow-up update `2026_09_18_01_pyroclastic_chain_reaction_propagated_damage.sql` binds all Living Bomb aura ranks through `-44457` so propagated applications can be marked, scaled, and cleaned up.
 
 The spread implementation collects completed hits and applies bombs from `AfterCast`. It therefore validates that every bound Living Bomb explosion rank has `Speed = 0`, which is required for the core to process all immediate hits before `AfterCast`. A rank with positive speed rejects the spread script during validation rather than running with an empty candidate list.
 
@@ -118,7 +122,7 @@ Worldserver must restart after the update so spell data and script bindings are 
 |---|---|---|
 | Passive 901003 missing | Both bound scripts fail validation or the proc gate is absent | Check updater execution, spell data, and startup script validation |
 | Passive not learned | Pyroblast behaves normally | Fix the separate talent acquisition data |
-| Script binding missing | The passive can exist without changing Pyroblast | Check `spell_script_names` for `-11366` and `-44461` |
+| Script binding missing | The passive can exist without changing Pyroblast, spreading, or reducing propagated damage | Check `spell_script_names` for `-11366`, `-44457`, and `-44461` |
 | Explosion rank has positive speed | That rank's spread script fails validation because `AfterCast` would precede delayed hits | Inspect all three ranks with `.spellinfo all` and redesign delayed completion before enabling that data |
 | Foreign ID collision | Automatic update fails before inserting module data | Allocate a new ID and update source, SQL, client data, and docs together |
 | Client spell row missing | Server behavior may exist with broken passive presentation | Deploy matching client spell data |
@@ -137,7 +141,11 @@ Worldserver must restart after the update so spell data and script bindings are 
 | Two or more unbombed enemies in explosion | Up to two random hit survivors receive the source rank | Not run |
 | Enemy already has caster's Living Bomb | Enemy is not selected for spread | Not run |
 | Enemy has another mage's Living Bomb | Enemy remains eligible for this caster's bomb | Not run |
-| Normal Living Bomb expiration or dispel | Explosion occurs without spread | Not run |
+| Normal Living Bomb expiration or dispel | Explosion occurs at full damage without spread | Not run |
+| Propagated Living Bomb ticks | Each tick uses 30 percent of the equivalent normal bomb amount before shared scaling and PvP hooks | Not run |
+| Manual recast on a propagated carrier | Refreshed periodic amount remains at 30 percent and the explosion remains marked | Not run |
+| Propagated Living Bomb expiration or dispel | Matching explosion uses 30 percent damage and does not spread | Not run |
+| Pyroclastic proc from a propagated carrier | Immediate explosion uses 30 percent damage and can spread up to two new reduced bombs | Not run |
 | Explosion kills a selected spread target | Living Bomb is not applied to the dead target | Not run |
 | Human and bot mage | Identical combat behavior | Not run |
 

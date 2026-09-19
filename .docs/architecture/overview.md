@@ -26,12 +26,16 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_apocalipse_mage_frost_bomb.cpp` | Frost Bomb removal, explosion, proc, and Permafrost slow behavior for spells 901007 through 901009 |
 | `src/mod_apocalipse_mage_automatic_ice_lance.cpp` | Automatic Ice Lance proc filtering and independently expiring haste for spells 901010 and 901011 |
 | `src/mod_apocalipse_mage_frozen_retaliation.cpp` | Incoming-damage proc and Fingers of Frost grant for ranks 901012 and 901013 |
+| `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo for spells 901014 and 901015 |
+| `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR proc behavior for passive 901016 |
+| `src/mod_apocalipse_paladin_divine_toll.cpp` | Sequenced half-damage Judgement orchestration for spells 901024 through 901026 |
+| `src/mod_apocalipse_paladin_divine_steed.cpp` | Display-only horse sprint and lifecycle cleanup for spell 901017 |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
 | `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
-| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 through 901013 |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 through 901026 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -49,7 +53,11 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 9. `AddModApocalipseMageFrostBombScripts()`
 10. `AddModApocalipseMageAutomaticIceLanceScripts()`
 11. `AddModApocalipseMageFrozenRetaliationScripts()`
-12. `AddModApocalipseBattlegroundStaminaScripts()`
+12. `AddModApocalipsePaladinDivineStormEchoScripts()`
+13. `AddModApocalipsePaladinPermanentSealOfRighteousnessScripts()`
+14. `AddModApocalipsePaladinDivineTollScripts()`
+15. `AddModApocalipsePaladinDivineSteedScripts()`
+16. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -68,6 +76,12 @@ The entry-point name is derived from the module directory `apocalipse-wow-module
 | Frost Bomb | Spells 901007 through 901009, removal filtering, target-centered explosion, proc path, and Permafrost slow | Acquisition, client assets, or playerbot rotation policy |
 | Automatic Ice Lance | Spell 901010 proc filtering, triggered Ice Lance, and spell 901011 independent haste expirations | Acquisition, client assets, or playerbot rotation policy |
 | Frozen Retaliation | Spells 901012 and 901013, incoming positive combat-damage proc, rank-specific chance, and Fingers of Frost grant | Acquisition, client assets, environmental damage, or playerbot rotation policy |
+| Divine Storm Echo | Passive 901014, echo 901015, delayed scheduling, execution guards, and recursion prevention | Acquisition, client assets, original Divine Storm behavior, or playerbot rotation policy |
+| Permanent Seal of Righteousness | Passive 901016, stock SoR calculation, proc filtering, real-SoR suppression, and recursion prevention | Acquisition, client assets, real seal exclusivity, judgement selection, or playerbot rotation policy |
+| Divine Steed | Active 901017, faction display choice, run-speed aura, safe removal, and logout/map cleanup | Acquisition, client export, real mounted state, vehicles, or playerbot rotation policy |
+| Paladin Vengeance variants | Passives 901018 and 901020, timed buffs 901019 and 901021, critical-event eligibility, stack caps, and effect amounts | Acquisition, client assets, specialization enforcement, or playerbot talent selection |
+| Extended Arsenal | Passive ranks 901022 and 901023, native range and jump-target modifiers, and exact Paladin family masks | Acquisition, client assets, base spell target rules, or playerbot talent selection |
+| Divine Toll | Active 901024, impact marker 901025, Justice visual 901026, delayed events, seal selection, damage provenance, and proc bounds | Acquisition, client patch generation, normal Judgement wrappers, or playerbot rotation policy |
 | Battleground Stamina | Spell 901002 validation, unbuffed baseline, assistance aura, and human gear lock | Bot gearing decisions, matchmaking, or arenas |
 
 ## Dependency direction
@@ -106,15 +120,41 @@ Prismatic Barrier 901006
 
 Frost Bomb 901007
   -> four-second hostile aura and filtered removal detonation
+     -> target-local Frost Nova visual 34326
      -> target-centered damage 901008 and Permafrost slow 901009
 
 Automatic Ice Lance passive 901010
-  -> eligible direct player-cast Frost damage proc
+  -> eligible Mage-family Frost damage proc, including periodic and triggered damage
      -> triggered Ice Lance 30455 and one haste expiration in aura 901011
 
 Frozen Retaliation ranks 901012 and 901013
   -> positive incoming combat damage at 1.5 or 3 percent
      -> existing Fingers of Frost aura 44544
+
+Divine Storm 53385 with passive 901014
+  -> caster-owned one-second delayed event
+     -> echo attack 901015 with normal procs and proportional healing
+
+Permanent Seal of Righteousness passive 901016
+  -> melee and judgement damage proc filtering
+     -> stock SoR damage 25742 unless real SoR is active
+
+Divine Steed 901017
+  -> ordinary run-speed aura and faction-specific mount display
+     -> aura, logout, and map cleanup without mechanical mounted state
+
+Guardian's Vengeance 901018 or Sacred Vengeance 901020
+  -> native critical-event proc filtering
+     -> three-stack, eight-second buff 901019 or 901021
+
+Extended Arsenal 901022 or 901023
+  -> native flat range and jump-target spell modifiers
+     -> Hammer of the Righteous and Avenger's Shield chain selection
+
+Divine Toll 901024
+  -> one through five GUID-based impacts at 500 ms intervals
+     -> marker 901025 scopes half damage, guaranteed hit, SoR overlap, and one JotW proc
+     -> visual 901026 and current real-seal Judgement behavior
 
 Battleground and player hooks
   -> Battleground Stamina
@@ -128,7 +168,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001 through 901013 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001 through 901026 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

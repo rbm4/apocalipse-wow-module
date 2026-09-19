@@ -2,9 +2,9 @@
 
 Status: Implemented in source, build and runtime not verified
 
-Owners: `src/mod_apocalipse_mage_frost_bomb.cpp`, `data/sql/db-world/2026_09_17_03_frost_bomb.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_mage_frost_bomb.cpp`, `data/sql/db-world/2026_09_17_03_frost_bomb.sql`, `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-17
+Last source review: 2026-09-18
 
 ## Purpose
 
@@ -23,7 +23,8 @@ Human and bot-controlled mages use identical cast, cooldown, removal, damage, pr
 | Surface | Contract |
 |---|---|
 | Application | 901007 Frost Bomb, 1.5 second cast, 16 second cooldown, 22 percent base mana, four-second Magic aura |
-| Explosion | 901008 Frost Bomb Explosion, 690 base Frost area damage, 10-yard target-centered radius, 0.4 direct coefficient |
+| Explosion | 901008 Frost Bomb Explosion, 690 base Frost area damage, 10-yard target-centered radius, 0.4 direct coefficient, no attached visual |
+| Explosion visual | Existing spell 34326, a zero-value dummy Frost Nova visual self-cast by the bombed target |
 | Slow | 901009 Frost Bomb Slow, 40 percent for five seconds before Permafrost |
 | Permafrost talent | Rank chain beginning at 11175; effect 0 extends duration and effect 1 increases slow strength |
 | Permafrost debuff | Existing spell 68391, applied while the custom slow is active for the same caster |
@@ -37,6 +38,7 @@ successful Frost Bomb cast on one enemy
   -> spend 22 percent base mana and start the 16 second cooldown
   -> apply the four-second dummy aura
   -> remove by expiration, enemy dispel, or target death
+     -> self-cast visual-only Frost Nova 34326 from the bombed target
      -> trigger Frost Bomb Explosion at the bombed target
      -> deal Frost damage to enemies within 10 yards
      -> apply Frost Bomb Slow to each living damage victim
@@ -66,7 +68,7 @@ Unlike the core Living Bomb correction, Frost Bomb does not set target-proc supp
 
 ## Targeting and death removal
 
-The explosion uses `TARGET_DEST_TARGET_ENEMY` with `TARGET_UNIT_DEST_AREA_ENEMY`, radius index 13, matching the module's established target-centered 10-yard area pattern. The primary target is retained by the default selector while valid.
+The explosion uses `TARGET_DEST_TARGET_ENEMY` with `TARGET_UNIT_DEST_AREA_ENEMY`, radius index 13, matching the module's established target-centered 10-yard area pattern. The primary target is retained by the default selector while valid. Spell 901008 has no `SpellVisualID_1` because Frost Nova visual 17 is caster-attached and would render on the mage. The explosion script instead makes the bombed target self-cast existing spell 34326, which uses visual 17 with only a zero-value dummy effect and no aura or triggered spell. Damage targeting, hostility, ownership, proc behavior, and scaling remain on the separate mage-cast 901008 path.
 
 The explosion spell allows a dead explicit target so `AURA_REMOVE_BY_DEATH` can still establish the destination. The dead primary cannot receive the slow, but nearby living damage victims can. This path must be verified in game because target death and aura teardown ordering are core-sensitive.
 
@@ -78,15 +80,18 @@ The automatic world update:
 2. Inserts only missing rows and recognizes only the expected spell signatures as module-owned.
 3. Binds the application AuraScript, explosion SpellScript, and slow AuraScript.
 4. Adds the explosion's 0.4 direct coefficient to `spell_bonus_data`.
-5. Synchronizes all three backend spell names.
+5. Leaves 901008 without an attached spell visual so its mage caster does not display the target-local explosion.
+6. Synchronizes all three backend spell names.
 
-The update contains no acquisition, rank-chain, `spell_proc`, or module spell-scaling rows. Proc integration comes from native spell family metadata and the core proc system.
+`data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` repairs an already-deployed module-owned 901008 row by changing `SpellVisualID_1` from 17 to 0. It rejects a colliding row whose gameplay signature is not recognized and is safe to rerun after it reaches 0.
+
+The updates contain no acquisition, rank-chain, `spell_proc`, or module spell-scaling rows. Proc integration comes from native spell family metadata and the core proc system.
 
 ## Runtime verification matrix
 
 | Scenario | Expected result | Status |
 |---|---|---|
-| Normal expiration after four seconds | One target-centered explosion | Not run |
+| Normal expiration after four seconds | One Frost Nova visual on the bombed enemy, no visual on the mage, and one target-centered damage event | Not run |
 | Enemy dispel | One immediate explosion | Not run |
 | Bombed target dies | One explosion centered on the dead target and damage to valid nearby enemies | Not run |
 | Caster logout or generic cleanup | No explosion | Not run |

@@ -21,7 +21,18 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-18 | Divine Toll | Partial | [`2026-09-18-divine-toll.md`](2026-09-18-divine-toll.md) |
+| 2026-09-18 | Extended Arsenal | Partial | [`2026-09-18-extended-arsenal.md`](2026-09-18-extended-arsenal.md) |
+| 2026-09-18 | Paladin Vengeance variants | Partial | [`2026-09-18-paladin-vengeance-variants.md`](2026-09-18-paladin-vengeance-variants.md) |
+| 2026-09-18 | Divine Steed | Partial | [`2026-09-18-divine-steed.md`](2026-09-18-divine-steed.md) |
+| 2026-09-18 | Permanent Seal of Righteousness | Partial | [`2026-09-18-permanent-seal-of-righteousness.md`](2026-09-18-permanent-seal-of-righteousness.md) |
+| 2026-09-18 | Divine Storm Echo | Partial | [`2026-09-18-divine-storm-echo.md`](2026-09-18-divine-storm-echo.md) |
+| 2026-09-18 | Pyroclastic propagated damage | Partial | [`2026-09-18-pyroclastic-propagated-damage.md`](2026-09-18-pyroclastic-propagated-damage.md) |
+| 2026-09-18 | Frost Bomb visual origin | Partial | [`2026-09-18-frost-bomb-visual-origin.md`](2026-09-18-frost-bomb-visual-origin.md) |
+| 2026-09-18 | Automatic Ice Lance proc eligibility | Partial | [`2026-09-18-automatic-ice-lance-proc-eligibility.md`](2026-09-18-automatic-ice-lance-proc-eligibility.md) |
+| 2026-09-18 | Prismatic Barrier Ice Barrier refresh | Partial | [`2026-09-18-prismatic-barrier-ice-refresh.md`](2026-09-18-prismatic-barrier-ice-refresh.md) |
 | 2026-09-17 | Persistent Blizzard migration | Reverted | [`2026-09-17-persistent-blizzard.md`](2026-09-17-persistent-blizzard.md) |
+| 2026-09-17 | Automatic Ice Lance migration rerun fix | Completed | [`2026-09-17-automatic-ice-lance-migration-rerun-fix.md`](2026-09-17-automatic-ice-lance-migration-rerun-fix.md) |
 | 2026-09-17 | Frozen Retaliation | Partial | [`2026-09-17-frozen-retaliation.md`](2026-09-17-frozen-retaliation.md) |
 | 2026-09-17 | Automatic Ice Lance | Partial | [`2026-09-17-automatic-ice-lance.md`](2026-09-17-automatic-ice-lance.md) |
 | 2026-09-17 | Frost Bomb | Partial | [`2026-09-17-frost-bomb.md`](2026-09-17-frost-bomb.md) |

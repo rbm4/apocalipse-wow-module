@@ -67,14 +67,14 @@ INSERT INTO `spell_dbc` (
     `SpellIconID`, `Name_Lang_enUS`, `Description_Lang_enUS`,
     `AuraDescription_Lang_enUS`
 ) SELECT
-    901010, 0x00000040, 0x00010000, 10, 21,
+    901010, 0x00000040, 0x00050000, 10, 21,
     1, 1, 16, 3,
     0, -1, 0,
     0, 6, 0,
     9, 1, 4,
     186, 'Automatic Ice Lance',
-    'Your direct, non-triggered Frost spell damage has a $s1% chance to cast Ice Lance automatically at the target and grant 1% spell haste for 10 sec. Haste contributions expire independently and can accumulate up to 20%.',
-    'Direct Frost spell damage can trigger an automatic Ice Lance.'
+    'Your Frost spell damage has a $s1% chance to cast Ice Lance automatically at the target and grant 1% spell haste for 10 sec. Haste contributions expire independently and can accumulate up to 20%.',
+    'Frost spell damage can trigger an automatic Ice Lance.'
 FROM DUAL
 WHERE @automatic_ice_lance_owned = 0;
 
@@ -134,6 +134,13 @@ SET @ice_lance_haste_managed := (
       AND `EffectAuraPeriod_2` = 1000
 );
 
+UPDATE `spell_dbc`
+SET `ProcTypeMask` = 0x00050000,
+    `Description_Lang_enUS` = 'Your Frost spell damage has a $s1% chance to cast Ice Lance automatically at the target and grant 1% spell haste for 10 sec. Haste contributions expire independently and can accumulate up to 20%.',
+    `AuraDescription_Lang_enUS` = 'Frost spell damage can trigger an automatic Ice Lance.'
+WHERE `ID` = 901010
+  AND @automatic_ice_lance_managed = 1;
+
 INSERT INTO `spell_proc` (
     `SpellId`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMask0`,
     `SpellFamilyMask1`, `SpellFamilyMask2`, `ProcFlags`, `SpellTypeMask`,
@@ -141,8 +148,8 @@ INSERT INTO `spell_proc` (
     `ProcsPerMinute`, `Chance`, `Cooldown`, `Charges`
 ) SELECT
     901010, 16, 3, 0,
-    0, 0, 0x00010000, 1,
-    2, 0, 0, 0,
+    0, 0, 0x00050000, 1,
+    2, 0, 2, 0,
     0, 10, 1000, 0
 FROM DUAL
 WHERE @automatic_ice_lance_managed = 1

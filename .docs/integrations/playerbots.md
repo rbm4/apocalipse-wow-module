@@ -33,13 +33,19 @@ Do not replace this with account-name, security-level, online-state, or `Playerb
 | Spell Scaling | Selected spells scale by player caster level | Same | None |
 | PvP Balancing | Damage to player victims is reduced | Same, whether attacker or victim is a bot-backed player | None |
 | Blazing Barrier | Same spell and talent behavior | Same | None |
-| Pyroclastic Chain Reaction | Passive-gated Pyroblast and Living Bomb interaction | Same when the bot has learned passive 901003 | None; talent acquisition remains external |
+| Pyroclastic Chain Reaction | Passive-gated Pyroblast interaction with 30 percent damage on propagated Living Bombs | Same when the bot has learned passive 901003 | None; talent acquisition remains external |
 | Missile Barrage Overload | Accumulated proc count extends Arcane Missiles | Same when the bot has learned passive 901004 | Existing AI checks aura presence but does not wait for a higher count; acquisition remains external |
 | Hypernova | Target-centered Arcane burst grants four Arcane Blast stacks | Same when the bot has learned spell 901005 | Knockback packets use the existing playerbot spline path; acquisition remains external |
 | Prismatic Barrier | Activates Mana Shield, Ice Barrier, and Blazing Barrier together | Same when the bot has learned spell 901006 | None; acquisition and rotation policy remain external |
 | Frost Bomb | Delayed target-centered Frost damage and Permafrost-scaled slow | Same when the bot has learned spell 901007 | None; acquisition and rotation policy remain external |
-| Automatic Ice Lance | Direct Frost damage can trigger Ice Lance and independently expiring haste | Same when the bot has learned passive 901010 | None; acquisition remains external and the existing rotation needs no special cast action |
+| Automatic Ice Lance | Mage-family Frost damage, including periodic and triggered damage, can trigger Ice Lance and independently expiring haste | Same when the bot has learned passive 901010 | None; acquisition remains external and the existing rotation needs no special cast action |
 | Frozen Retaliation | Incoming combat damage can grant Fingers of Frost at the known rank's chance | Same when the bot has learned rank 901012 or 901013 | None; acquisition remains external and no cast action is needed |
+| Divine Storm Echo | Divine Storm schedules a half-damage echo while passive 901014 is active | Same when the bot has acquired passive 901014 | None; existing Divine Storm actions need no change and acquisition remains external |
+| Permanent Seal of Righteousness | Passive 901016 adds stock SoR damage beside another real seal and suppresses itself beside real SoR | Same when the bot has acquired passive 901016 | None; existing melee and judgement actions need no change and acquisition remains external |
+| Divine Steed | Active 901017 doubles run speed for four seconds with a faction-specific cosmetic charger | Same when the bot has acquired and casts 901017 | None; no mounted state or AI dependency is introduced, and acquisition/rotation remain external |
+| Paladin Vengeance variants | Critical damage or healing events refresh the corresponding three-stack buff | Same when the bot has acquired passive 901018 or 901020 | None; native proc handling applies and acquisition remains external |
+| Extended Arsenal | Increases Hammer of the Righteous and Avenger's Shield range and chain targets | Same when the bot has acquired rank 901022 or 901023 | None; native spell modifiers apply and acquisition remains external |
+| Divine Toll | Sequences one through five half-damage Judgement impacts with dynamic seal and proc behavior | Same when the bot has acquired and casts 901024 | None; acquisition and cast-decision policy remain external |
 | Battleground Stamina | Eligible players receive assistance; non-combat-swappable gear is locked | Eligible bots receive assistance | Equipment lock is bypassed so bot auto-gearing can continue |
 
 Player-owned pets and guardians are treated as player attackers by PvP balancing through `GetCharmerOrOwnerPlayerOrPlayerItself()`. This applies whether the owning player is human-controlled or bot-controlled.
@@ -88,6 +94,12 @@ Before adding work to a bot-related hook:
 | Bot casts Frost Bomb 901007 | Same detonation causes, area damage, proc behavior, and Permafrost-scaled slow as a human cast | Not run in this review |
 | Bot with passive 901010 deals eligible Frost damage | Same automatic Ice Lance, Fingers of Frost consumption, and independent haste expirations as a human | Not run in this review |
 | Bot with Frozen Retaliation 901012 or 901013 takes positive combat damage | Same rank-specific chance and Fingers of Frost refresh as a human | Not run in this review |
+| Bot with passive 901014 casts Divine Storm 53385 | Same delayed half-damage echo, target selection, procs, and healing as a human | Not run in this review |
+| Bot with passive 901016 uses melee attacks or judgements beside another seal | Same stock SoR overlay damage, real-SoR suppression, and Judgements of the Just behavior as a human | Not run in this review |
+| Bot casts Divine Steed 901017 | Same faction display, speed, duration, cooldown, casting freedom, and cleanup as a human | Not run in this review |
+| Bot with passive 901018 or 901020 produces a qualifying critical event | Same stack addition, refresh, cap, and buff amounts as a human | Not run in this review |
+| Bot with Extended Arsenal 901022 or 901023 casts Hammer or Avenger's Shield | Same rank-specific range and added target count as a human | Not run in this review |
+| Bot casts Divine Toll 901024 with each supported seal | Same target validation, random sequence, retargeting, half damage, cooldown reset, and proc limits as a human | Not run in this review |
 | Bot casts any learned Blizzard rank | Same 1.5 second cast and 12 second persistent ground effect as a human | Not run in this review |
 
 ## Related repository context

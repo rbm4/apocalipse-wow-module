@@ -36,6 +36,7 @@ SET @frost_bomb_explosion_owned := (
       AND `ImplicitTargetA_1` = 53
       AND `ImplicitTargetB_1` = 16
       AND `EffectRadiusIndex_1` = 13
+      AND `SpellVisualID_1` IN (0, 17)
 );
 
 SET @frost_bomb_slow_owned := (
@@ -131,7 +132,7 @@ INSERT INTO `spell_dbc` (
     -1, 0, 0,
     2, 1, 689,
     53, 16, 13,
-    17, 188, 'Frost Bomb Explosion',
+    0, 188, 'Frost Bomb Explosion',
     'Deals $s1 Frost damage to enemies within 10 yards of the Frost Bomb and applies Frost Bomb Slow.',
     3, 32,
     1, 1, 1.0, 16,
@@ -202,7 +203,13 @@ SET @frost_bomb_explosion_managed := (
       AND `ImplicitTargetA_1` = 53
       AND `ImplicitTargetB_1` = 16
       AND `EffectRadiusIndex_1` = 13
+      AND `SpellVisualID_1` IN (0, 17)
 );
+
+UPDATE `spell_dbc`
+SET `SpellVisualID_1` = 0
+WHERE @frost_bomb_explosion_managed = 1
+  AND `ID` = 901008;
 
 SET @frost_bomb_slow_managed := (
     SELECT COUNT(*) = 1

@@ -4,7 +4,7 @@ Status: Implemented in source, build and runtime not verified
 
 Owners: `src/mod_apocalipse_mage_prismatic_barrier.cpp`, `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-17
+Last source review: 2026-09-18
 
 ## Purpose
 
@@ -39,12 +39,13 @@ Human and bot-controlled mages use the same mana cost, cooldown, triggered spell
 successful Prismatic Barrier cast on self
   -> charge 42 percent base mana and start the 45 second cooldown
   -> trigger Mana Shield rank 9 on the caster
-  -> trigger Ice Barrier rank 8 on the caster
+  -> refresh the duration of an existing ranked Ice Barrier
+     or trigger Ice Barrier rank 8 when none is active
   -> trigger Blazing Barrier on the caster
-  -> each resulting aura uses its existing core or module AuraScript
+  -> each newly created aura uses its existing core or module AuraScript
 ```
 
-The three child casts are triggered casts. They do not charge additional mana, start their normal spell cooldowns, or add separate global cooldowns. They still create the real child auras, so normal absorb calculations, talent interactions, dispels, aura replacement rules, and visuals remain owned by those spells.
+Mana Shield, a newly applied Ice Barrier, and Blazing Barrier use triggered casts. They do not charge additional mana, start their normal spell cooldowns, or add separate global cooldowns. When any ranked Ice Barrier is already active, Prismatic Barrier refreshes that aura to its maximum duration instead of recasting rank 8. This preserves its current absorb amount, including a stronger amount, but does not restore absorb already consumed. The parent cast still spends mana and starts its cooldown.
 
 ## Mana, cooldown, and targeting
 
@@ -85,7 +86,8 @@ The migration does not add acquisition data or a scaling row. Mana Shield, Ice B
 | Cast with enough mana and no barriers active | All three child auras appear and the 45 second cooldown starts | Not run |
 | Mana use | Exactly 42 percent base mana is spent once | Not run |
 | Child spell cooldowns ready or unavailable | Only Prismatic Barrier starts a cooldown | Not run |
-| Existing stronger child barrier | Existing child recast rules apply without removing unrelated barriers | Not run |
+| Existing ranked Ice Barrier | Its current absorb amount is preserved and its duration refreshes to maximum | Not run |
+| Partially consumed Ice Barrier | Duration refreshes but consumed absorb is not restored | Not run |
 | Damage reaches each absorb layer | Each aura uses its normal amount, depletion, and talent behavior | Not run |
 | Human mage and playerbot mage | Identical spell results | Not run |
 | Client patch missing | Spell is unavailable or incorrectly presented | Not run |

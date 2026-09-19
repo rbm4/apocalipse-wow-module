@@ -8,6 +8,9 @@
 #include "SpellScriptLoader.h"
 #include "Unit.h"
 
+#include <map>
+#include <mutex>
+#include <utility>
 #include <vector>
 
 enum ApocalipseMagePyroclasticChainReactionSpells
@@ -21,6 +24,60 @@ enum ApocalipseMagePyroclasticChainReactionSpells
 namespace
 {
 constexpr std::size_t MAX_LIVING_BOMB_SPREAD_TARGETS = 2;
+constexpr int32 PROPAGATED_LIVING_BOMB_DAMAGE_PCT = 30;
+
+using PropagatedLivingBombKey = std::pair<ObjectGuid, ObjectGuid>;
+
+struct PropagatedLivingBombState
+{
+    uint64 Token;
+    bool RemovalPending;
+};
+
+std::map<PropagatedLivingBombKey, PropagatedLivingBombState> propagatedLivingBombs;
+std::mutex propagatedLivingBombsMutex;
+uint64 propagatedLivingBombToken = 0;
+
+uint64 MarkPropagatedLivingBomb(ObjectGuid casterGuid, ObjectGuid targetGuid)
+{
+    std::lock_guard<std::mutex> lock(propagatedLivingBombsMutex);
+    uint64 token = ++propagatedLivingBombToken;
+    propagatedLivingBombs[{ casterGuid, targetGuid }] = { token, false };
+    return token;
+}
+
+bool IsPropagatedLivingBomb(ObjectGuid casterGuid, ObjectGuid targetGuid)
+{
+    std::lock_guard<std::mutex> lock(propagatedLivingBombsMutex);
+    return propagatedLivingBombs.count({ casterGuid, targetGuid }) != 0;
+}
+
+void MarkPropagatedLivingBombForRemoval(
+    ObjectGuid casterGuid, ObjectGuid targetGuid, uint64 token)
+{
+    std::lock_guard<std::mutex> lock(propagatedLivingBombsMutex);
+    auto itr = propagatedLivingBombs.find({ casterGuid, targetGuid });
+    if (itr != propagatedLivingBombs.end() && itr->second.Token == token)
+        itr->second.RemovalPending = true;
+}
+
+void UnmarkPropagatedLivingBomb(
+    ObjectGuid casterGuid, ObjectGuid targetGuid, uint64 token)
+{
+    std::lock_guard<std::mutex> lock(propagatedLivingBombsMutex);
+    auto itr = propagatedLivingBombs.find({ casterGuid, targetGuid });
+    if (itr != propagatedLivingBombs.end() && itr->second.Token == token)
+        propagatedLivingBombs.erase(itr);
+}
+
+void UnmarkRemovedPropagatedLivingBomb(
+    ObjectGuid casterGuid, ObjectGuid targetGuid)
+{
+    std::lock_guard<std::mutex> lock(propagatedLivingBombsMutex);
+    auto itr = propagatedLivingBombs.find({ casterGuid, targetGuid });
+    if (itr != propagatedLivingBombs.end() && itr->second.RemovalPending)
+        propagatedLivingBombs.erase(itr);
+}
 }
 
 class spell_apoc_mage_pyroclastic_chain_reaction_pyroblast : public SpellScriptLoader
@@ -86,6 +143,118 @@ public:
     }
 };
 
+class spell_apoc_mage_pyroclastic_chain_reaction_living_bomb : public SpellScriptLoader
+{
+public:
+    spell_apoc_mage_pyroclastic_chain_reaction_living_bomb()
+        : SpellScriptLoader("spell_apoc_mage_pyroclastic_chain_reaction_living_bomb") { }
+
+    class spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript);
+
+        bool Load() override
+        {
+            _propagatedToken = 0;
+            return true;
+        }
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            return ValidateSpellInfo({
+                SPELL_APOC_MAGE_PYROCLASTIC_CHAIN_REACTION,
+                SPELL_MAGE_LIVING_BOMB_R1
+            });
+        }
+
+        void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        {
+            SpellInfo const* triggeringSpell =
+                aurEff->GetBase()->GetTriggeredByAuraSpellInfo();
+            if (!triggeringSpell ||
+                triggeringSpell->Id != SPELL_APOC_MAGE_PYROCLASTIC_CHAIN_REACTION)
+                return;
+
+            AuraEffect* periodicEffect = GetEffect(EFFECT_0);
+            if (!periodicEffect)
+                return;
+
+            periodicEffect->ChangeAmount(CalculatePct(
+                periodicEffect->GetAmount(), PROPAGATED_LIVING_BOMB_DAMAGE_PCT));
+            if (!_propagatedToken)
+            {
+                _propagatedToken = MarkPropagatedLivingBomb(
+                    GetCasterGUID(), GetTarget()->GetGUID());
+            }
+        }
+
+        void HandleBeforeRemove(
+            AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (!_propagatedToken)
+                return;
+
+            AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+            if (removeMode == AURA_REMOVE_BY_ENEMY_SPELL ||
+                removeMode == AURA_REMOVE_BY_EXPIRE)
+            {
+                MarkPropagatedLivingBombForRemoval(
+                    GetCasterGUID(), GetTarget()->GetGUID(), _propagatedToken);
+            }
+        }
+
+        void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (!_propagatedToken)
+                return;
+
+            AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+            if (removeMode == AURA_REMOVE_BY_ENEMY_SPELL ||
+                removeMode == AURA_REMOVE_BY_EXPIRE)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    ObjectGuid casterGuid = GetCasterGUID();
+                    ObjectGuid targetGuid = GetTarget()->GetGUID();
+                    uint64 token = _propagatedToken;
+                    caster->m_Events.AddEventAtOffset(
+                        [casterGuid, targetGuid, token]()
+                        {
+                            UnmarkPropagatedLivingBomb(
+                                casterGuid, targetGuid, token);
+                        }, Milliseconds(1));
+                    return;
+                }
+            }
+
+            UnmarkPropagatedLivingBomb(
+                GetCasterGUID(), GetTarget()->GetGUID(), _propagatedToken);
+        }
+
+        void Register() override
+        {
+            AfterEffectApply += AuraEffectApplyFn(
+                spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript::HandleApply,
+                EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE,
+                AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+            OnEffectRemove += AuraEffectRemoveFn(
+                spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript::HandleBeforeRemove,
+                EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+            AfterEffectRemove += AuraEffectRemoveFn(
+                spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript::HandleRemove,
+                EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        }
+
+    private:
+        uint64 _propagatedToken;
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_apoc_mage_pyroclastic_chain_reaction_living_bomb_AuraScript();
+    }
+};
+
 class spell_apoc_mage_pyroclastic_chain_reaction_explosion : public SpellScriptLoader
 {
 public:
@@ -113,6 +282,18 @@ public:
                 SPELL_MAGE_LIVING_BOMB_R1,
                 SPELL_MAGE_LIVING_BOMB_EXPLOSION_R1
             });
+        }
+
+        void HandleDamage(SpellEffIndex /*effIndex*/)
+        {
+            Unit* caster = GetCaster();
+            Unit* sourceTarget = GetExplTargetUnit();
+            if (!caster || !sourceTarget || !IsPropagatedLivingBomb(
+                caster->GetGUID(), sourceTarget->GetGUID()))
+                return;
+
+            SetHitDamage(CalculatePct(
+                GetHitDamage(), PROPAGATED_LIVING_BOMB_DAMAGE_PCT));
         }
 
         void CollectSpreadTarget()
@@ -173,12 +354,28 @@ public:
             }
         }
 
+        void FinishPropagatedExplosion()
+        {
+            Unit* caster = GetCaster();
+            Unit* sourceTarget = GetExplTargetUnit();
+            if (caster && sourceTarget)
+            {
+                UnmarkRemovedPropagatedLivingBomb(
+                    caster->GetGUID(), sourceTarget->GetGUID());
+            }
+        }
+
         void Register() override
         {
+            OnEffectHitTarget += SpellEffectFn(
+                spell_apoc_mage_pyroclastic_chain_reaction_explosion_SpellScript::HandleDamage,
+                EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
             AfterHit += SpellHitFn(
                 spell_apoc_mage_pyroclastic_chain_reaction_explosion_SpellScript::CollectSpreadTarget);
             AfterCast += SpellCastFn(
                 spell_apoc_mage_pyroclastic_chain_reaction_explosion_SpellScript::SpreadLivingBomb);
+            AfterCast += SpellCastFn(
+                spell_apoc_mage_pyroclastic_chain_reaction_explosion_SpellScript::FinishPropagatedExplosion);
         }
 
     private:
@@ -195,5 +392,6 @@ public:
 void AddModApocalipseMagePyroclasticChainReactionScripts()
 {
     new spell_apoc_mage_pyroclastic_chain_reaction_pyroblast();
+    new spell_apoc_mage_pyroclastic_chain_reaction_living_bomb();
     new spell_apoc_mage_pyroclastic_chain_reaction_explosion();
 }

@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module registers twelve systems:
+The module provides seventeen systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -15,7 +15,12 @@ The module registers twelve systems:
 9. Frost Bomb custom mage spell
 10. Automatic Ice Lance custom mage passive
 11. Frozen Retaliation custom mage passive
-12. Battleground stamina assistance and equipment control
+12. Divine Storm Echo custom paladin passive
+13. Permanent Seal of Righteousness custom paladin passive
+14. Divine Steed custom paladin sprint
+15. Paladin Vengeance variant passives
+16. Extended Arsenal custom paladin passive
+17. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -54,7 +59,12 @@ apocalipse-wow-module/
 |       |-- 2026_09_17_02_prismatic_barrier.sql
 |       |-- 2026_09_17_03_frost_bomb.sql
 |       |-- 2026_09_17_04_automatic_ice_lance.sql
-|       `-- 2026_09_17_05_frozen_retaliation.sql
+|       |-- 2026_09_17_05_frozen_retaliation.sql
+|       |-- 2026_09_18_02_divine_storm_echo.sql
+|       |-- 2026_09_18_03_permanent_seal_of_righteousness.sql
+|       |-- 2026_09_18_04_divine_steed.sql
+|       |-- 2026_09_18_04_paladin_vengeance_variants.sql
+|       `-- 2026_09_18_05_extended_arsenal.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -68,6 +78,9 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_mage_frost_bomb.cpp
 |   |-- mod_apocalipse_mage_automatic_ice_lance.cpp
 |   |-- mod_apocalipse_mage_frozen_retaliation.cpp
+|   |-- mod_apocalipse_paladin_divine_storm_echo.cpp
+|   |-- mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp
+|   |-- mod_apocalipse_paladin_divine_steed.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/
@@ -141,9 +154,9 @@ Detailed contract: [`.docs/custom-spells/blazing-barrier.md`](.docs/custom-spell
 
 Owner: `src/mod_apocalipse_mage_pyroclastic_chain_reaction.cpp`
 
-Custom passive spell 901003 gives Pyroblast hits a 20 percent chance to detonate and refresh the caster's Living Bomb on the target. The matching-rank explosion preserves its normal damage targets and spreads the source Living Bomb rank to up to two random surviving enemies hit by the explosion that do not already have that caster's Living Bomb.
+Custom passive spell 901003 gives Pyroblast hits a 20 percent chance to detonate and refresh the caster's Living Bomb on the target. The matching-rank explosion preserves its normal damage targets and spreads the source Living Bomb rank to up to two random surviving enemies hit by the explosion that do not already have that caster's Living Bomb. Propagated bombs deal 30 percent of normal periodic and explosion damage.
 
-The automatic module world update installs the passive and binds all Pyroblast and Living Bomb explosion ranks. Talent acquisition is intentionally external and requires matching server and client talent data. Human and bot-controlled mages use identical combat behavior.
+The automatic module world updates install the passive and bind all Pyroblast, Living Bomb aura, and Living Bomb explosion ranks. Talent acquisition is intentionally external and requires matching server and client talent data. Human and bot-controlled mages use identical combat behavior.
 
 Detailed contract: [`.docs/custom-spells/pyroclastic-chain-reaction.md`](.docs/custom-spells/pyroclastic-chain-reaction.md)
 
@@ -177,7 +190,7 @@ Detailed contract: [`.docs/custom-spells/prismatic-barrier.md`](.docs/custom-spe
 
 Owner: `src/mod_apocalipse_mage_frost_bomb.cpp`
 
-Custom active spell 901007 places a four-second Frost Bomb on one enemy with a 1.5 second cast and 16 second cooldown. Expiration, enemy dispel, or target death triggers spell 901008 for target-centered Frost area damage, then spell 901009 slows each living damage victim according to the caster's Permafrost rank. Its automatic world update and matching client spell rows are required, while acquisition remains external.
+Custom active spell 901007 places a four-second Frost Bomb on one enemy with a 1.5 second cast and 16 second cooldown. Expiration, enemy dispel, or target death shows a Frost Nova explosion on the bombed enemy, triggers spell 901008 for target-centered Frost area damage, then spell 901009 slows each living damage victim according to the caster's Permafrost rank. Its automatic world update and matching client spell rows are required, while acquisition remains external.
 
 Detailed contract: [`.docs/custom-spells/frost-bomb.md`](.docs/custom-spells/frost-bomb.md)
 
@@ -185,7 +198,7 @@ Detailed contract: [`.docs/custom-spells/frost-bomb.md`](.docs/custom-spells/fro
 
 Owner: `src/mod_apocalipse_mage_automatic_ice_lance.cpp`
 
-Custom passive spell 901010 gives direct, non-triggered Frost spell damage a 10 percent chance, with a one-second internal cooldown, to trigger existing Ice Lance 30455 on the damaged target. Each proc also grants an independently expiring 1 percent spell-haste contribution for 10 seconds through non-persistent aura 901011, capped at 20 percent. The automatic Ice Lance retains proc events so it consumes Fingers of Frost normally.
+Custom passive spell 901010 gives Mage-family Frost spell damage, including periodic and triggered damage, a 10 percent chance, with a one-second internal cooldown, to trigger existing Ice Lance 30455 on the damaged target. Ice Lance damage is excluded to prevent recursion. Each proc also grants an independently expiring 1 percent spell-haste contribution for 10 seconds through non-persistent aura 901011, capped at 20 percent. The automatic Ice Lance retains proc events so it consumes Fingers of Frost normally.
 
 The automatic module world update installs both custom rows, proc metadata, script bindings, and temporary-aura cleanup metadata. Acquisition remains external, and matching client spell rows are required. Human and bot-controlled mages use identical mechanics.
 
@@ -200,6 +213,70 @@ Custom passive ranks 901012 and 901013 give positive incoming combat damage a 1.
 The automatic module world update installs both custom rows, rank relationships, floating-point proc chances, rank-chain script binding, and backend names. Acquisition remains external, matching client spell rows with rank labels are required, and human and bot-controlled mages use identical mechanics.
 
 Detailed contract: [`.docs/custom-spells/frozen-retaliation.md`](.docs/custom-spells/frozen-retaliation.md)
+
+### Divine Storm Echo
+
+Owner: `src/mod_apocalipse_paladin_divine_storm_echo.cpp`
+
+Custom passive 901014 makes completed Divine Storm 53385 casts schedule triggered echo 901015 one second later. The echo selects up to 12 enemies around the paladin's current position, deals normalized 55 percent weapon damage, resolves independent hits and critical strikes, retains normal proc eligibility, and reuses core Divine Storm healing proportional to final damage.
+
+The automatic module world update installs both custom rows and exact script bindings. Passive acquisition remains external, echo 901015 must never be learned directly, and matching client rows are required. Human and bot-controlled paladins use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/divine-storm-echo.md`](.docs/custom-spells/divine-storm-echo.md)
+
+### Permanent Seal of Righteousness
+
+Owner: `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp`
+
+Custom passive 901016 adds stock Seal of Righteousness damage to eligible melee attacks and judgements while another real seal remains active. It reuses damage spell 25742, the stock AP, Holy spell-power, target vulnerability, libram, and weapon-speed formula, including the Judgements of the Just double hit.
+
+The passive has no seal family flags, so it does not enter real seal exclusivity or judgement selection. It suppresses itself while real Seal of Righteousness is active and rejects its own damage to prevent recursion. Acquisition remains external, a matching visible client spell row is required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/permanent-seal-of-righteousness.md`](.docs/custom-spells/permanent-seal-of-righteousness.md)
+
+### Divine Steed
+
+Owner: `src/mod_apocalipse_paladin_divine_steed.cpp`
+
+Custom active spell 901017 doubles run speed for four seconds on a 20-second cooldown and shows Charger display 14565 for Alliance players or Thalassian Charger display 20030 for Horde players. It changes only `UNIT_FIELD_MOUNTDISPLAYID`, never applies mounted state, and therefore preserves ordinary combat, casting, pets, indoor use, action bars, and collision height.
+
+The AuraScript clears only its own display while the player is not mechanically mounted, and player lifecycle hooks remove the effect on logout and map changes. The automatic module world update installs the spell, binding, and non-save attribute. Acquisition is external, a matching client spell row is required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/divine-steed.md`](.docs/custom-spells/divine-steed.md)
+
+### Paladin Vengeance Variants
+
+Owner: `data/sql/db-world/2026_09_18_04_paladin_vengeance_variants.sql`
+
+Guardian's Vengeance passive 901018 turns melee and damaging-spell critical hits into Guardian's Resolve 901019. Each of its three eight-second stacks reduces all damage taken by 1 percent and adds 10 flat defense rating.
+
+Sacred Vengeance passive 901020 turns direct and periodic healing critical hits into Sacred Fervor 901021. Each of its three eight-second stacks increases healing done by 2 percent and adds 10 mana per 5 seconds. A critical source heal grants one stack; Beacon copies cannot crit and grant none.
+
+Both graphs use native proc and aura handling without C++. Acquisition remains external, only the passive IDs may be granted, four matching client spell rows are required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/paladin-vengeance-variants.md`](.docs/custom-spells/paladin-vengeance-variants.md)
+
+### Extended Arsenal
+
+Owner: `data/sql/db-world/2026_09_18_05_extended_arsenal.sql`
+
+Extended Arsenal ranks 901022 and 901023 increase Hammer of the Righteous and Avenger's Shield maximum range by 3 or 6 yards and their chain target count by 1 or 2. The passive uses native flat spell modifiers and the exact Paladin family masks from the deployment DBC.
+
+No C++ script, proc metadata, or playerbot AI change is required. The automatic module world update installs both ranks and their rank relationship. Acquisition remains external, matching client spell rows are required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/extended-arsenal.md`](.docs/custom-spells/extended-arsenal.md)
+
+### Divine Toll
+
+Owners: `src/mod_apocalipse_paladin_divine_toll.cpp`, `data/sql/db-world/2026_09_18_05_divine_toll.sql`
+
+Custom active spell 901024 costs 10 percent base mana, uses the global cooldown, and has a 60-second cooldown. It rolls one through five impacts against the selected hostile target, beginning immediately and continuing every 500 ms. Invalid targets are replaced by the nearest valid enemy within normal Judgement range.
+
+Each impact applies Judgement of Justice and executes the currently active real seal's stock Judgement behavior at 50 percent damage with independent critical strikes and normal downstream PvP and proc handling. Judgements of the Wise is limited to once per sequence, while Judgements of the Just, Heart of the Crusader, Righteous Vengeance, and generic procs retain their approved per-impact behavior. Passive 901016 can fire beside real Seal of Righteousness only during the bounded Divine Toll impact marker.
+
+Acquisition and client patch generation remain external. Humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/divine-toll.md`](.docs/custom-spells/divine-toll.md)
 
 ### Battleground Stamina Assistance
 
@@ -221,7 +298,7 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001 through 901013
+- Server and client custom-spell data for spells 901001 through 901026
 - Matching talent data when a custom passive is granted through a talent
 
 Stock AzerothCore compatibility has not been validated.
@@ -241,9 +318,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901013 updates install the custom mage spells and their script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901026 updates install the custom class spells, proc metadata, and script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001 through 901013 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001 through 901026 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

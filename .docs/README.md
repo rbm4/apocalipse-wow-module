@@ -61,6 +61,12 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/frost-bomb.md`](custom-spells/frost-bomb.md)
 - [`custom-spells/automatic-ice-lance.md`](custom-spells/automatic-ice-lance.md)
 - [`custom-spells/frozen-retaliation.md`](custom-spells/frozen-retaliation.md)
+- [`custom-spells/divine-storm-echo.md`](custom-spells/divine-storm-echo.md)
+- [`custom-spells/permanent-seal-of-righteousness.md`](custom-spells/permanent-seal-of-righteousness.md)
+- [`custom-spells/divine-steed.md`](custom-spells/divine-steed.md)
+- [`custom-spells/paladin-vengeance-variants.md`](custom-spells/paladin-vengeance-variants.md)
+- [`custom-spells/extended-arsenal.md`](custom-spells/extended-arsenal.md)
+- [`custom-spells/divine-toll.md`](custom-spells/divine-toll.md)
 
 ## Source-of-truth order
 

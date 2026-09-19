@@ -10,6 +10,7 @@ enum ApocalipseMageFrostBombSpells
     SPELL_APOC_MAGE_FROST_BOMB           = 901007,
     SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION = 901008,
     SPELL_APOC_MAGE_FROST_BOMB_SLOW      = 901009,
+    SPELL_MAGE_FROST_NOVA_VISUAL         = 34326,
     SPELL_MAGE_PERMAFROST_R1             = 11175,
     SPELL_MAGE_PERMAFROST_AURA           = 68391
 };
@@ -85,7 +86,19 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            return ValidateSpellInfo({ SPELL_APOC_MAGE_FROST_BOMB_SLOW }) &&
+            if (!ValidateSpellInfo({
+                SPELL_APOC_MAGE_FROST_BOMB_SLOW,
+                SPELL_MAGE_FROST_NOVA_VISUAL
+            }))
+                return false;
+
+            SpellInfo const* visualSpell =
+                sSpellMgr->GetSpellInfo(SPELL_MAGE_FROST_NOVA_VISUAL);
+            return visualSpell->SpellVisual[0] == 17 &&
+                visualSpell->Effects[EFFECT_0].IsEffect(SPELL_EFFECT_DUMMY) &&
+                visualSpell->Effects[EFFECT_0].CalcValue() == 0 &&
+                !visualSpell->Effects[EFFECT_1].IsEffect() &&
+                !visualSpell->Effects[EFFECT_2].IsEffect() &&
                 spellInfo->GetSchoolMask() == SPELL_SCHOOL_MASK_FROST &&
                 spellInfo->SpellFamilyName == SPELLFAMILY_MAGE &&
                 spellInfo->Effects[EFFECT_0].IsEffect(
@@ -94,6 +107,13 @@ public:
                     TARGET_DEST_TARGET_ENEMY &&
                 spellInfo->Effects[EFFECT_0].TargetB.GetTarget() ==
                     TARGET_UNIT_DEST_AREA_ENEMY;
+        }
+
+        void ShowExplosion()
+        {
+            if (Unit* target = GetExplTargetUnit())
+                target->CastSpell(
+                    target, SPELL_MAGE_FROST_NOVA_VISUAL, true);
         }
 
         void ApplySlow(SpellEffIndex /*effIndex*/)
@@ -107,6 +127,8 @@ public:
 
         void Register() override
         {
+            OnCast += SpellCastFn(
+                spell_apoc_mage_frost_bomb_explosion_SpellScript::ShowExplosion);
             OnEffectHitTarget += SpellEffectFn(
                 spell_apoc_mage_frost_bomb_explosion_SpellScript::ApplySlow,
                 EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);

@@ -17,6 +17,10 @@ void AddModApocalipseMagePrismaticBarrierScripts();
 void AddModApocalipseMageFrostBombScripts();
 void AddModApocalipseMageAutomaticIceLanceScripts();
 void AddModApocalipseMageFrozenRetaliationScripts();
+void AddModApocalipsePaladinDivineStormEchoScripts();
+void AddModApocalipsePaladinPermanentSealOfRighteousnessScripts();
+void AddModApocalipsePaladinDivineTollScripts();
+void AddModApocalipsePaladinDivineSteedScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -32,5 +36,9 @@ void Addapocalipse_wow_moduleScripts()
     AddModApocalipseMageFrostBombScripts();
     AddModApocalipseMageAutomaticIceLanceScripts();
     AddModApocalipseMageFrozenRetaliationScripts();
+    AddModApocalipsePaladinDivineStormEchoScripts();
+    AddModApocalipsePaladinPermanentSealOfRighteousnessScripts();
+    AddModApocalipsePaladinDivineTollScripts();
+    AddModApocalipsePaladinDivineSteedScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

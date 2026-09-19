@@ -4,11 +4,11 @@ Status: Implemented in source, build and runtime not verified
 
 Owners: `src/mod_apocalipse_mage_automatic_ice_lance.cpp`, `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-17
+Last source review: 2026-09-18
 
 ## Purpose
 
-Automatic Ice Lance is a Frost Mage passive using provisional spell 901010. Direct, non-triggered Frost spell damage has a 10 percent chance to cast existing Ice Lance 30455 at the damaged target and add one independently expiring contribution to haste aura 901011.
+Automatic Ice Lance is a Frost Mage passive using provisional spell 901010. Mage-family Frost spell damage, including direct, periodic, and triggered damage, has a 10 percent chance to cast existing Ice Lance 30455 at the damaged target and add one independently expiring contribution to haste aura 901011.
 
 ## Acquisition boundary
 
@@ -24,7 +24,7 @@ Human and bot-controlled mages use identical proc, targeting, Ice Lance, Fingers
 |---|---|
 | Passive | 901010 Automatic Ice Lance, permanent dummy aura |
 | Trigger | 10 percent chance with a 1000 ms internal cooldown |
-| Damage filter | Direct Mage-family Frost spell damage from a non-triggered player cast |
+| Damage filter | Mage-family Frost spell damage, including direct, periodic, and triggered damage; Ice Lance itself is excluded |
 | Automatic attack | Existing Ice Lance 30455, cast instantly and without cost or global cooldown |
 | Haste | 901011 Ice Lance Momentum, 1 percent spell haste per active contribution |
 | Expiration | Each contribution expires 10 seconds after its own proc |
@@ -36,7 +36,7 @@ Human and bot-controlled mages use identical proc, targeting, Ice Lance, Fingers
 ## Runtime flow
 
 ```text
-eligible direct player-cast Frost damage hit
+eligible Mage-family Frost damage hit
   -> spell_proc applies the 10 percent roll and 1000 ms cooldown
   -> passive AuraScript validates cast origin, damage type, and target
   -> trigger Ice Lance 30455 on the proc target
@@ -48,9 +48,9 @@ eligible direct player-cast Frost damage hit
 
 ## Proc and recursion contract
 
-The `spell_proc` row filters to Mage family, Frost school, direct magic damage hit events. The AuraScript additionally requires the aura owner to be a player and the event actor, requires a non-triggered `Spell`, requires `SPELL_DIRECT_DAMAGE`, and rejects Ice Lance 30455 and Frost Bomb Explosion 901008 explicitly. Triggered Blizzard damage and every other triggered cast are rejected by the same source-cast guard.
+The `spell_proc` row filters to Mage family, Frost school, damage hit events from direct magic damage or periodic damage. `PROC_ATTR_TRIGGERED_CAN_PROC` allows triggered Frost damage to enter the same path. The AuraScript additionally requires the aura owner to be a player and the event actor, requires damage information, and rejects Ice Lance 30455 explicitly. Frost Bomb Explosion, Blizzard ticks, and other Mage-family Frost damage can qualify.
 
-The automatic Ice Lance is cast with the Mage as caster and original caster. Its trigger flags retain proc events so existing Fingers of Frost can consume a charge. Automatic Ice Lance cannot recurse because passive 901010 rejects triggered spells and its `spell_proc` row does not enable triggered events.
+The automatic Ice Lance is cast with the Mage as caster and original caster. Its trigger flags retain proc events so existing Fingers of Frost can consume a charge. Automatic Ice Lance cannot recurse because both the core self-loop guard and the AuraScript reject Ice Lance as the triggering spell. The 1000 ms internal cooldown bounds chains involving other triggered Frost effects.
 
 ## Target contract
 
@@ -67,10 +67,12 @@ The haste aura is marked non-save in `spell_custom_attr`. Removing passive 90101
 The automatic world update:
 
 1. Collision-checks 901010 and 901011 in `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`.
-2. Inserts only missing rows and recognizes only their expected signatures as module-owned.
-3. Adds the 10 percent, 1000 ms `spell_proc` definition for passive 901010.
+2. Inserts only missing rows and recognizes only their expected signatures as module-owned. The 10 percent passive stores `EffectBasePoints_1 = 9` because AzerothCore adds one when interpreting spell base points; both ownership predicates must compare against that stored value so an applied migration remains rerunnable.
+3. Adds the 10 percent, 1000 ms `spell_proc` definition for direct and periodic Mage Frost damage and enables triggered spells to qualify.
 4. Binds both AuraScripts and marks haste aura 901011 non-save.
 5. Synchronizes both backend spell names.
+
+The follow-up automatic update `data/sql/db-world/2026_09_18_01_automatic_ice_lance_proc_eligibility.sql` applies the broadened proc masks and descriptions to recognized existing installations. The matching client `Spell.dbc` row also needs the updated proc mask and text.
 
 ## Runtime verification matrix
 
@@ -78,10 +80,10 @@ The automatic world update:
 |---|---|---|
 | Direct non-critical Frost spell hit | 10 percent proc eligibility | Not run |
 | Critical direct Frost spell hit | Same 10 percent proc eligibility | Not run |
-| Periodic Frost damage | No proc | Not run |
-| Triggered Frost damage and Blizzard damage | No proc | Not run |
-| Frost Bomb Explosion 901008 | No proc | Not run |
-| Normal player-cast Ice Lance 30455 | No proc | Not run |
+| Periodic Mage Frost damage | 10 percent proc eligibility, limited by the shared cooldown | Not run |
+| Triggered Mage Frost damage and Blizzard damage | 10 percent proc eligibility, limited by the shared cooldown | Not run |
+| Frost Bomb Explosion 901008 | 10 percent proc eligibility, limited by the shared cooldown | Not run |
+| Normal or automatic Ice Lance 30455 | No proc recursion | Not run |
 | Automatic Ice Lance with Fingers of Frost | Ice Lance consumes Fingers of Frost normally | Not run |
 | Invalid, dead, friendly, cross-map, or line-of-sight-blocked target | No proc, Ice Lance, haste contribution, or internal cooldown | Not run |
 | Contributions at 0 and 7 seconds | First expires near 10 seconds and second near 17 seconds | Not run |
