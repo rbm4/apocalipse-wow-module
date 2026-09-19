@@ -3,18 +3,8 @@ SET @frost_bomb_owned := (
     FROM `spell_dbc`
     WHERE `ID` = 901007
       AND `Name_Lang_enUS` = 'Frost Bomb'
-      AND `CastingTimeIndex` = 16
-      AND `RecoveryTime` = 16000
-      AND `DurationIndex` = 35
-      AND `ManaCostPct` = 22
-      AND `DispelType` = 1
-      AND `SchoolMask` = 16
       AND `SpellClassSet` = 3
-      AND `SpellClassMask_1` = 0
-      AND `EquippedItemClass` = -1
       AND `Effect_1` = 6
-      AND `EffectDieSides_1` = 1
-      AND `EffectBasePoints_1` = 901007
       AND `ImplicitTargetA_1` = 6
       AND `EffectAura_1` = 4
 );
@@ -24,19 +14,10 @@ SET @frost_bomb_explosion_owned := (
     FROM `spell_dbc`
     WHERE `ID` = 901008
       AND `Name_Lang_enUS` = 'Frost Bomb Explosion'
-      AND `AttributesEx2` = 0x40000001
-      AND `SchoolMask` = 16
       AND `SpellClassSet` = 3
-      AND `SpellClassMask_1` = 32
-      AND `EquippedItemClass` = -1
       AND `Effect_1` = 2
-      AND `EffectDieSides_1` = 1
-      AND `EffectBasePoints_1` = 689
-      AND ABS(`EffectBonusMultiplier_1` - 0.4) < 0.0001
       AND `ImplicitTargetA_1` = 53
       AND `ImplicitTargetB_1` = 16
-      AND `EffectRadiusIndex_1` = 13
-      AND `SpellVisualID_1` IN (0, 17)
 );
 
 SET @frost_bomb_slow_owned := (
@@ -44,14 +25,8 @@ SET @frost_bomb_slow_owned := (
     FROM `spell_dbc`
     WHERE `ID` = 901009
       AND `Name_Lang_enUS` = 'Frost Bomb Slow'
-      AND `DispelType` = 1
-      AND `DurationIndex` = 28
-      AND `SchoolMask` = 16
       AND `SpellClassSet` = 3
-      AND `EquippedItemClass` = -1
       AND `Effect_1` = 6
-      AND `EffectDieSides_1` = 1
-      AND `EffectBasePoints_1` = -41
       AND `ImplicitTargetA_1` = 6
       AND `EffectAura_1` = 33
 );
@@ -89,6 +64,92 @@ SET @frost_bomb_collision_guard := (
         WHERE `ID` = 901009 AND @frost_bomb_slow_owned = 0
     ) AS `collision_guard`
 );
+
+UPDATE `spell_dbc`
+SET `DispelType` = 1,
+    `Attributes` = 0x04010000,
+    `CastingTimeIndex` = 16,
+    `RecoveryTime` = 16000,
+    `InterruptFlags` = 15,
+    `ProcChance` = 101,
+    `BaseLevel` = 80,
+    `SpellLevel` = 80,
+    `DurationIndex` = 35,
+    `PowerType` = 0,
+    `ManaCost` = 0,
+    `RangeIndex` = 4,
+    `Speed` = 0,
+    `EquippedItemClass` = -1,
+    `EquippedItemSubclass` = 0,
+    `EquippedItemInvTypes` = 0,
+    `EffectDieSides_1` = 1,
+    `EffectBasePoints_1` = 901007,
+    `SpellVisualID_1` = 13,
+    `SpellIconID` = 188,
+    `ManaCostPct` = 22,
+    `StartRecoveryCategory` = 133,
+    `StartRecoveryTime` = 1500,
+    `SpellClassMask_1` = 0,
+    `DefenseType` = 1,
+    `PreventionType` = 1,
+    `EffectChainAmplitude_1` = 1.0,
+    `SchoolMask` = 16
+WHERE `ID` = 901007
+  AND @frost_bomb_owned = 1;
+
+UPDATE `spell_dbc`
+SET `Attributes` = 0x04010080,
+    `AttributesEx2` = 0x40000001,
+    `CastingTimeIndex` = 1,
+    `ProcChance` = 101,
+    `BaseLevel` = 80,
+    `SpellLevel` = 80,
+    `PowerType` = 0,
+    `ManaCost` = 0,
+    `RangeIndex` = 4,
+    `Speed` = 0,
+    `EquippedItemClass` = -1,
+    `EquippedItemSubclass` = 0,
+    `EquippedItemInvTypes` = 0,
+    `EffectDieSides_1` = 1,
+    `EffectBasePoints_1` = 689,
+    `EffectRadiusIndex_1` = 13,
+    `SpellVisualID_1` = 0,
+    `SpellIconID` = 188,
+    `SpellClassMask_1` = 32,
+    `DefenseType` = 1,
+    `PreventionType` = 1,
+    `EffectChainAmplitude_1` = 1.0,
+    `SchoolMask` = 16,
+    `EffectBonusMultiplier_1` = 0.4
+WHERE `ID` = 901008
+  AND @frost_bomb_explosion_owned = 1;
+
+UPDATE `spell_dbc`
+SET `DispelType` = 1,
+    `Attributes` = 0x04010000,
+    `CastingTimeIndex` = 1,
+    `ProcChance` = 101,
+    `BaseLevel` = 80,
+    `SpellLevel` = 80,
+    `DurationIndex` = 28,
+    `PowerType` = 0,
+    `ManaCost` = 0,
+    `RangeIndex` = 4,
+    `Speed` = 0,
+    `EquippedItemClass` = -1,
+    `EquippedItemSubclass` = 0,
+    `EquippedItemInvTypes` = 0,
+    `EffectDieSides_1` = 1,
+    `EffectBasePoints_1` = -41,
+    `SpellVisualID_1` = 17,
+    `SpellIconID` = 193,
+    `DefenseType` = 1,
+    `PreventionType` = 1,
+    `EffectChainAmplitude_1` = 1.0,
+    `SchoolMask` = 16
+WHERE `ID` = 901009
+  AND @frost_bomb_slow_owned = 1;
 
 INSERT INTO `spell_dbc` (
     `ID`, `DispelType`, `Attributes`, `CastingTimeIndex`, `RecoveryTime`,
