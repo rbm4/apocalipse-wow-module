@@ -41,7 +41,7 @@ Pure formatting changes may use a short history entry and do not need a feature 
 ### Before implementation
 
 1. Read `AGENTS.md` and `.docs/README.md`.
-2. Trace the relevant loader registration, hook, config, SQL, spell ID, and bot path.
+2. Trace the relevant loader registration, hook, config, SQL, spell ID, and bot path using the repository's offline-only evidence hierarchy. Never attempt local MySQL access.
 3. Choose the owner document before editing code.
 4. For a new cross-cutting feature, copy `templates/feature.md` to `features/<lowercase-kebab-name>.md`.
 5. For a new internal subsystem, copy `templates/subsystem.md` to `subsystems/<lowercase-kebab-name>.md`.

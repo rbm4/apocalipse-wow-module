@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module provides twenty-five systems:
+The module provides thirty systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -15,20 +15,25 @@ The module provides twenty-five systems:
 9. Frost Bomb custom mage spell
 10. Automatic Ice Lance custom mage passive
 11. Frozen Retaliation custom mage passive
-12. Divine Storm Echo custom paladin passive
-13. Permanent Seal of Righteousness custom paladin passive
-14. Divine Steed custom paladin sprint
-15. Paladin Vengeance variant passives
-16. Extended Arsenal custom paladin passive
-17. Divine Toll custom paladin spell
-18. Burning Conflagration custom warlock passive
-19. Chaotic Inferno custom warlock passive
-20. Demonic Equilibrium custom warlock passive
-21. Unquenchable Flames custom warlock passive
-22. Unyielding Shadows custom warlock passive
-23. Haunting Affliction custom warlock passive
-24. Permanent Metamorphosis custom warlock passive
-25. Battleground stamina assistance and equipment control
+12. Ambush Trapper custom hunter passive
+13. Primal Resolve custom hunter defensive
+14. Apex Bond custom hunter spell
+15. Blood of the Hunt custom hunter passive
+16. Melee Specialization custom hunter passive
+17. Divine Storm Echo custom paladin passive
+18. Permanent Seal of Righteousness custom paladin passive
+19. Divine Steed custom paladin sprint
+20. Paladin Vengeance variant passives
+21. Extended Arsenal custom paladin passive
+22. Divine Toll custom paladin spell
+23. Burning Conflagration custom warlock passive
+24. Chaotic Inferno custom warlock passive
+25. Demonic Equilibrium custom warlock passive
+26. Unquenchable Flames custom warlock passive
+27. Unyielding Shadows custom warlock passive
+28. Haunting Affliction custom warlock passive
+29. Permanent Metamorphosis custom warlock passive
+30. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -75,7 +80,11 @@ apocalipse-wow-module/
 |       |-- 2026_09_18_05_extended_arsenal.sql
 |       |-- 2026_09_20_04_burning_conflagration.sql
 |       |-- 2026_09_20_05_chaotic_inferno.sql
-|       `-- 2026_09_20_06_demonic_equilibrium.sql
+|       |-- 2026_09_20_06_demonic_equilibrium.sql
+|       |-- 2026_09_21_00_ambush_trapper.sql
+|       |-- 2026_09_21_01_apex_bond.sql
+|       |-- 2026_09_21_01_blood_of_the_hunt.sql
+|       `-- 2026_09_21_02_melee_specialization.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -89,6 +98,9 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_mage_frost_bomb.cpp
 |   |-- mod_apocalipse_mage_automatic_ice_lance.cpp
 |   |-- mod_apocalipse_mage_frozen_retaliation.cpp
+|   |-- mod_apocalipse_hunter_ambush_trapper.cpp
+|   |-- mod_apocalipse_hunter_apex_bond.cpp
+|   |-- mod_apocalipse_hunter_blood_of_the_hunt.cpp
 |   |-- mod_apocalipse_paladin_divine_storm_echo.cpp
 |   |-- mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp
 |   |-- mod_apocalipse_paladin_divine_steed.cpp
@@ -227,6 +239,56 @@ Custom passive ranks 901012 and 901013 give positive incoming combat damage a 1.
 The automatic module world update installs both custom rows, rank relationships, floating-point proc chances, rank-chain script binding, and backend names. Acquisition remains external, matching client spell rows with rank labels are required, and human and bot-controlled mages use identical mechanics.
 
 Detailed contract: [`.docs/custom-spells/frozen-retaliation.md`](.docs/custom-spells/frozen-retaliation.md)
+
+### Ambush Trapper
+
+Owners: `src/mod_apocalipse_hunter_ambush_trapper.cpp`, `data/sql/db-world/2026_09_21_00_ambush_trapper.sql`
+
+Custom passive 901038 grants Predator's Ambush 901039 whenever a Hunter trap activates. The 15-second buff has five native charges. Each landed Hunter melee special consumes one charge, deals Physical damage through helper 901040 equal to 2 percent of the lower of target and Hunter maximum health, and restores 5 percent maximum mana through helper 901041.
+
+Ambush Strike receives linear lower-level DAMAGE scaling and then existing PvP reduction. Acquisition remains external and must reference only 901038. Matching client rows are required for all four spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/ambush-trapper.md`](.docs/custom-spells/ambush-trapper.md)
+
+### Primal Resolve
+
+Owners: `src/mod_apocalipse_hunter_primal_resolve.cpp`, `data/sql/db-world/2026_09_21_03_primal_resolve.sql`
+
+Custom active spell 901042 removes current snare mechanics and reduces all damage taken by 15 percent for 6 seconds. It has a 30-second cooldown, does not remove roots or grant ongoing movement immunity, and leaves the Hunter attack-capable and targetable.
+
+The reduction uses native all-school damage-taken handling, while the one-time cleanup uses the deployment core's snare-removal helper. Acquisition and playerbot cast policy remain external, and a matching client spell row is required.
+
+Detailed contract: [`.docs/custom-spells/primal-resolve.md`](.docs/custom-spells/primal-resolve.md)
+
+### Apex Bond
+
+Owners: `src/mod_apocalipse_hunter_apex_bond.cpp`, `data/sql/db-world/2026_09_21_01_apex_bond.sql`
+
+Custom active spell 901046 requires a living active pet. It instantly heals the Hunter and pet for 15 percent of each target's maximum health, then grants the pet 15 percent increased damage for 10 seconds. The spell has a 90-second cooldown.
+
+Implicit pet targets provide the same generic pet-presence contract used by Mend Pet, while the script enforces the stricter active and alive pet checks used by Bestial Wrath. Acquisition and bot cast policy remain external, and a matching client spell row is required.
+
+Detailed contract: [`.docs/custom-spells/apex-bond.md`](.docs/custom-spells/apex-bond.md)
+
+### Blood of the Hunt
+
+Owners: `src/mod_apocalipse_hunter_blood_of_the_hunt.cpp`, `data/sql/db-world/2026_09_21_01_blood_of_the_hunt.sql`
+
+Custom passive 901044 heals the Hunter for 15 percent of positive damage dealt by Raptor Strike, Mongoose Bite, Wing Clip, or Counterattack. Hunter trap activations instead heal for 5 percent maximum health. Both branches cast direct-heal helper 901045 and share one two-second internal cooldown.
+
+Blood Heal receives linear lower-level HEAL scaling. Acquisition remains external and must reference only 901044. Matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/blood-of-the-hunt.md`](.docs/custom-spells/blood-of-the-hunt.md)
+
+### Melee Specialization
+
+Owner: `data/sql/db-world/2026_09_21_02_melee_specialization.sql`
+
+Custom passive 901047 uses native Hunter family filters to let Raptor Strike, Mongoose Bite, and Counterattack satisfy any aura-state requirement. In the deployment DBC only Counterattack currently declares one; Raptor Strike and Mongoose Bite are already unrestricted by aura state. A second family mask adds Wing Clip and gives all four Hunter melee ability families a 30 percent `SPELLMOD_DAMAGE` increase.
+
+The passive does not remove range, weapon, resource, cooldown, target, silence, disarm, or other cast checks. It requires no C++ script or loader registration. Acquisition remains external, matching client spell data is required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/melee-specialization.md`](.docs/custom-spells/melee-specialization.md)
 
 ### Divine Storm Echo
 
@@ -386,12 +448,14 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001 through 901035
+- Server and client custom-spell data for spells 901001 through 901047
 - Matching talent data when a custom passive is granted through a talent
 
 Stock AzerothCore compatibility has not been validated.
 
 ## Database setup
+
+Agent development and review are offline-only and must assume MySQL is unavailable. Agents derive IDs and spell data only from module migrations, matching AzerothCore source and checked-in SQL, and finally read-only local DBC extraction when needed. Backend source may explain export mechanics but is not allocation evidence. Agents do not probe for MySQL or execute the commands in this section. Live collision checks and migration execution belong to an authorized deployment operator.
 
 Manual baseline and migration files are outside the automatic updater path. Run them only against the named database while following the server's backup and migration procedure.
 
@@ -406,9 +470,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901035 updates install the custom class spells, native modifiers, proc metadata, and script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901047 updates install the custom class spells, native modifiers, proc metadata, and script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001 through 901035 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001 through 901047 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

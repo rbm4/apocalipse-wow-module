@@ -23,6 +23,20 @@ Before changing code or data, read:
 
 Use executed code in the matching custom core as the final source of truth. When code, SQL, config, and docs disagree, investigate the runtime path and fix the drift in the same change.
 
+## Offline-only database assumption
+
+Agent development and review must always assume that no local or reachable MySQL service exists. Agents must not attempt a MySQL connection, probe database ports or services, start a database or container, search for credentials, invoke database MCP tools, or execute SQL for discovery or validation. This remains true even when configuration files contain database connection settings.
+
+Use this mandatory evidence order for spell IDs and spell data:
+
+1. Inspect `data/sql/db-world/` and manual migrations in this module for existing custom allocations and ownership. Use module C++ constants and documentation only to cross-check migration consistency, not as a substitute for the migration ledger.
+2. Inspect the matching custom AzerothCore source and checked-in AzerothCore SQL for stock IDs, schemas, enum values, proc behavior, family masks, and nearby spell contracts.
+3. Only when those sources are insufficient, extract fields from an available local `.dbc` file in read-only mode. Never require a DBC file and never modify one unless explicitly requested.
+
+These are the only permitted ID and spell-data discovery sources. Backend code may be inspected to understand export mechanics, but backend caches, services, and databases are not ID-allocation evidence.
+
+If these offline sources cannot prove that an ID is globally free, use the next repository-free guarded range, preserve collision guards, and report live database and deployed-client collision checks as pending operator deployment work. Do not ask for database credentials and do not block implementation solely because live MySQL validation is unavailable. SQL validation during agent work is static review only. SQL snippets in operations documentation are commands for an authorized deployment operator, not instructions for agents to execute.
+
 ## Current source map
 
 | Path | Responsibility |
@@ -39,6 +53,10 @@ Use executed code in the matching custom core as the final source of truth. When
 | `src/mod_apocalipse_mage_frost_bomb.cpp` | Frost Bomb removal, explosion, proc, and Permafrost slow behavior |
 | `src/mod_apocalipse_mage_automatic_ice_lance.cpp` | Automatic Ice Lance proc filtering and independent haste expirations |
 | `src/mod_apocalipse_mage_frozen_retaliation.cpp` | Two-rank incoming-damage proc that grants Fingers of Frost |
+| `src/mod_apocalipse_hunter_ambush_trapper.cpp` | Trap-activation buff and charged Hunter melee-special behavior |
+| `src/mod_apocalipse_hunter_primal_resolve.cpp` | Active Hunter damage reduction and snare cleanup |
+| `src/mod_apocalipse_hunter_apex_bond.cpp` | Active Hunter and pet healing with a temporary pet damage buff |
+| `src/mod_apocalipse_hunter_blood_of_the_hunt.cpp` | Shared-cooldown Hunter melee-special and trap self-healing |
 | `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo |
 | `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR proc behavior beside another real seal |
 | `src/mod_apocalipse_paladin_divine_toll.cpp` | Sequenced half-damage Judgement impacts and proc controls |
@@ -62,7 +80,7 @@ Use executed code in the matching custom core as the final source of truth. When
 5. **State bot behavior explicitly.** Every gameplay feature must say whether it applies identically to bots, suppresses output, bypasses a restriction, or requires separate logic.
 6. **Use the correct database.** World definitions use `WorldDatabase`; per-character grant state uses `CharacterDatabase`. Preserve explicit `USE` boundaries in manual SQL.
 7. **Keep SQL mode clear.** Files outside `data/sql/db-world/` are manual unless documented otherwise. Files inside that directory are automatic world updates. Never apply production SQL without explicit approval.
-8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901035 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
+8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901047 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
 9. **Keep config defaults synchronized.** A setting's code fallback, distributed `.conf.dist`, validation, and documented default must agree. If they do not, record the drift until fixed.
 10. **Preserve gameplay cleanup.** Battleground-only state must be removed on unsupported maps/leave. Managed talents and hidden budgets must be revoked on tree transitions/reset. Do not add persistent auras accidentally.
 11. **Keep event work bounded.** Bot populations multiply login, talent, equipment, and combat-hook cost. Do not add database queries to combat or per-tick paths.

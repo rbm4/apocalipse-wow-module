@@ -152,6 +152,64 @@ Frozen Retaliation rank 1 901012 or rank 2 901013
 The proc has no attacker, school, family, class, or phase filter. Melee, ranged, direct spell, periodic, and triggered combat damage can qualify when positive damage remains. Fully prevented damage and the separate environmental damage path do not dispatch the required positive combat-damage proc event. Humans and bots follow the same path.
 
 ```text
+Ambush Trapper passive 901038 observes a Hunter trap activation
+  -> finish-phase spell_proc requires Hunter family and the trap activation flag
+  -> AuraScript requires the Hunter as actor and a trap triggerer as original target
+  -> passive proc handler applies 15-second, five-charge aura 901039 to the Hunter
+  -> a landed Hunter-family melee damage-class spell consumes one native charge
+  -> helper 901040 deals floor(2% * min(target max health, Hunter max health))
+  -> helper 901041 restores 5 percent maximum mana
+```
+
+Ambush Strike participates in direct Spell Scaling before PvP Balancing. Below level 80, scaling multiplies the capped base amount by the Hunter's level divided by 80 and converts to an integer. PvP Balancing then applies its configured integer reduction for player victims. Humans and bots follow the same bounded path with no combat-time database access.
+
+```text
+Primal Resolve 901042 cast by a Hunter
+  -> native all-school aura reduces damage taken by 15 percent
+  -> script effect removes current MECHANIC_SNARE auras
+  -> roots remain and no ongoing movement immunity is granted
+  -> Hunter remains attack-capable and targetable for the 6-second duration
+  -> parent spell retains its 30-second cooldown
+```
+
+The cleanup uses the deployment core's `RemoveMovementImpairingAuras(false)` path. Damage reduction composes through the core's normal multiplicative damage-taken aura handling and adds no module damage hook or runtime state. Humans and bots receive identical mechanics when they cast the spell; acquisition and playerbot cast policy remain external.
+
+```text
+Apex Bond 901046 cast by a Hunter
+  -> implicit TARGET_UNIT_PET supplies generic core and client pet presence validation
+  -> SpellScript requires Player::GetPet() and a living active pet
+  -> native percent effects heal pet and Hunter for 15 percent maximum health
+  -> normal pet aura increases all pet damage by 15 percent for 10 seconds
+  -> parent spell enters its 90-second cooldown
+```
+
+The active pet owns its temporary damage aura, so dismissal, swapping, death, and normal pet lifecycle cleanup cannot transfer the buff to another pet. Humans and bots follow the same bounded cast path; acquisition and cast policy remain external.
+
+```text
+Blood of the Hunt passive 901044 observes two event families
+  -> positive Hunter melee-special damage at hit phase
+     -> exact Raptor Strike, Mongoose Bite, Wing Clip, or Counterattack family mask
+     -> helper 901045 receives floor(15% * post-mitigation damage)
+  -> Hunter trap activation at finish phase with a real triggerer
+     -> helper 901045 receives floor(5% * Hunter maximum health)
+  -> either accepted branch starts one shared 2000 ms aura proc cooldown
+```
+
+Blood Heal participates in direct HEAL scaling. Below level 80, Spell Scaling multiplies the supplied helper amount by the Hunter's level divided by 80 and converts to an integer. Rejected and zero-damage events do not start the cooldown. Humans and bots follow the same bounded path with no combat-time database access.
+
+```text
+Melee Specialization passive 901047 is active
+  -> aura type 262 reports selected Hunter melee aura states as satisfied
+     -> Counterattack currently declares caster aura state 7
+     -> Raptor Strike and Mongoose Bite currently declare caster aura state 0
+  -> misc value 1 also suppresses the surrounding combat requirement for affected spells
+  -> aura type 108 registers a 30 percent SPELLMOD_DAMAGE modifier
+  -> damage masks select Raptor Strike, Mongoose Bite, Wing Clip, and Counterattack
+```
+
+The passive uses only native spell data and adds no script registration or combat-time database access. Range, weapon, resource, cooldown, target, silence, disarm, and other cast checks remain unchanged. Humans and bots follow the same path.
+
+```text
 Divine Storm 53385 with passive 901014
   -> AfterCast schedules a caster-owned one-second event
   -> event requires the player in world, alive, and still affected by 901014
@@ -326,6 +384,11 @@ The global mount cast check removes enhanced Metamorphosis before shapeshift val
 | 901007-901009 Frost Bomb graph | Automatic baseline plus follow-up updates under `data/sql/db-world/` | Application, explosion, and slow scripts on their exact IDs | Native Frost direct damage with 0.8 coefficient and Permafrost rank effects | Three matching client `Spell.dbc` rows; acquisition is separate |
 | 901010-901011 Automatic Ice Lance graph | Automatic `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | Passive proc and haste scripts on their exact IDs | Reuses Ice Lance 30455 and native spell-haste aura handling | Two matching client `Spell.dbc` rows; passive acquisition is separate |
 | 901012-901013 Frozen Retaliation rank chain | Automatic `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | Negative -901012 binding covers both `spell_ranks` rows | Rank-specific taken-damage proc chance reuses Fingers of Frost aura 44544 | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
+| 901038-901041 Ambush Trapper graph | Automatic `data/sql/db-world/2026_09_21_00_ambush_trapper.sql` | Trap passive and charged buff bindings on 901038 and 901039 | Native five charges, capped Physical helper with DAMAGE scaling, and percent mana energize | Four matching client `Spell.dbc` rows; acquisition references only passive 901038 |
+| 901042 Primal Resolve | Automatic `data/sql/db-world/2026_09_21_03_primal_resolve.sql` | `spell_apoc_hunter_primal_resolve` on 901042 | Native all-school damage reduction plus one-time scripted snare removal | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
+| 901046 Apex Bond | Automatic `data/sql/db-world/2026_09_21_01_apex_bond.sql` | `spell_apoc_hunter_apex_bond` on 901046 | Native percent healing, pet target validation, cooldown, and all-damage pet aura | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
+| 901044-901045 Blood of the Hunt graph | Automatic `data/sql/db-world/2026_09_21_01_blood_of_the_hunt.sql` | `spell_apoc_hunter_blood_of_the_hunt` on 901044 | Shared melee/trap proc cooldown and direct helper with HEAL scaling | Two matching client `Spell.dbc` rows; acquisition references only passive 901044 |
+| 901047 Melee Specialization | Automatic `data/sql/db-world/2026_09_21_02_melee_specialization.sql` | No script binding; native aura-state and spell-modifier handlers | Exact Hunter family masks bypass declared aura states, currently only Counterattack, and apply 30 percent `SPELLMOD_DAMAGE` to the three selected families plus Wing Clip | Matching client `Spell.dbc`; acquisition is separate |
 | 901014-901015 Divine Storm Echo graph | Automatic `data/sql/db-world/2026_09_18_02_divine_storm_echo.sql` | Scheduler on 53385 and existing `spell_pal_divine_storm` on 901015 | Delayed normalized 55 percent weapon attack reuses Divine Storm target, proc, and healing paths | Two matching client `Spell.dbc` rows; acquisition references unranked passive 901014 only and echo acquisition is forbidden |
 | 901016 Permanent Seal of Righteousness | Automatic `data/sql/db-world/2026_09_18_03_permanent_seal_of_righteousness.sql` | `spell_apoc_paladin_permanent_seal_of_righteousness` on 901016 | Reuses stock SoR damage 25742 and calculation without entering real seal or judgement selection | Matching client `Spell.dbc`; acquisition is separate |
 | 901017 Divine Steed | Automatic baseline plus `2026_09_20_01_divine_steed_cast_cancel.sql` | `spell_apoc_paladin_divine_steed` on 901017 plus player cast and lifecycle cleanup | Normal run-speed aura with display-only faction charger, no mounted state, and cancellation after another non-triggered player spell | Matching client `Spell.dbc`; acquisition is separate |
@@ -362,6 +425,11 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing Divine Steed row, binding, or non-save attribute | Sprint validation fails, display lifecycle is absent, or the aura can persist unexpectedly | Check 901017, its exact script and custom-attribute rows, and client patch |
 | Missing Vengeance variant row or proc metadata | The corresponding passive cannot add or correctly scale its timed buff | Check 901018 through 901021, the exact `spell_proc` rows, non-save attributes, and client patch |
 | Missing Extended Arsenal row or rank metadata | The passive cannot modify range and target count or the higher rank may not replace the lower rank | Check 901022 and 901023, their exact effect masks, the `spell_ranks` rows, and client patch |
+| Missing Ambush Trapper row, proc metadata, binding, or registration | Trap activation cannot grant charges, or melee specials cannot trigger damage and mana | Check 901038 through 901041, both proc rows, both bindings, loader registration, scaling row, and client export |
+| Missing Primal Resolve row, binding, or registration | Damage reduction or on-cast snare cleanup is unavailable | Check 901042, effect contracts, script binding, loader registration, and client export |
+| Missing Apex Bond row, binding, or registration | Cast validation or effects are unavailable, or pet presence is not represented to the client | Check 901046, its implicit pet targets, script and custom-attribute rows, loader registration, and client export |
+| Missing Blood of the Hunt row, helper, proc metadata, binding, or registration | Eligible melee specials or trap activations cannot heal, or the shared cooldown is absent | Check 901044 and 901045, proc row, binding, loader registration, HEAL scaling row, and client export |
+| Missing Melee Specialization row or mismatched family masks | Reactive abilities remain gated or the damage modifier affects the wrong Hunter spells | Check 901047 effects, misc values, all six effect class-mask words, and client export |
 | Missing Divine Toll row, marker, visual, or additive binding | The cast fails validation, loses sequencing, permits repeated JotW, or deals unscaled stock damage | Check 901024 through 901026, -31876, all listed damage bindings, and external client export |
 | Missing Burning Conflagration row or binding | The passive cannot validate or Conflagrate does not spread Immolate | Check 901027, binding -17962, loader registration, and matching client and talent data |
 | Missing Permanent Metamorphosis row or Spec Manager acquisition | Demonology players do not receive passive 901030 or clients cannot display it | Check the 901030 updater, `mod_spec_spells`, loader registration, and client export |

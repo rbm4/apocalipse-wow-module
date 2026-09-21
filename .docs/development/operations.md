@@ -93,6 +93,11 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901033, stock Soul Link aura binding, and backend name |
 | `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901034, native resist-dispel modifier, exact Immolate and Shadowflame family masks, and backend name |
 | `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901035, native resist-dispel modifier, combined Warlock family mask excluding Unstable Affliction, and backend name |
+| `data/sql/db-world/2026_09_21_00_ambush_trapper.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized four-spell graph | Spells 901038 through 901041, trap and melee proc metadata, script bindings, non-save buff, zero coefficients, DAMAGE scaling, and backend names |
+| `data/sql/db-world/2026_09_21_03_primal_resolve.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901042, all-school damage reduction, snare-removal binding, non-save metadata, and backend name |
+| `data/sql/db-world/2026_09_21_01_apex_bond.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901046, native percent heals, pet damage aura, script binding, non-save metadata, and backend name |
+| `data/sql/db-world/2026_09_21_01_blood_of_the_hunt.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and helper rows | Spells 901044 and 901045, shared melee/trap cooldown metadata, script binding, zero coefficients, HEAL scaling, and backend names |
+| `data/sql/db-world/2026_09_21_02_melee_specialization.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901047, native family-filtered aura-state bypass, 30 percent melee-family damage modifier, and backend name |
 | `data/sql/db-world/2026_09_18_01_automatic_ice_lance_proc_eligibility.sql` | `acore_world` | AzerothCore module updater; guarded for the recognized passive row | Updates installed spell 901010 for direct, periodic, and triggered Frost damage eligibility and current descriptions |
 | `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized explosion row | Removes caster-attached visual 17 from spell 901008 so C++ can emit the same visual from the bombed target through existing spell 34326 |
 | `data/sql/db-world/2026_09_20_00_frost_bomb_damage_and_visual.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized explosion row and coefficient | Doubles 901008 base damage and direct coefficient, updates descriptions, and clears caster-attached visual 17 again before client export |
@@ -103,15 +108,31 @@ The `mod_player_spec_talent_grant` table is currently created but not used by th
 
 Custom-spell updater files require the externally managed `wotlk_spells_full` and `wotlk_spells` tables in `acore_world`. They use those tables for collision guards, stock spell metadata, backend names, and client-export ownership. Missing tables are a hard migration failure and must be restored through the backend schema workflow before worldserver startup.
 
+## Agent offline-only database policy
+
+Agent sessions must always assume that MySQL is unavailable. Agents must not attempt connections, service or port probes, container startup, credential discovery, database MCP access, or SQL execution. SQL review is static only.
+
+For spell IDs and spell data, agents must use this order:
+
+1. Module world updates and manual migrations. C++ constants and documentation only cross-check migration consistency.
+2. Matching custom AzerothCore source and checked-in SQL.
+3. Read-only extraction from an available local `.dbc` only when the earlier sources are insufficient.
+
+These are the only permitted ID and spell-data discovery sources. Backend source may be reviewed for export mechanics, but backend caches, services, and databases are not allocation evidence.
+
+Agents allocate the next repository-free guarded range and leave live database and deployed-client collision checks pending for an authorized deployment operator. The deployment SQL below is operator guidance and must not be executed by agents.
+
 ## First deployment sequence
+
+The following sequence is for an authorized deployment operator in an environment that actually provides the databases. It is not an agent validation workflow.
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 through 901035 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001 through 901047 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901035 module updates can run.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901047 module updates can run.
 8. Confirm all updater records and module startup logs.
 9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells. Deploy the separate talent and acquisition data through their owned workflows.
 10. Run focused human and bot in-game scenarios.
@@ -134,14 +155,16 @@ WHERE `ID` = 901002;
 
 The expected equipped-item values are `-1`, `0`, and `0`. Confirm the `HasItemFitToSpellRequirements` error no longer appears when assistance is applied.
 
-## Custom spell preflight
+## Operator custom spell preflight
 
-Before first deployment, verify all custom IDs are unallocated in:
+Before first deployment, an authorized operator verifies all custom IDs in the real deployment environment. Agents do not run these queries and instead rely on the offline evidence hierarchy and migration collision guards.
+
+Verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901035;
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901035;
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901035;
+SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901047;
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901047;
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901047;
 SELECT `entry` FROM `creature_template` WHERE `entry` = 900002;
 SELECT `ID` FROM `summonproperties_dbc` WHERE `ID` = 901032;
 ```

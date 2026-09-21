@@ -21,6 +21,12 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-21 | Offline database policy | Completed | [`2026-09-21-offline-database-policy.md`](2026-09-21-offline-database-policy.md) |
+| 2026-09-21 | Primal Resolve | Partial | [`2026-09-21-primal-resolve.md`](2026-09-21-primal-resolve.md) |
+| 2026-09-21 | Melee Specialization | Partial | [`2026-09-21-melee-specialization.md`](2026-09-21-melee-specialization.md) |
+| 2026-09-21 | Blood of the Hunt | Partial | [`2026-09-21-blood-of-the-hunt.md`](2026-09-21-blood-of-the-hunt.md) |
+| 2026-09-21 | Apex Bond | Partial | [`2026-09-21-apex-bond.md`](2026-09-21-apex-bond.md) |
+| 2026-09-21 | Ambush Trapper | Partial | [`2026-09-21-ambush-trapper.md`](2026-09-21-ambush-trapper.md) |
 | 2026-09-20 | Unyielding Shadows | Partial | [`2026-09-20-unyielding-shadows.md`](2026-09-20-unyielding-shadows.md) |
 | 2026-09-20 | Unquenchable Flames | Partial | [`2026-09-20-unquenchable-flames.md`](2026-09-20-unquenchable-flames.md) |
 | 2026-09-20 | Demonic Equilibrium | Partial | [`2026-09-20-demonic-equilibrium.md`](2026-09-20-demonic-equilibrium.md) |

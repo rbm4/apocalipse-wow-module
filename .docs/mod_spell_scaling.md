@@ -74,6 +74,8 @@ Primary key `(spell_id, scale_type)` allows one spell to participate in several 
 
 - Direct and periodic damage may also pass through PvP Balancing. The loader registers Spell Scaling before PvP Balancing, and integer truncation occurs at each stage.
 - Blazing Barrier 901001 is seeded as `ABSORB` factor 1.0. It is currently a level-80 spell, where scaling returns 1.0.
+- Ambush Strike 901040 is installed as `DAMAGE` factor 1.0. The capped percent-health amount is calculated first, then lower-level scaling and PvP reduction apply with integer truncation at each stage.
+- Blood Heal 901045 is installed as `HEAL` factor 1.0. The damage-based or maximum-health base amount is calculated first, then lower-level scaling applies with integer truncation.
 - Spec Manager is a major source of high-level spells granted to low-level characters, but the systems communicate only through shared spell IDs.
 
 ## Failure modes
