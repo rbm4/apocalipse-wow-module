@@ -32,7 +32,7 @@ Add an in-combat paladin horse sprint without invoking the core's mounted or veh
 ## Decisions
 
 - The display is cosmetic only. The implementation never calls `Unit::Mount`, sets `UNIT_FLAG_MOUNT`, applies `SPELL_AURA_MOUNTED`, or creates a vehicle.
-- Alliance players use verified Charger display 14565 from spell 23214; Horde players use verified Thalassian Charger display 20030 from spell 34767, regardless of character race.
+- The original implementation incorrectly used Charger creature entry 14565 and Thalassian Charger creature entry 20030 as direct display IDs. This was corrected by the 2026-09-19 Divine Steed display-ID fix.
 - The aura is non-dispellable and uses ordinary run-speed aura type 31.
 - Removal does not clear a display after a real mount has replaced it.
 
@@ -42,7 +42,7 @@ Add an in-combat paladin horse sprint without invoking the core's mounted or veh
 |---|---|---|
 | Repository collision search | Search for 901017 across the workspace | Passed; no spell allocation found |
 | Checked-in base DBC collision | Parse backend `data/Spell.dbc` | Passed; 901017 absent |
-| Mount reference data | Parse spells 23214 and 34767 from backend `data/Spell.dbc` | Passed; display values 14565 and 20030 confirmed |
+| Mount reference data | Parse spells 23214 and 34767 from backend `data/Spell.dbc` | Superseded; values 14565 and 20030 are creature entries, not direct display IDs |
 | Static diff checks | `git diff --check`, forbidden-dash scan, trailing-whitespace scan, API searches, ID synchronization search, and 80-column C++ scan | Passed; only existing LF-to-CRLF warnings were emitted |
 | Parent worldserver build | Custom core build with module and playerbots | Not run; core repository rules require explicit build request |
 | Database updater and startup | Development world database and worldserver logs | Not run |

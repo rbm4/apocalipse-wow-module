@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module provides seventeen systems:
+The module provides twenty-five systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -20,7 +20,15 @@ The module provides seventeen systems:
 14. Divine Steed custom paladin sprint
 15. Paladin Vengeance variant passives
 16. Extended Arsenal custom paladin passive
-17. Battleground stamina assistance and equipment control
+17. Divine Toll custom paladin spell
+18. Burning Conflagration custom warlock passive
+19. Chaotic Inferno custom warlock passive
+20. Demonic Equilibrium custom warlock passive
+21. Unquenchable Flames custom warlock passive
+22. Unyielding Shadows custom warlock passive
+23. Haunting Affliction custom warlock passive
+24. Permanent Metamorphosis custom warlock passive
+25. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -64,7 +72,10 @@ apocalipse-wow-module/
 |       |-- 2026_09_18_03_permanent_seal_of_righteousness.sql
 |       |-- 2026_09_18_04_divine_steed.sql
 |       |-- 2026_09_18_04_paladin_vengeance_variants.sql
-|       `-- 2026_09_18_05_extended_arsenal.sql
+|       |-- 2026_09_18_05_extended_arsenal.sql
+|       |-- 2026_09_20_04_burning_conflagration.sql
+|       |-- 2026_09_20_05_chaotic_inferno.sql
+|       `-- 2026_09_20_06_demonic_equilibrium.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -81,6 +92,9 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_paladin_divine_storm_echo.cpp
 |   |-- mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp
 |   |-- mod_apocalipse_paladin_divine_steed.cpp
+|   |-- mod_apocalipse_warlock_burning_conflagration.cpp
+|   |-- mod_apocalipse_warlock_chaotic_inferno.cpp
+|   |-- mod_apocalipse_warlock_demonic_equilibrium.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/
@@ -190,7 +204,7 @@ Detailed contract: [`.docs/custom-spells/prismatic-barrier.md`](.docs/custom-spe
 
 Owner: `src/mod_apocalipse_mage_frost_bomb.cpp`
 
-Custom active spell 901007 places a four-second Frost Bomb on one enemy with a 1.5 second cast and 16 second cooldown. Expiration, enemy dispel, or target death shows a Frost Nova explosion on the bombed enemy, triggers spell 901008 for target-centered Frost area damage, then spell 901009 slows each living damage victim according to the caster's Permafrost rank. Its automatic world update and matching client spell rows are required, while acquisition remains external.
+Custom active spell 901007 places a four-second Frost Bomb on one enemy with a 1.5 second cast and 16 second cooldown. Expiration, enemy dispel, or target death shows a Frost Nova explosion on the bombed enemy, triggers spell 901008 for 1380 base target-centered Frost area damage with a 0.8 coefficient, then spell 901009 slows each living damage victim according to the caster's Permafrost rank. Its automatic world updates and matching client spell rows are required, while acquisition remains external.
 
 Detailed contract: [`.docs/custom-spells/frost-bomb.md`](.docs/custom-spells/frost-bomb.md)
 
@@ -238,9 +252,9 @@ Detailed contract: [`.docs/custom-spells/permanent-seal-of-righteousness.md`](.d
 
 Owner: `src/mod_apocalipse_paladin_divine_steed.cpp`
 
-Custom active spell 901017 doubles run speed for four seconds on a 20-second cooldown and shows Charger display 14565 for Alliance players or Thalassian Charger display 20030 for Horde players. It changes only `UNIT_FIELD_MOUNTDISPLAYID`, never applies mounted state, and therefore preserves ordinary combat, casting, pets, indoor use, action bars, and collision height.
+Custom active spell 901017 doubles run speed for up to four seconds on a 20-second cooldown and shows Charger display 14584 for Alliance players or Thalassian Charger display 19085 for Horde players. It changes only `UNIT_FIELD_MOUNTDISPLAYID`, never applies mounted state, and removes the aura, speed bonus, and cosmetic display after the player's next successful non-triggered spell cast.
 
-The AuraScript clears only its own display while the player is not mechanically mounted, and player lifecycle hooks remove the effect on logout and map changes. The automatic module world update installs the spell, binding, and non-save attribute. Acquisition is external, a matching client spell row is required, and humans and bots use identical mechanics.
+The AuraScript clears only its own display while the player is not mechanically mounted, and the player hook removes the effect after another successful non-triggered spell, on logout, and on map changes. Automatic module world updates install the spell, binding, non-save attribute, and current descriptions. Acquisition is external, a matching client spell row is required, and humans and bots use identical mechanics.
 
 Detailed contract: [`.docs/custom-spells/divine-steed.md`](.docs/custom-spells/divine-steed.md)
 
@@ -278,6 +292,80 @@ Acquisition and client patch generation remain external. Humans and bots use ide
 
 Detailed contract: [`.docs/custom-spells/divine-toll.md`](.docs/custom-spells/divine-toll.md)
 
+### Burning Conflagration
+
+Owners: `src/mod_apocalipse_warlock_burning_conflagration.cpp`, `data/sql/db-world/2026_09_20_04_burning_conflagration.sql`
+
+Custom passive 901027 makes a successful Conflagrate hit capture the caster's exact Immolate rank before normal consumption, then apply that full Immolate to up to three random eligible enemies within 10 yards of the primary target. Targets already carrying that caster's Immolate are excluded, while another Warlock's Immolate does not block propagation.
+
+The automatic module update defines the passive and binds every Conflagrate rank through `-17962`. Talent acquisition and matching client data remain external. Humans and bots use identical mechanics, and existing Destruction actions need no AI changes.
+
+Detailed contract: [`.docs/custom-spells/burning-conflagration.md`](.docs/custom-spells/burning-conflagration.md)
+
+### Chaotic Inferno
+
+Owners: `src/mod_apocalipse_warlock_chaotic_inferno.cpp`, `data/sql/db-world/2026_09_20_05_chaotic_inferno.sql`
+
+Custom passive 901031 makes every successful Chaos Bolt impact cast helper 901032 at the target's position. The helper reproduces stock Inferno meteor damage and area stun, then creates an independent 20-second Infernal that follows and assists the Warlock.
+
+The guardian uses module creature 900002, cloned from stock Infernal 89, with stock model, Immolation, level data, and owner scaling. Its ally-category guardian properties let it coexist with the normal demon without a pet bar or player commands. There is no explicit active-count cap, but the 20-second lifetime and Chaos Bolt cooldown naturally bound ordinary overlap.
+
+Acquisition remains external and must reference only 901031. Matching client rows are required for 901031 and implementation-only helper 901032. Humans and bots use identical behavior.
+
+Detailed contract: [`.docs/custom-spells/chaotic-inferno.md`](.docs/custom-spells/chaotic-inferno.md)
+
+### Haunting Affliction
+
+Owners: `src/mod_apocalipse_warlock_haunting_affliction.cpp`, `data/sql/db-world/2026_09_20_02_haunting_affliction.sql`
+
+Custom passive 901028 causes a successful Haunt hit to apply the Warlock's highest learned Curse of Agony, Corruption, and Unstable Affliction ranks. Hidden marker 901029 enforces a caster-global 30-second internal cooldown across every target and is not saved through logout.
+
+A different curse owned by the same Warlock suppresses only Curse of Agony. Same-caster Seed of Corruption suppresses only Corruption. Existing eligible DoTs refresh normally, Unstable Affliction retains its stock dispel behavior, and humans and bots use identical mechanics.
+
+Acquisition remains external and must reference only passive 901028. Matching client rows are required for 901028 and implementation-only marker 901029.
+
+Detailed contract: [`.docs/custom-spells/haunting-affliction.md`](.docs/custom-spells/haunting-affliction.md)
+
+### Permanent Metamorphosis
+
+Owners: `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp`, `data/sql/db-world/2026_09_20_03_permanent_metamorphosis.sql`
+
+Demonology passive 901030 preserves normal Metamorphosis activation spell 59672 and its cooldown, but gives transformation aura 47241 infinite duration. Death retains stock cleanup, while passive removal, talent reset, login recovery after an interrupted shutdown, logout, or a mount attempt removes the transformation and its linked effects. Dismounting does not restore it.
+
+The Demonology Spec Manager profile grants passive 901030 alongside active spell 59672. Humans and bots use identical mechanics, and existing playerbot activation and aura checks remain valid. A matching client spell row is required.
+
+Detailed contract: [`.docs/custom-spells/permanent-metamorphosis.md`](.docs/custom-spells/permanent-metamorphosis.md)
+
+### Demonic Equilibrium
+
+Owners: `src/mod_apocalipse_warlock_demonic_equilibrium.cpp`, `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql`
+
+Custom passive 901033 raises stock Soul Link's damage transfer from 20 percent to 75 percent while both auras are active. The per-hit split hook preserves stock Soul Link activation, demon eligibility, combat logs, proc handling, and its behavior when the passive is absent.
+
+The automatic module update defines the passive and binds its script to stock Soul Link aura 25228. Talent acquisition and matching client data remain external. Humans and bots use identical mechanics, and existing Soul Link actions need no AI changes.
+
+Detailed contract: [`.docs/custom-spells/demonic-equilibrium.md`](.docs/custom-spells/demonic-equilibrium.md)
+
+### Unquenchable Flames
+
+Owner: `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql`
+
+Custom passive 901034 gives the Warlock's Immolate and Shadowflame effects 100 percent dispel resistance through native caster spell-modifier handling. Existing caster-owned effects react immediately when the passive is learned or removed, while expiration, Conflagrate consumption, death cleanup, immunity cleanup, and scripted removal remain unchanged.
+
+The automatic module update defines the complete data-only passive and backend client-export source. Talent acquisition and matching client data remain external. Humans and bots use identical mechanics, and no C++ registration or AI change is required.
+
+Detailed contract: [`.docs/custom-spells/unquenchable-flames.md`](.docs/custom-spells/unquenchable-flames.md)
+
+### Unyielding Shadows
+
+Owner: `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql`
+
+Custom passive 901035 gives matching Warlock curses and Shadow debuffs 100 percent dispel resistance through native caster and owner spell-modifier handling. Its combined family mask covers Corruption, Fear, Howl of Terror, Death Coil, Banish, drains, Seed of Corruption, Shadowfury, Haunt, Shadow Embrace and Seduction while deliberately excluding Unstable Affliction.
+
+The automatic module update defines the complete data-only passive and backend client-export source. Talent acquisition and matching client data remain external. Humans and bots use identical mechanics, and no C++ registration or AI change is required.
+
+Detailed contract: [`.docs/custom-spells/unyielding-shadows.md`](.docs/custom-spells/unyielding-shadows.md)
+
 ### Battleground Stamina Assistance
 
 Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
@@ -298,7 +386,7 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001 through 901026
+- Server and client custom-spell data for spells 901001 through 901035
 - Matching talent data when a custom passive is granted through a talent
 
 Stock AzerothCore compatibility has not been validated.
@@ -318,9 +406,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901026 updates install the custom class spells, proc metadata, and script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901035 updates install the custom class spells, native modifiers, proc metadata, and script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001 through 901026 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001 through 901035 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

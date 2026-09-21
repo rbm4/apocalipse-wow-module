@@ -32,13 +32,23 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            return spellInfo->GetMaxDuration() == FROST_BOMB_DURATION_MS &&
+            if (!ValidateSpellInfo({
+                SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION,
+                SPELL_APOC_MAGE_FROST_BOMB_SLOW,
+                SPELL_MAGE_FROST_NOVA_VISUAL
+            }))
+                return false;
+
+            SpellInfo const* visualSpell =
+                sSpellMgr->GetSpellInfo(SPELL_MAGE_FROST_NOVA_VISUAL);
+            return visualSpell->SpellVisual[0] == 17 &&
+                visualSpell->Effects[EFFECT_0].IsEffect(SPELL_EFFECT_DUMMY) &&
+                visualSpell->Effects[EFFECT_0].CalcValue() == 0 &&
+                !visualSpell->Effects[EFFECT_1].IsEffect() &&
+                !visualSpell->Effects[EFFECT_2].IsEffect() &&
+                spellInfo->GetMaxDuration() == FROST_BOMB_DURATION_MS &&
                 uint32(spellInfo->Effects[EFFECT_0].CalcValue()) ==
-                    SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION &&
-                ValidateSpellInfo({
-                    SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION,
-                    SPELL_APOC_MAGE_FROST_BOMB_SLOW
-                });
+                    SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION;
         }
 
         void HandleRemove(AuraEffect const* aurEff,
@@ -50,12 +60,17 @@ public:
                 removeMode != AURA_REMOVE_BY_DEATH)
                 return;
 
-            if (Unit* caster = GetCaster())
-                caster->CastSpell(
-                    GetTarget(), SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION,
-                    TriggerCastFlags(
-                        TRIGGERED_FULL_MASK & ~TRIGGERED_DISALLOW_PROC_EVENTS),
-                    nullptr, aurEff);
+            Unit* caster = GetCaster();
+            Unit* target = GetTarget();
+            if (!caster || !target)
+                return;
+
+            target->CastSpell(target, SPELL_MAGE_FROST_NOVA_VISUAL, true);
+            caster->CastSpell(
+                target, SPELL_APOC_MAGE_FROST_BOMB_EXPLOSION,
+                TriggerCastFlags(
+                    TRIGGERED_FULL_MASK & ~TRIGGERED_DISALLOW_PROC_EVENTS),
+                nullptr, aurEff);
         }
 
         void Register() override
@@ -86,19 +101,7 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            if (!ValidateSpellInfo({
-                SPELL_APOC_MAGE_FROST_BOMB_SLOW,
-                SPELL_MAGE_FROST_NOVA_VISUAL
-            }))
-                return false;
-
-            SpellInfo const* visualSpell =
-                sSpellMgr->GetSpellInfo(SPELL_MAGE_FROST_NOVA_VISUAL);
-            return visualSpell->SpellVisual[0] == 17 &&
-                visualSpell->Effects[EFFECT_0].IsEffect(SPELL_EFFECT_DUMMY) &&
-                visualSpell->Effects[EFFECT_0].CalcValue() == 0 &&
-                !visualSpell->Effects[EFFECT_1].IsEffect() &&
-                !visualSpell->Effects[EFFECT_2].IsEffect() &&
+            return ValidateSpellInfo({ SPELL_APOC_MAGE_FROST_BOMB_SLOW }) &&
                 spellInfo->GetSchoolMask() == SPELL_SCHOOL_MASK_FROST &&
                 spellInfo->SpellFamilyName == SPELLFAMILY_MAGE &&
                 spellInfo->Effects[EFFECT_0].IsEffect(
@@ -107,13 +110,6 @@ public:
                     TARGET_DEST_TARGET_ENEMY &&
                 spellInfo->Effects[EFFECT_0].TargetB.GetTarget() ==
                     TARGET_UNIT_DEST_AREA_ENEMY;
-        }
-
-        void ShowExplosion()
-        {
-            if (Unit* target = GetExplTargetUnit())
-                target->CastSpell(
-                    target, SPELL_MAGE_FROST_NOVA_VISUAL, true);
         }
 
         void ApplySlow(SpellEffIndex /*effIndex*/)
@@ -127,8 +123,6 @@ public:
 
         void Register() override
         {
-            OnCast += SpellCastFn(
-                spell_apoc_mage_frost_bomb_explosion_SpellScript::ShowExplosion);
             OnEffectHitTarget += SpellEffectFn(
                 spell_apoc_mage_frost_bomb_explosion_SpellScript::ApplySlow,
                 EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);

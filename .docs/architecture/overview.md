@@ -30,12 +30,19 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR proc behavior for passive 901016 |
 | `src/mod_apocalipse_paladin_divine_toll.cpp` | Sequenced half-damage Judgement orchestration for spells 901024 through 901026 |
 | `src/mod_apocalipse_paladin_divine_steed.cpp` | Display-only horse sprint and lifecycle cleanup for spell 901017 |
+| `src/mod_apocalipse_warlock_burning_conflagration.cpp` | Conflagrate and Immolate spread interaction for spell 901027 |
+| `src/mod_apocalipse_warlock_chaotic_inferno.cpp` | Chaos Bolt impact summons and autonomous Infernal behavior for spells 901031 and 901032 |
+| `src/mod_apocalipse_warlock_demonic_equilibrium.cpp` | Passive-gated Soul Link damage transfer increase for spell 901033 |
+| `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql` | Data-only native Fire dispel resistance passive 901034 |
+| `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | Data-only native Shadow dispel resistance passive 901035 with Unstable Affliction excluded |
+| `src/mod_apocalipse_warlock_haunting_affliction.cpp` | Passive-gated Haunt DoT applications and caster-global cooldown for spells 901028 and 901029 |
+| `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp` | Passive-gated infinite Metamorphosis duration and lifecycle cleanup for spell 901030 |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
 | `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
-| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 through 901026 |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including spells 901002 through 901035 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -57,7 +64,12 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 13. `AddModApocalipsePaladinPermanentSealOfRighteousnessScripts()`
 14. `AddModApocalipsePaladinDivineTollScripts()`
 15. `AddModApocalipsePaladinDivineSteedScripts()`
-16. `AddModApocalipseBattlegroundStaminaScripts()`
+16. `AddModApocalipseWarlockBurningConflagrationScripts()`
+17. `AddModApocalipseWarlockChaoticInfernoScripts()`
+18. `AddModApocalipseWarlockDemonicEquilibriumScripts()`
+19. `AddModApocalipseWarlockHauntingAfflictionScripts()`
+20. `AddModApocalipseWarlockPermanentMetamorphosisScripts()`
+21. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -82,6 +94,13 @@ The entry-point name is derived from the module directory `apocalipse-wow-module
 | Paladin Vengeance variants | Passives 901018 and 901020, timed buffs 901019 and 901021, critical-event eligibility, stack caps, and effect amounts | Acquisition, client assets, specialization enforcement, or playerbot talent selection |
 | Extended Arsenal | Passive ranks 901022 and 901023, native range and jump-target modifiers, and exact Paladin family masks | Acquisition, client assets, base spell target rules, or playerbot talent selection |
 | Divine Toll | Active 901024, impact marker 901025, Justice visual 901026, delayed events, seal selection, damage provenance, and proc bounds | Acquisition, client patch generation, normal Judgement wrappers, or playerbot rotation policy |
+| Burning Conflagration | Passive 901027, pre-consumption Immolate rank capture, bounded nearby selection, and full matching-rank propagation | Acquisition, client patch generation, base Conflagrate consumption, or playerbot rotation policy |
+| Chaotic Inferno | Passive 901031, helper 901032, creature 900002, non-pet guardian ownership, stock Inferno impact, scaling, follow, assist, and duration | Acquisition, client patch generation, stock Inferno 1122, or playerbot rotation policy |
+| Demonic Equilibrium | Passive 901033, stock Soul Link aura 25228 split override, and per-hit 75 percent calculation | Acquisition, client patch generation, Soul Link activation, demon eligibility, or playerbot rotation policy |
+| Unquenchable Flames | Passive 901034, native 100 percent resist-dispel modifier, and exact Immolate and Shadowflame family masks | Acquisition, client patch generation, global stock-spell changes, or playerbot rotation policy |
+| Unyielding Shadows | Passive 901035, native 100 percent resist-dispel modifier, and combined Warlock family mask excluding Unstable Affliction | Acquisition, client patch generation, global stock-spell changes, or playerbot rotation policy |
+| Haunting Affliction | Passive 901028, marker 901029, Haunt hit hook, highest-known DoT ranks, and curse and Seed exclusions | Acquisition, base DoT mechanics, client patch generation, or playerbot rotation policy |
+| Permanent Metamorphosis | Passive 901030, conditional aura 47241 duration, mount pre-check, and lifecycle cleanup | Stock activation spell 59672, cooldown, transformation effects, linked cleanup, or playerbot rotation policy |
 | Battleground Stamina | Spell 901002 validation, unbuffed baseline, assistance aura, and human gear lock | Bot gearing decisions, matchmaking, or arenas |
 
 ## Dependency direction
@@ -156,6 +175,18 @@ Divine Toll 901024
      -> marker 901025 scopes half damage, guaranteed hit, SoR overlap, and one JotW proc
      -> visual 901026 and current real-seal Judgement behavior
 
+Conflagrate rank chain with passive 901027
+  -> capture exact same-caster Immolate rank before core consumption
+     -> apply full Immolate to up to three eligible enemies within 10 yards
+
+Haunt rank chain with passive 901028
+  -> successful hit applies caster marker 901029 for 30 seconds
+     -> eligible highest-known Curse of Agony, Corruption, and Unstable Affliction ranks
+
+Metamorphosis 59672 with passive 901030
+  -> stock activation and cooldown
+     -> infinite transformation aura 47241 until stock or explicit lifecycle cleanup
+
 Battleground and player hooks
   -> Battleground Stamina
      -> bot session check only for equipment-lock exemption
@@ -168,7 +199,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001 through 901026 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001 through 901035 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

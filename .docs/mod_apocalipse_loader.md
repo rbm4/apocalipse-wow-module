@@ -4,7 +4,7 @@ Status: Active
 
 Owner: `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-17
+Last source review: 2026-09-20
 
 ## Purpose
 
@@ -33,7 +33,16 @@ The function name must continue to match the parent core's module discovery conv
 | 9 | `AddModApocalipseMageFrostBombScripts()` | `src/mod_apocalipse_mage_frost_bomb.cpp` |
 | 10 | `AddModApocalipseMageAutomaticIceLanceScripts()` | `src/mod_apocalipse_mage_automatic_ice_lance.cpp` |
 | 11 | `AddModApocalipseMageFrozenRetaliationScripts()` | `src/mod_apocalipse_mage_frozen_retaliation.cpp` |
-| 12 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
+| 12 | `AddModApocalipsePaladinDivineStormEchoScripts()` | `src/mod_apocalipse_paladin_divine_storm_echo.cpp` |
+| 13 | `AddModApocalipsePaladinPermanentSealOfRighteousnessScripts()` | `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` |
+| 14 | `AddModApocalipsePaladinDivineTollScripts()` | `src/mod_apocalipse_paladin_divine_toll.cpp` |
+| 15 | `AddModApocalipsePaladinDivineSteedScripts()` | `src/mod_apocalipse_paladin_divine_steed.cpp` |
+| 16 | `AddModApocalipseWarlockBurningConflagrationScripts()` | `src/mod_apocalipse_warlock_burning_conflagration.cpp` |
+| 17 | `AddModApocalipseWarlockChaoticInfernoScripts()` | `src/mod_apocalipse_warlock_chaotic_inferno.cpp` |
+| 18 | `AddModApocalipseWarlockDemonicEquilibriumScripts()` | `src/mod_apocalipse_warlock_demonic_equilibrium.cpp` |
+| 19 | `AddModApocalipseWarlockHauntingAfflictionScripts()` | `src/mod_apocalipse_warlock_haunting_affliction.cpp` |
+| 20 | `AddModApocalipseWarlockPermanentMetamorphosisScripts()` | `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp` |
+| 21 | `AddModApocalipseBattlegroundStaminaScripts()` | `src/battleground_stamina/BattlegroundStaminaScripts.cpp` |
 
 The loader contains no gameplay state. Its order affects script registration and can affect the rounding sequence when multiple UnitScripts mutate the same damage value.
 

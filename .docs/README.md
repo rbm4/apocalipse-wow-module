@@ -67,6 +67,13 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/paladin-vengeance-variants.md`](custom-spells/paladin-vengeance-variants.md)
 - [`custom-spells/extended-arsenal.md`](custom-spells/extended-arsenal.md)
 - [`custom-spells/divine-toll.md`](custom-spells/divine-toll.md)
+- [`custom-spells/burning-conflagration.md`](custom-spells/burning-conflagration.md)
+- [`custom-spells/chaotic-inferno.md`](custom-spells/chaotic-inferno.md)
+- [`custom-spells/demonic-equilibrium.md`](custom-spells/demonic-equilibrium.md)
+- [`custom-spells/unquenchable-flames.md`](custom-spells/unquenchable-flames.md)
+- [`custom-spells/unyielding-shadows.md`](custom-spells/unyielding-shadows.md)
+- [`custom-spells/haunting-affliction.md`](custom-spells/haunting-affliction.md)
+- [`custom-spells/permanent-metamorphosis.md`](custom-spells/permanent-metamorphosis.md)
 
 ## Source-of-truth order
 

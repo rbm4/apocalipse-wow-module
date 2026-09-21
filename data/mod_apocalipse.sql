@@ -210,6 +210,7 @@ INSERT IGNORE INTO `mod_spec_spells` (`class`, `spec_index`, `spell_id`, `descri
 (9, 0, 30108, 'Unstable Afliction'),   -- Affliction
 (9, 0, 18223, 'Curse of Exhaustion'),  -- Affliction
 (9, 1, 59672, 'Metamorphosis'),        -- Demonology
+(9, 1, 901030, 'Permanent Metamorphosis'), -- Demonology
 (9, 1, 30146, 'Summon Felguard'),      -- Demonology
 (9, 1, 47193, 'Demonic Empowerment'),  -- Demonology
 (9, 1, 63156, 'Decimation (rank 1)'),  -- Demonology

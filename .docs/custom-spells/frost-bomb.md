@@ -2,9 +2,9 @@
 
 Status: Implemented in source, build and runtime not verified
 
-Owners: `src/mod_apocalipse_mage_frost_bomb.cpp`, `data/sql/db-world/2026_09_17_03_frost_bomb.sql`, `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_mage_frost_bomb.cpp`, `data/sql/db-world/2026_09_17_03_frost_bomb.sql`, `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql`, `data/sql/db-world/2026_09_20_00_frost_bomb_damage_and_visual.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-18
+Last source review: 2026-09-20
 
 ## Purpose
 
@@ -23,13 +23,13 @@ Human and bot-controlled mages use identical cast, cooldown, removal, damage, pr
 | Surface | Contract |
 |---|---|
 | Application | 901007 Frost Bomb, 1.5 second cast, 16 second cooldown, 22 percent base mana, four-second Magic aura |
-| Explosion | 901008 Frost Bomb Explosion, 690 base Frost area damage, 10-yard target-centered radius, 0.4 direct coefficient, no attached visual |
+| Explosion | 901008 Frost Bomb Explosion, 1380 base Frost area damage, 10-yard target-centered radius, 0.8 direct coefficient, no attached visual |
 | Explosion visual | Existing spell 34326, a zero-value dummy Frost Nova visual self-cast by the bombed target |
 | Slow | 901009 Frost Bomb Slow, 40 percent for five seconds before Permafrost |
 | Permafrost talent | Rank chain beginning at 11175; effect 0 extends duration and effect 1 increases slow strength |
 | Permafrost debuff | Existing spell 68391, applied while the custom slow is active for the same caster |
 | Registration | `AddModApocalipseMageFrostBombScripts()` |
-| Server migration | `data/sql/db-world/2026_09_17_03_frost_bomb.sql` |
+| Server migrations | Baseline `2026_09_17_03_frost_bomb.sql` plus visual and damage follow-up updates under `data/sql/db-world/` |
 
 ## Runtime flow
 
@@ -68,7 +68,7 @@ Unlike the core Living Bomb correction, Frost Bomb does not set target-proc supp
 
 ## Targeting and death removal
 
-The explosion uses `TARGET_DEST_TARGET_ENEMY` with `TARGET_UNIT_DEST_AREA_ENEMY`, radius index 13, matching the module's established target-centered 10-yard area pattern. The primary target is retained by the default selector while valid. Spell 901008 has no `SpellVisualID_1` because Frost Nova visual 17 is caster-attached and would render on the mage. The explosion script instead makes the bombed target self-cast existing spell 34326, which uses visual 17 with only a zero-value dummy effect and no aura or triggered spell. Damage targeting, hostility, ownership, proc behavior, and scaling remain on the separate mage-cast 901008 path.
+The explosion uses `TARGET_DEST_TARGET_ENEMY` with `TARGET_UNIT_DEST_AREA_ENEMY`, radius index 13, matching the module's established target-centered 10-yard area pattern. The primary target is retained by the default selector while valid. Spell 901008 has no `SpellVisualID_1` because Frost Nova visual 17 is caster-attached and would render on the mage. The application AuraScript makes its own bombed target self-cast existing spell 34326 before the mage casts 901008, so visual placement no longer depends on recovering the explicit target from the explosion SpellScript. Spell 34326 uses visual 17 with only a zero-value dummy effect and no aura or triggered spell. Damage targeting, hostility, ownership, proc behavior, and scaling remain on the separate mage-cast 901008 path.
 
 The explosion spell allows a dead explicit target so `AURA_REMOVE_BY_DEATH` can still establish the destination. The dead primary cannot receive the slow, but nearby living damage victims can. This path must be verified in game because target death and aura teardown ordering are core-sensitive.
 
@@ -79,11 +79,13 @@ The automatic world update:
 1. Collision-checks 901007, 901008, and 901009 in `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`.
 2. Inserts only missing rows and recognizes only the expected spell signatures as module-owned.
 3. Binds the application AuraScript, explosion SpellScript, and slow AuraScript.
-4. Adds the explosion's 0.4 direct coefficient to `spell_bonus_data`.
+4. Adds the explosion coefficient to `spell_bonus_data`; the follow-up damage migration raises it from 0.4 to 0.8.
 5. Leaves 901008 without an attached spell visual so its mage caster does not display the target-local explosion.
 6. Synchronizes all three backend spell names.
 
-`data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` repairs an already-deployed module-owned 901008 row by changing `SpellVisualID_1` from 17 to 0. It rejects a colliding row whose gameplay signature is not recognized and is safe to rerun after it reaches 0.
+`data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` repairs an already-deployed module-owned 901008 row by changing `SpellVisualID_1` from 17 to 0. `data/sql/db-world/2026_09_20_00_frost_bomb_damage_and_visual.sql` doubles both base damage and spell-power scaling from 690 plus 0.4 to 1380 plus 0.8, and again clears visual 17 for databases that missed the earlier repair. Both updates reject an unrecognized collision and are safe to rerun after reaching their final values.
+
+The deployed client patch must be rebuilt from the updated `spell_dbc` row. A client that still has visual 17 attached to 901008 will continue to render an additional caster-attached explosion even when the server row is 0 and spell 34326 is correctly self-cast by the bombed target.
 
 The updates contain no acquisition, rank-chain, `spell_proc`, or module spell-scaling rows. Proc integration comes from native spell family metadata and the core proc system.
 

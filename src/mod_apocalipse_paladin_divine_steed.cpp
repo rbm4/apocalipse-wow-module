@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "ScriptMgr.h"
+#include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
 #include "SpellScript.h"
@@ -112,6 +113,13 @@ class apoc_paladin_divine_steed_player : public PlayerScript
 public:
     apoc_paladin_divine_steed_player()
         : PlayerScript("apoc_paladin_divine_steed_player") { }
+
+    void OnPlayerSpellCast(Player* player, Spell* spell, bool) override
+    {
+        if (spell && !spell->IsTriggered() &&
+            player->HasAura(SPELL_APOC_PALADIN_DIVINE_STEED))
+            ClearDivineSteed(player);
+    }
 
     void OnPlayerBeforeLogout(Player* player) override
     {

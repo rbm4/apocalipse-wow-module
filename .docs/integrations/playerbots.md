@@ -42,10 +42,17 @@ Do not replace this with account-name, security-level, online-state, or `Playerb
 | Frozen Retaliation | Incoming combat damage can grant Fingers of Frost at the known rank's chance | Same when the bot has learned rank 901012 or 901013 | None; acquisition remains external and no cast action is needed |
 | Divine Storm Echo | Divine Storm schedules a half-damage echo while passive 901014 is active | Same when the bot has acquired passive 901014 | None; existing Divine Storm actions need no change and acquisition remains external |
 | Permanent Seal of Righteousness | Passive 901016 adds stock SoR damage beside another real seal and suppresses itself beside real SoR | Same when the bot has acquired passive 901016 | None; existing melee and judgement actions need no change and acquisition remains external |
-| Divine Steed | Active 901017 doubles run speed for four seconds with a faction-specific cosmetic charger | Same when the bot has acquired and casts 901017 | None; no mounted state or AI dependency is introduced, and acquisition/rotation remain external |
+| Divine Steed | Active 901017 doubles run speed for up to four seconds with a faction-specific cosmetic charger and ends after another successful non-triggered spell | Same when the bot has acquired and casts 901017 | None; no mounted state or AI dependency is introduced, and acquisition/rotation remain external |
 | Paladin Vengeance variants | Critical damage or healing events refresh the corresponding three-stack buff | Same when the bot has acquired passive 901018 or 901020 | None; native proc handling applies and acquisition remains external |
 | Extended Arsenal | Increases Hammer of the Righteous and Avenger's Shield range and chain targets | Same when the bot has acquired rank 901022 or 901023 | None; native spell modifiers apply and acquisition remains external |
 | Divine Toll | Sequences one through five half-damage Judgement impacts with dynamic seal and proc behavior | Same when the bot has acquired and casts 901024 | None; acquisition and cast-decision policy remain external |
+| Burning Conflagration | Successful Conflagrate hits spread the caster's exact Immolate rank to up to three nearby enemies | Same when the bot has acquired passive 901027 | None; existing Immolate and Conflagrate actions need no change and acquisition remains external |
+| Chaotic Inferno | Every successful Chaos Bolt calls down a full Inferno impact and independent 20-second assisting guardian | Same when the bot has acquired passive 901031 | None; existing Chaos Bolt actions need no change, guardian AI is server-owned, and acquisition remains external |
+| Demonic Equilibrium | Raises Soul Link damage transfer from 20 percent to 75 percent | Same when the bot has acquired passive 901033 | None; existing Soul Link actions need no change and acquisition remains external |
+| Unquenchable Flames | Prevents dispels from removing the caster's Immolate and Shadowflame effects | Same when the bot has acquired passive 901034 | None; native spell-modifier handling applies and acquisition remains external |
+| Unyielding Shadows | Prevents dispels from removing matching curses and Shadow debuffs while excluding Unstable Affliction | Same when the bot has acquired passive 901035 | None; native owner spell-modifier handling also covers matching demon effects, and acquisition remains external |
+| Haunting Affliction | Successful Haunt hits apply eligible highest-known Affliction DoTs once per caster cooldown | Same when the bot has acquired passive 901028 | None; existing DoT triggers observe caster-owned auras and acquisition remains external |
+| Permanent Metamorphosis | Activated Metamorphosis remains until normal or explicit cleanup while passive 901030 is active | Same through Demonology Spec Manager acquisition | Existing AI casts 59672, checks aura 47241, and recasts only after cleanup and the normal cooldown |
 | Battleground Stamina | Eligible players receive assistance; non-combat-swappable gear is locked | Eligible bots receive assistance | Equipment lock is bypassed so bot auto-gearing can continue |
 
 Player-owned pets and guardians are treated as player attackers by PvP balancing through `GetCharmerOrOwnerPlayerOrPlayerItself()`. This applies whether the owning player is human-controlled or bot-controlled.
@@ -96,10 +103,16 @@ Before adding work to a bot-related hook:
 | Bot with Frozen Retaliation 901012 or 901013 takes positive combat damage | Same rank-specific chance and Fingers of Frost refresh as a human | Not run in this review |
 | Bot with passive 901014 casts Divine Storm 53385 | Same delayed half-damage echo, target selection, procs, and healing as a human | Not run in this review |
 | Bot with passive 901016 uses melee attacks or judgements beside another seal | Same stock SoR overlay damage, real-SoR suppression, and Judgements of the Just behavior as a human | Not run in this review |
-| Bot casts Divine Steed 901017 | Same faction display, speed, duration, cooldown, casting freedom, and cleanup as a human | Not run in this review |
+| Bot casts Divine Steed 901017, then another rotation spell | Same faction display, speed, cooldown, triggered-cast exclusion, and cancellation after the next successful non-triggered spell as a human | Not run in this review |
 | Bot with passive 901018 or 901020 produces a qualifying critical event | Same stack addition, refresh, cap, and buff amounts as a human | Not run in this review |
 | Bot with Extended Arsenal 901022 or 901023 casts Hammer or Avenger's Shield | Same rank-specific range and added target count as a human | Not run in this review |
 | Bot casts Divine Toll 901024 with each supported seal | Same target validation, random sequence, retargeting, half damage, cooldown reset, and proc limits as a human | Not run in this review |
+| Bot with passive 901027 casts Conflagrate into its own Immolate | Same rank capture, exclusions, random three-target cap, and full Immolate applications as a human | Not run in this review |
+| Bot with passive 901031 lands one or several Chaos Bolts | Same impacts, cooldown-bounded 20-second guardians, normal-pet coexistence, scaling, assist, duration, and cleanup as a human | Not run in this review |
+| Bot with passive 901033 takes damage with Soul Link active | Same 75 percent transfer to its living controlled demon as a human | Not run in this review |
+| Bot with passive 901034 applies Immolate or Shadowflame | Same zero dispel chance for that bot-owned aura as a human-owned aura | Not run in this review |
+| Bot with passive 901028 lands Haunt with and without curse or Seed conflicts | Same caster-global cooldown, learned DoT ranks, ownership, and exclusions as a human | Not run in this review |
+| Demonology bot with passive 901030 casts Metamorphosis | Same infinite aura 47241 duration, normal 59672 cooldown, cleanup, and later recast behavior as a human | Not run in this review |
 | Bot casts any learned Blizzard rank | Same 1.5 second cast and 12 second persistent ground effect as a human | Not run in this review |
 
 ## Related repository context

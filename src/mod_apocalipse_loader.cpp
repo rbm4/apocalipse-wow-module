@@ -21,6 +21,11 @@ void AddModApocalipsePaladinDivineStormEchoScripts();
 void AddModApocalipsePaladinPermanentSealOfRighteousnessScripts();
 void AddModApocalipsePaladinDivineTollScripts();
 void AddModApocalipsePaladinDivineSteedScripts();
+void AddModApocalipseWarlockBurningConflagrationScripts();
+void AddModApocalipseWarlockChaoticInfernoScripts();
+void AddModApocalipseWarlockDemonicEquilibriumScripts();
+void AddModApocalipseWarlockHauntingAfflictionScripts();
+void AddModApocalipseWarlockPermanentMetamorphosisScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -40,5 +45,10 @@ void Addapocalipse_wow_moduleScripts()
     AddModApocalipsePaladinPermanentSealOfRighteousnessScripts();
     AddModApocalipsePaladinDivineTollScripts();
     AddModApocalipsePaladinDivineSteedScripts();
+    AddModApocalipseWarlockBurningConflagrationScripts();
+    AddModApocalipseWarlockChaoticInfernoScripts();
+    AddModApocalipseWarlockDemonicEquilibriumScripts();
+    AddModApocalipseWarlockHauntingAfflictionScripts();
+    AddModApocalipseWarlockPermanentMetamorphosisScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

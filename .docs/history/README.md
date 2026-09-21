@@ -21,6 +21,16 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-20 | Unyielding Shadows | Partial | [`2026-09-20-unyielding-shadows.md`](2026-09-20-unyielding-shadows.md) |
+| 2026-09-20 | Unquenchable Flames | Partial | [`2026-09-20-unquenchable-flames.md`](2026-09-20-unquenchable-flames.md) |
+| 2026-09-20 | Demonic Equilibrium | Partial | [`2026-09-20-demonic-equilibrium.md`](2026-09-20-demonic-equilibrium.md) |
+| 2026-09-20 | Chaotic Inferno | Partial | [`2026-09-20-chaotic-inferno.md`](2026-09-20-chaotic-inferno.md) |
+| 2026-09-20 | Burning Conflagration | Partial | [`2026-09-20-burning-conflagration.md`](2026-09-20-burning-conflagration.md) |
+| 2026-09-20 | Permanent Metamorphosis | Partial | [`2026-09-20-permanent-metamorphosis.md`](2026-09-20-permanent-metamorphosis.md) |
+| 2026-09-20 | Haunting Affliction | Partial | [`2026-09-20-haunting-affliction.md`](2026-09-20-haunting-affliction.md) |
+| 2026-09-20 | Divine Steed cast cancellation | Partial | [`2026-09-20-divine-steed-cast-cancellation.md`](2026-09-20-divine-steed-cast-cancellation.md) |
+| 2026-09-20 | Frost Bomb damage and visual placement | Partial | [`2026-09-20-frost-bomb-damage-and-visual.md`](2026-09-20-frost-bomb-damage-and-visual.md) |
+| 2026-09-19 | Divine Steed display-ID fix | Partial | [`2026-09-19-divine-steed-display-id-fix.md`](2026-09-19-divine-steed-display-id-fix.md) |
 | 2026-09-18 | Custom-core API compatibility | Partial | [`2026-09-18-custom-core-api-compatibility.md`](2026-09-18-custom-core-api-compatibility.md) |
 | 2026-09-18 | Divine Toll | Partial | [`2026-09-18-divine-toll.md`](2026-09-18-divine-toll.md) |
 | 2026-09-18 | Extended Arsenal | Partial | [`2026-09-18-extended-arsenal.md`](2026-09-18-extended-arsenal.md) |

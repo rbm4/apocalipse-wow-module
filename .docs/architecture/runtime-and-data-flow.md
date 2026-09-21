@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last source review: 2026-09-18
+Last source review: 2026-09-20
 
 ## Startup
 
@@ -127,7 +127,7 @@ Frost Bomb 901007 cast on an enemy
      -> Permafrost-scaled slow 901009 on each living damage victim
 ```
 
-Frost Bomb's explosion uses the Mage Frostbolt family bit for the existing Frost proc and frozen-target paths. Its triggered explosion permits proc events and deliberately does not copy Living Bomb's target-proc suppression or damage-does-not-break-auras correction. Spell 901009 reads Permafrost effects from rank chain 11175 and triggers existing healing-reduction aura 68391.
+The application AuraScript makes the bombed target self-cast visual-only spell 34326 before the mage-owned explosion begins. Frost Bomb's explosion deals 1380 base damage with a 0.8 direct coefficient and uses the Mage Frostbolt family bit for the existing Frost proc and frozen-target paths. Its triggered explosion permits proc events and deliberately does not copy Living Bomb's target-proc suppression or damage-does-not-break-auras correction. Spell 901009 reads Permafrost effects from rank chain 11175 and triggers existing healing-reduction aura 68391.
 
 ```text
 Automatic Ice Lance passive 901010
@@ -176,13 +176,14 @@ The passive retains the Paladin family but has zero family masks, so it never en
 ```text
 Divine Steed 901017
   -> four-second dummy and normal 100 percent run-speed auras
-  -> Alliance display 14565 or Horde display 20030
+  -> Alliance display 14584 or Horde display 19085
   -> UNIT_FIELD_MOUNTDISPLAYID changes without Unit::Mount or UNIT_FLAG_MOUNT
+  -> the next successful non-triggered player spell removes aura 901017
   -> removal clears only the recorded display while not mechanically mounted
   -> logout and map-change hooks remove the aura and reconcile leaked display state
 ```
 
-The client receives the rider-and-horse composition, but `IsMounted()` remains false. Ordinary casting, auto-attacks, pets, indoor use, action bars, vehicles, and mount collision height are unaffected. Humans and bots follow the same bounded path.
+The client receives the rider-and-horse composition, but `IsMounted()` remains false. Ordinary casts are permitted, then the player spell hook removes Divine Steed after a successful non-triggered cast; triggered children and proc casts are ignored. Auto-attacks, pets, indoor use, action bars, vehicles, and mount collision height are unaffected. Humans and bots follow the same bounded path.
 
 ```text
 Guardian's Vengeance 901018
@@ -222,6 +223,80 @@ Divine Toll 901024 on a hostile target with a real seal
 
 The sequence cancels on caster death, logout, map change, real-seal loss, or cast-lock state. Vengeance and Corruption add a real stack before damage. A marker-scoped exception lets passive 901016 fire beside real SoR. An additive rank-chain check on Judgements of the Wise allows its first marked event and rejects later marked events. Heart of the Crusader, Judgements of the Just, Righteous Vengeance, and generic procs retain normal paths. Humans and bots follow identical behavior, and acquisition remains external.
 
+```text
+Conflagrate rank chain with passive 901027
+  -> effect script captures the exact caster-owned Immolate rank
+  -> core damage calculation consumes source Immolate unless glyph-protected
+  -> post-hit search around the primary target excludes invalid and already affected units
+  -> up to three random enemies receive full matching-rank Immolate
+```
+
+The capture hook runs before `Spell::EffectSchoolDamage`, while spread runs after the successful single-target hit. Shadowflame can enable normal Conflagrate but cannot supply an Immolate rank. Humans and bots follow the same bounded path with no combat-time database access.
+
+```text
+Soul Link aura 25228 processes incoming damage
+  -> calculate stock 20 percent split
+  -> if passive 901033 is active, replace it with 75 percent of current damage
+  -> core caps the transfer to remaining damage
+  -> core removes the transfer from the Warlock and damages the living demon
+```
+
+Demonic Equilibrium checks the passive per hit, so acquisition and removal take effect without a Soul Link recast. It leaves activation spell 19028, demon eligibility, school filtering, combat logs, and proc dispatch on the stock path. Humans and bots use identical bounded logic with no combat-time database access.
+
+```text
+Dispel targets an Immolate or Shadowflame aura from a Warlock with passive 901034
+  -> Aura::CalcDispelChance resolves the aura's original caster
+  -> native operation 28 matches Immolate word 0 bit 2 or Shadowflame word 2 bit 1
+  -> add 100 percent resist-dispel chance and clamp resistance to 100
+  -> return zero dispel chance and skip the aura without removing it
+```
+
+Unquenchable Flames evaluates the caster's current spell modifiers at each dispel attempt. Existing caster-owned auras become protected when the passive is learned and return to stock dispel behavior when it is removed. Expiration, Conflagrate consumption, death cleanup, immunity cleanup, and scripted removal remain unchanged. Humans and bots use the same native path with no script or combat-time database access.
+
+```text
+Dispel targets a matching Warlock aura whose owner has passive 901035
+  -> Aura::CalcDispelChance resolves the original caster and spell-mod owner
+  -> operation 28 intersects family mask (0xC04CC41A, 0x1804161B, 0)
+  -> add 100 percent resist-dispel chance and clamp resistance to 100
+  -> return zero dispel chance and skip the aura without removing it
+```
+
+Unyielding Shadows covers curses, Corruption, Fear, Howl of Terror, Death Coil, Banish, drains, Seed of Corruption, Shadowfury, Haunt, Shadow Embrace, matching legacy Siphon Life variants, and owner-demon effects. Unstable Affliction's unique word 1 bit `0x00000100` is absent, preserving its stock dispel and backlash path. Existing matching auras react immediately when the passive is learned or removed. Humans and bots use the same native path with no script or combat-time database access.
+
+```text
+Chaos Bolt rank chain with passive 901031
+  -> successful projectile impact casts helper 901032 at the hit position
+  -> ally-category guardian 900002 is created for 20 seconds without replacing PetGUID
+  -> stock Inferno Effect 22703 resolves meteor damage and area stun
+  -> guardian attacks the impact target and later follows owner assist events
+```
+
+The module clone of stock Infernal 89 preserves its model, addon auras, level data, and owner-derived scaling while isolating custom autonomous AI from normal Infernal behavior. Every qualifying hit adds another guardian with no explicit count cap. The 20-second balance lifetime and Chaos Bolt cooldown bound ordinary overlap. Humans and bots share the path, and no combat-time database access occurs.
+
+```text
+Haunt rank chain with passive 901028
+  -> successful AfterHit rejects active caster marker 901029
+  -> apply the non-saved 30-second marker to the caster
+  -> cast the highest ranks known in the active specialization
+  -> preserve a different same-caster curse by skipping Curse of Agony
+  -> preserve same-caster Seed of Corruption by skipping Corruption
+  -> apply Unstable Affliction independently
+```
+
+The marker makes the cooldown global per Warlock across every target and starts before the DoT applications. Triggered stock casts preserve caster ownership, normal refreshes, Unstable Affliction dispel behavior, and playerbot aura awareness. Humans and bots follow identical behavior, and acquisition remains external.
+
+```text
+Demonology Warlock with passive 901030 casts Metamorphosis 59672
+  -> stock activation starts the normal cooldown
+  -> aura 47241 maximum duration becomes -1
+  -> learning 901030 during an active form upgrades the existing aura
+  -> death retains stock removal behavior
+  -> passive loss, talent reset, login recovery, logout, or mount attempt removes aura 47241
+  -> stock aura removal clears linked effects and temporary abilities
+```
+
+The global mount cast check removes enhanced Metamorphosis before shapeshift validation so valid mount spells can proceed. A later failed mount check still leaves the form removed, and dismounting never reapplies it. Humans and bots retain the existing 59672 activation and 47241 form checks.
+
 ### Melee, healing, and absorbs
 
 - Melee damage is changed only by PvP balancing.
@@ -233,7 +308,7 @@ The sequence cancels on caster death, logout, map change, real-seal loss, or cas
 
 | Database | Objects | Access |
 |---|---|---|
-| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creature 900001, `spell_dbc`, `spell_ranks`, `spell_proc`, `spell_script_names`, `spell_bonus_data`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
+| `acore_world` | `mod_spec_spells`, `mod_spell_scaling`, creatures 900001 and 900002, `summonproperties_dbc`, `creature_template_model`, `creature_template_addon`, `pet_levelstats`, `spell_dbc`, `spell_ranks`, `spell_proc`, `spell_script_names`, `spell_bonus_data`, `spell_custom_attr`, `wotlk_spells` | `WorldDatabase` or core spell loaders |
 | `acore_characters` | `mod_player_spec`, `mod_player_spec_talent_budget`, currently unused `mod_player_spec_talent_grant` | `CharacterDatabase` |
 
 `data/mod_apocalipse.sql` explicitly switches from `acore_world` to `acore_characters` before creating the per-character tables. Keep that boundary intact.
@@ -248,15 +323,22 @@ The sequence cancels on caster death, logout, map change, real-seal loss, or cas
 | 901004 Missile Barrage Overload | Automatic `data/sql/db-world/2026_09_17_01_missile_barrage_overload.sql` | Exact 44401 and 901004 bindings | Extends normal Arcane Missiles periodic duration without changing missile damage | Matching client `Spell.dbc` and separate talent data |
 | 901005 Hypernova | Automatic `data/sql/db-world/2026_09_17_01_hypernova.sql` | `spell_apoc_mage_hypernova` on 901005 | Native Arcane damage, destination knockback, and coefficient 2.856 | Matching client `Spell.dbc`; acquisition is separate |
 | 901006 Prismatic Barrier | Automatic `data/sql/db-world/2026_09_17_02_prismatic_barrier.sql` | `spell_apoc_mage_prismatic_barrier` on 901006 | Reuses Mana Shield 43020, Ice Barrier 43039, and Blazing Barrier 901001 | Matching client `Spell.dbc`; acquisition is separate |
-| 901007-901009 Frost Bomb graph | Automatic `data/sql/db-world/2026_09_17_03_frost_bomb.sql` | Application, explosion, and slow scripts on their exact IDs | Native Frost direct damage with 0.4 coefficient and Permafrost rank effects | Three matching client `Spell.dbc` rows; acquisition is separate |
+| 901007-901009 Frost Bomb graph | Automatic baseline plus follow-up updates under `data/sql/db-world/` | Application, explosion, and slow scripts on their exact IDs | Native Frost direct damage with 0.8 coefficient and Permafrost rank effects | Three matching client `Spell.dbc` rows; acquisition is separate |
 | 901010-901011 Automatic Ice Lance graph | Automatic `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | Passive proc and haste scripts on their exact IDs | Reuses Ice Lance 30455 and native spell-haste aura handling | Two matching client `Spell.dbc` rows; passive acquisition is separate |
 | 901012-901013 Frozen Retaliation rank chain | Automatic `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | Negative -901012 binding covers both `spell_ranks` rows | Rank-specific taken-damage proc chance reuses Fingers of Frost aura 44544 | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
 | 901014-901015 Divine Storm Echo graph | Automatic `data/sql/db-world/2026_09_18_02_divine_storm_echo.sql` | Scheduler on 53385 and existing `spell_pal_divine_storm` on 901015 | Delayed normalized 55 percent weapon attack reuses Divine Storm target, proc, and healing paths | Two matching client `Spell.dbc` rows; acquisition references unranked passive 901014 only and echo acquisition is forbidden |
 | 901016 Permanent Seal of Righteousness | Automatic `data/sql/db-world/2026_09_18_03_permanent_seal_of_righteousness.sql` | `spell_apoc_paladin_permanent_seal_of_righteousness` on 901016 | Reuses stock SoR damage 25742 and calculation without entering real seal or judgement selection | Matching client `Spell.dbc`; acquisition is separate |
-| 901017 Divine Steed | Automatic `data/sql/db-world/2026_09_18_04_divine_steed.sql` | `spell_apoc_paladin_divine_steed` on 901017 plus player lifecycle cleanup | Normal run-speed aura with display-only faction charger and no mounted state | Matching client `Spell.dbc`; acquisition is separate |
+| 901017 Divine Steed | Automatic baseline plus `2026_09_20_01_divine_steed_cast_cancel.sql` | `spell_apoc_paladin_divine_steed` on 901017 plus player cast and lifecycle cleanup | Normal run-speed aura with display-only faction charger, no mounted state, and cancellation after another non-triggered player spell | Matching client `Spell.dbc`; acquisition is separate |
 | 901018-901021 Paladin Vengeance variants | Automatic `data/sql/db-world/2026_09_18_04_paladin_vengeance_variants.sql` | No script binding; native proc-trigger auras and `spell_proc` rows | Three-stack Protection damage reduction/defense or Holy healing/mp5 buff | Four matching client `Spell.dbc` rows; acquisition references only passives 901018 and 901020 |
 | 901022-901023 Extended Arsenal rank chain | Automatic `data/sql/db-world/2026_09_18_05_extended_arsenal.sql` | No script binding; native flat spell modifiers | Adds 3/6 yards and 1/2 chain targets to Hammer of the Righteous and Avenger's Shield | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
 | 901024-901026 Divine Toll graph | Automatic `data/sql/db-world/2026_09_18_05_divine_toll.sql` | Parent orchestration, -31876 JotW gate, and additive stock-damage bindings | Reuses active-seal Judgement formulas, reduces marked hit damage to 50 percent, and preserves downstream PvP and proc paths | External backend derives matching client data; acquisition and patch deployment are separate |
+| 901027 Burning Conflagration | Automatic `data/sql/db-world/2026_09_20_04_burning_conflagration.sql` | Additional `-17962` Conflagrate rank-chain binding | Reuses the captured stock Immolate rank with full initial and periodic damage behavior | Matching client row and separate talent acquisition data required |
+| 901028-901029 Haunting Affliction graph | Automatic `data/sql/db-world/2026_09_20_02_haunting_affliction.sql` | Additional `-48181` Haunt rank-chain binding | Resolves and casts learned stock DoT ranks with curse and Seed exclusions behind a caster marker | Two matching client rows; acquisition references only passive 901028 |
+| 901030 Permanent Metamorphosis | Automatic `data/sql/db-world/2026_09_20_03_permanent_metamorphosis.sql` | Global duration, mount pre-check, and player cleanup hooks | Makes stock aura 47241 infinite without replacing activation 59672 or its cooldown | Matching client row; Demonology Spec Manager acquisition is included |
+| 901031-901032 Chaotic Inferno graph | Automatic `data/sql/db-world/2026_09_20_05_chaotic_inferno.sql` | Additional `-50796` Chaos Bolt rank-chain binding plus guardian AI and stat hook | Reuses stock Inferno Effect 22703 and Infernal model/scaling through non-pet guardian 900002 | Two matching client rows; acquisition references only passive 901031 |
+| 901033 Demonic Equilibrium | Automatic `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql` | Additional stock aura 25228 split binding | Replaces Soul Link's current split amount with 75 percent while the passive is active | Matching client row and separate talent acquisition data required |
+| 901034 Unquenchable Flames | Automatic `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql` | No script binding; native flat spell modifier | Adds 100 percent resist-dispel chance to exact Immolate and Shadowflame family masks | Matching client row and separate talent acquisition data required |
+| 901035 Unyielding Shadows | Automatic `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | No script binding; native flat spell modifier | Adds 100 percent resist-dispel chance to matching curses and Shadow debuffs while excluding UA | Matching client row and separate talent acquisition data required |
 
 A server-only row can provide mechanics but not complete client presentation. A client-only row cannot provide server mechanics.
 
@@ -281,6 +363,13 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing Vengeance variant row or proc metadata | The corresponding passive cannot add or correctly scale its timed buff | Check 901018 through 901021, the exact `spell_proc` rows, non-save attributes, and client patch |
 | Missing Extended Arsenal row or rank metadata | The passive cannot modify range and target count or the higher rank may not replace the lower rank | Check 901022 and 901023, their exact effect masks, the `spell_ranks` rows, and client patch |
 | Missing Divine Toll row, marker, visual, or additive binding | The cast fails validation, loses sequencing, permits repeated JotW, or deals unscaled stock damage | Check 901024 through 901026, -31876, all listed damage bindings, and external client export |
+| Missing Burning Conflagration row or binding | The passive cannot validate or Conflagrate does not spread Immolate | Check 901027, binding -17962, loader registration, and matching client and talent data |
+| Missing Permanent Metamorphosis row or Spec Manager acquisition | Demonology players do not receive passive 901030 or clients cannot display it | Check the 901030 updater, `mod_spec_spells`, loader registration, and client export |
+| Missing Permanent Metamorphosis registration | Aura 47241 retains stock duration and lifecycle hooks do not run | Check `AddModApocalipseWarlockPermanentMetamorphosisScripts()` and rebuild the module |
+| Missing Chaotic Inferno spell, summon, creature, properties, or registration | Chaos Bolt cannot summon, the impact is incomplete, or guardians lack ownership, scaling, or autonomous assist | Check 901031, 901032, creature 900002, summon properties, cloned support rows, `-50796`, loader registration, and both client rows |
+| Missing Demonic Equilibrium row, binding, or registration | Soul Link remains at stock 20 percent even when 901033 is learned | Check 901033, binding 25228, loader registration, and matching client and talent data |
+| Missing Unquenchable Flames row or native modifier fields | Immolate and Shadowflame retain stock dispel chance even when 901034 is learned | Check operation 28, amount 100, exact family masks, and matching client and talent data |
+| Missing Unyielding Shadows row or native modifier fields | Curses and Shadow debuffs retain stock dispel chance when 901035 is learned | Check operation 28, amount 100, combined family mask, UA exclusion, and matching client and talent data |
 | Missing acquisition data for 901005 | Hypernova exists but cannot be learned normally | Add acquisition through its separately owned workflow |
 | Config reload during active battleground | New values are cached but existing auras are not immediately swept | Re-enter battleground, trigger an application hook, or restart according to operator plan |
 | Bot lacks a valid session | Bot exception is not detected | Fix bot lifecycle; do not add heuristic fallback |

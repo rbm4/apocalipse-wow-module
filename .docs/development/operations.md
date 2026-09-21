@@ -1,6 +1,6 @@
 # Build, configuration, database, and release operations
 
-Last source review: 2026-09-18
+Last source review: 2026-09-20
 
 ## Supported context
 
@@ -82,11 +82,20 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/sql/db-world/2026_09_18_02_divine_storm_echo.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and echo rows | Spells 901014 and 901015, Divine Storm scheduling and healing bindings, and backend names |
 | `data/sql/db-world/2026_09_18_03_permanent_seal_of_righteousness.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901016, melee and judgement proc metadata, script binding, and backend name |
 | `data/sql/db-world/2026_09_18_04_divine_steed.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901017, display lifecycle binding, non-save attribute, and backend name |
+| `data/sql/db-world/2026_09_20_01_divine_steed_cast_cancel.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized active row | Updates 901017 descriptions for cancellation after another spell cast |
 | `data/sql/db-world/2026_09_18_04_paladin_vengeance_variants.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized four-spell graph | Spells 901018 through 901021, critical-event proc metadata, non-save timed buffs, and backend names |
 | `data/sql/db-world/2026_09_18_05_extended_arsenal.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized two-rank passive chain | Spells 901022 and 901023, range and jump-target modifiers, rank relationships, and backend names |
 | `data/sql/db-world/2026_09_18_05_divine_toll.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized three-spell active graph | Spells 901024 through 901026, parent and additive stock-spell bindings, non-save markers, and backend names |
+| `data/sql/db-world/2026_09_20_02_haunting_affliction.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and cooldown graph | Spells 901028 and 901029, Haunt rank-chain binding, non-save marker metadata, and backend names |
+| `data/sql/db-world/2026_09_20_03_permanent_metamorphosis.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901030, Demonology Spec Manager acquisition, and backend name |
+| `data/sql/db-world/2026_09_20_04_burning_conflagration.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901027, Conflagrate rank-chain binding, and backend name |
+| `data/sql/db-world/2026_09_20_05_chaotic_inferno.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized spell, creature, and summon graph | Spells 901031 and 901032, creature 900002, summon properties, Infernal support rows, Chaos Bolt binding, and backend names |
+| `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901033, stock Soul Link aura binding, and backend name |
+| `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901034, native resist-dispel modifier, exact Immolate and Shadowflame family masks, and backend name |
+| `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901035, native resist-dispel modifier, combined Warlock family mask excluding Unstable Affliction, and backend name |
 | `data/sql/db-world/2026_09_18_01_automatic_ice_lance_proc_eligibility.sql` | `acore_world` | AzerothCore module updater; guarded for the recognized passive row | Updates installed spell 901010 for direct, periodic, and triggered Frost damage eligibility and current descriptions |
 | `data/sql/db-world/2026_09_18_00_frost_bomb_visual_origin.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized explosion row | Removes caster-attached visual 17 from spell 901008 so C++ can emit the same visual from the bombed target through existing spell 34326 |
+| `data/sql/db-world/2026_09_20_00_frost_bomb_damage_and_visual.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for the recognized explosion row and coefficient | Doubles 901008 base damage and direct coefficient, updates descriptions, and clears caster-attached visual 17 again before client export |
 
 `data/mod_apocalipse.sql` correctly issues `USE acore_characters` before creating `mod_player_spec`, `mod_player_spec_talent_budget`, and `mod_player_spec_talent_grant`. Do not remove that switch.
 
@@ -98,11 +107,11 @@ Custom-spell updater files require the externally managed `wotlk_spells_full` an
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 through 901026 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001 through 901035 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901026 module updates can run.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901035 module updates can run.
 8. Confirm all updater records and module startup logs.
 9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells. Deploy the separate talent and acquisition data through their owned workflows.
 10. Run focused human and bot in-game scenarios.
@@ -130,9 +139,11 @@ The expected equipped-item values are `-1`, `0`, and `0`. Confirm the `HasItemFi
 Before first deployment, verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901026;
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901026;
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901026;
+SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901035;
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901035;
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901035;
+SELECT `entry` FROM `creature_template` WHERE `entry` = 900002;
+SELECT `ID` FROM `summonproperties_dbc` WHERE `ID` = 901032;
 ```
 
 Also inspect the actual client/server base `Spell.dbc`; it is not represented fully by these SQL queries.
@@ -163,9 +174,13 @@ At minimum test:
 - Automatic Ice Lance direct, periodic, and triggered Mage Frost eligibility, Ice Lance recursion exclusion, 10 percent chance, one-second cooldown, wall and pillar line-of-sight rejection, target guards, Fingers of Frost consumption, independent 10-second expirations, 20 percent cap, passive removal cleanup, and identical human/playerbot results.
 - Frozen Retaliation ranks 1 and 2, 1.5 and 3 percent chances, melee, ranged, direct spell, periodic, triggered, fully prevented, environmental, existing Fingers of Frost, rank upgrade, and identical human/playerbot results.
 - Divine Storm Echo without the passive, one-second timing, death, logout, passive removal, movement, 12-target selection, normalized 55 percent weapon damage, independent hit and critical strike results, normal procs, proportional healing, recursion prevention, and identical human/playerbot results.
-- Divine Steed Alliance/Horde display selection, four-second duration, 100 percent run speed, 20-second cooldown, combat and indoor use, ordinary attacks and casts, pet retention, death/cancel/logout/map cleanup, real mount replacement, enabled race and sex rider attachments, and identical human/playerbot results.
+- Divine Steed Alliance/Horde display selection, four-second duration, 100 percent run speed, 20-second cooldown, combat and indoor use, cancellation after successful non-triggered player spells, triggered-spell exclusion, ordinary attacks, pet retention, death/cancel/logout/map cleanup, real mount replacement, enabled race and sex rider attachments, and identical human/playerbot results.
 - Extended Arsenal ranks 1 and 2, 3 and 6 yard cast-range increases, one and two added targets, Hammer melee hop radius and frontal restrictions, Avenger's Shield daze, silence, and secondary behavior on every added target, unrelated Paladin spell isolation, and identical human/playerbot results.
 - Divine Toll no-seal rejection, 10 percent base mana cost, 60-second cooldown, uniform one-through-five roll, immediate and 500 ms timing, invalid-target retargeting, caster cancellation states, every stock seal, half damage, independent critical strikes, immunity and absorb behavior, shared Judgement reset, JotW once, per-impact talent and generic procs, real-SoR overlay exception, and identical human/playerbot results.
+- Permanent Metamorphosis stock activation and cooldown, infinite aura 47241 duration, active-form passive acquisition, death, passive removal, talent reset, interrupted-shutdown login recovery, logout, valid and later-rejected mount attempts, dismount behavior, linked aura and temporary ability cleanup, and identical human/playerbot results.
+- Unquenchable Flames all Immolate and Shadowflame ranks, unrelated Warlock debuff isolation, multiple-caster ownership, passive acquisition and removal during an active aura, normal expiration and Conflagrate consumption, and identical human/playerbot results.
+- Unyielding Shadows every curse and covered Shadow aura, Unstable Affliction stock dispel and backlash behavior, multiple-caster ownership, owner-demon effects, passive acquisition and removal during an active aura, normal non-dispel removal, and identical human/playerbot results.
+- Chaotic Inferno successful and failed Chaos Bolt impacts, stock meteor damage and stun, 20-second guardian duration, cooldown-bounded unlimited stacking, normal pet coexistence, owner assist and follow behavior, lifecycle cleanup, and identical human/playerbot results.
 - Battleground stamina below/above threshold, buff isolation, gear swaps, bot auto-gearing, death, reconnect, and exit cleanup.
 
 Record observed results in the relevant feature page and history entry. If a scenario was not run, mark it `Not run`.

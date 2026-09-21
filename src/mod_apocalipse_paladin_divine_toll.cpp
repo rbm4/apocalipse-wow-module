@@ -41,8 +41,8 @@ enum ApocalipsePaladinDivineTollSpells
 };
 
 constexpr uint32 PALADIN_ICON_JUDGEMENTS_OF_THE_JUST = 3015;
-constexpr uint32 DIVINE_TOLL_MIN_IMPACTS = 3;
-constexpr uint32 DIVINE_TOLL_MAX_IMPACTS = 6;
+constexpr uint32 DIVINE_TOLL_MIN_IMPACTS = 1;
+constexpr uint32 DIVINE_TOLL_MAX_IMPACTS = 5;
 constexpr uint32 DIVINE_TOLL_IMPACT_INTERVAL_MS = 500;
 constexpr int32 DIVINE_TOLL_DAMAGE_PCT = 50;
 constexpr int32 DIVINE_TOLL_HIT_BONUS_PCT = 10000;
