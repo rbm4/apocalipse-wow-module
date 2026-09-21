@@ -1,6 +1,6 @@
 #include "Creature.h"
 #include "CreatureAI.h"
-#include "Pet.h"
+#include "PetDefines.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Spell.h"
@@ -22,13 +22,7 @@ enum ApocalipseWarlockChaoticInfernoSpells
 {
     SPELL_APOC_WARLOCK_CHAOTIC_INFERNO = 901031,
     SPELL_APOC_WARLOCK_CHAOTIC_INFERNO_SUMMON = 901032,
-    SPELL_WARLOCK_INFERNO_EFFECT = 22703,
-    SPELL_PET_AVOIDANCE = 32233,
-    SPELL_WARLOCK_PET_SCALING_05 = 61013,
-    SPELL_INFERNAL_SCALING_01 = 36186,
-    SPELL_INFERNAL_SCALING_02 = 36188,
-    SPELL_INFERNAL_SCALING_03 = 36189,
-    SPELL_INFERNAL_SCALING_04 = 36190
+    SPELL_WARLOCK_INFERNO_EFFECT = 22703
 };
 
 enum ApocalipseWarlockChaoticInfernoCreatures

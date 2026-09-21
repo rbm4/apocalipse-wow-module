@@ -95,4 +95,4 @@ Rollback must remove the exact script binding, spell rows 901031 and 901032, sum
 
 - No hard count cap is enforced; the 20-second lifetime and Chaos Bolt cooldown provide the ordinary-play bound, while cooldown resets still need load validation.
 - The implementation uses a module creature entry because attaching autonomous AI directly to stock creature 89 would also replace normal Infernal AI globally.
-- Build, SQL application, startup, client export, and in-game behavior have not been run in this environment.
+- The first deployment-core build exposed duplicate pet-scaling enum names. The module now consumes those symbols from `PetDefines.h`; a confirming rebuild, SQL application, startup, client export, and in-game behavior remain pending.

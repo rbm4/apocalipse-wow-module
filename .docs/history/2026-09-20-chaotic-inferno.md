@@ -41,7 +41,7 @@ Add a small Destruction passive that turns every successful Chaos Bolt impact in
 | Check | Command or scenario | Result |
 |---|---|---|
 | Source and data inspection | Static review of custom core summon, guardian, scaling, and Chaos Bolt paths | Passed |
-| Build | Parent custom-core build | Not run by user instruction |
+| Build | Parent custom-core build | Failed on duplicate pet-scaling enum names; module declarations removed in favor of `PetDefines.h`; rebuild pending |
 | SQL updater | Apply automatic world update | Not run by user instruction |
 | Client export | Build and inspect client patch | Not run by user instruction |
 | Runtime | Human and bot scenarios from owner page | Not run by user instruction |
