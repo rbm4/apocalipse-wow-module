@@ -56,7 +56,8 @@ INSERT IGNORE INTO `mod_spell_scaling` (`spell_id`, `scale_type`, `scale_factor`
 
 -- ── Death Knight ─────────────────────────────────────────────────────────────
 INSERT IGNORE INTO `mod_spell_scaling` (`spell_id`, `scale_type`, `scale_factor`, `description`) VALUES
-(49184, 'DAMAGE', 1.0, 'Howling Blast - AoE frost damage');
+(49184,  'DAMAGE',   1.0, 'Howling Blast - AoE frost damage'),
+(901049, 'PERIODIC', 1.0, 'Rupture Bleed - stacking Physical periodic damage');
 
 -- ── Shaman ───────────────────────────────────────────────────────────────────
 INSERT IGNORE INTO `mod_spell_scaling` (`spell_id`, `scale_type`, `scale_factor`, `description`) VALUES

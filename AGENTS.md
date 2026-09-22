@@ -53,18 +53,33 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 | `src/mod_apocalipse_mage_frost_bomb.cpp` | Frost Bomb removal, explosion, proc, and Permafrost slow behavior |
 | `src/mod_apocalipse_mage_automatic_ice_lance.cpp` | Automatic Ice Lance proc filtering and independent haste expirations |
 | `src/mod_apocalipse_mage_frozen_retaliation.cpp` | Two-rank incoming-damage proc that grants Fingers of Frost |
+| `src/mod_apocalipse_rogue_concentrated_venom.cpp` | Equipped weapon-poison proc that adds real Deadly Poison applications with a per-target throttle |
+| `src/mod_apocalipse_rogue_leeching_mixture.cpp` | Owner-attributed Rogue poison damage self-healing with a one-second maximum-health cap |
+| `src/mod_apocalipse_rogue_gloomblade_infusion.cpp` | Owner-attributed outgoing damage converted into a separate Shadow hit |
+| `src/mod_apocalipse_rogue_shadow_execution.cpp` | Rogue ability-applied stacking Shadow periodic weapon damage |
+| `src/mod_apocalipse_rogue_relentless_finale.cpp` | Five-point finisher healing, cast-scoped combo retention, visible readiness, and post-use recharge |
+| `src/mod_apocalipse_rogue_improved_feint.cpp` | Rank-wide Feint-triggered all-school damage reduction passive |
+| `src/mod_apocalipse_rogue_daring_challenge.cpp` | Combat Rogue taunt, threat lead, and target-specific threat amplification |
 | `src/mod_apocalipse_hunter_ambush_trapper.cpp` | Trap-activation buff and charged Hunter melee-special behavior |
 | `src/mod_apocalipse_hunter_primal_resolve.cpp` | Active Hunter damage reduction and snare cleanup |
 | `src/mod_apocalipse_hunter_apex_bond.cpp` | Active Hunter and pet healing with a temporary pet damage buff |
 | `src/mod_apocalipse_hunter_blood_of_the_hunt.cpp` | Shared-cooldown Hunter melee-special and trap self-healing |
+| `src/mod_apocalipse_rogue_alchemical_guard.cpp` | Active Rogue damage reduction and poison/disease cleanse and immunity |
+| `src/mod_apocalipse_death_knight_crimson_ward.cpp` | Incoming-damage Blood Death Knight maximum-health absorb |
+| `src/mod_apocalipse_death_knight_frozen_resolve.cpp` | Combat-gated Death Knight stacking armor and damage reduction |
+| `src/mod_apocalipse_death_knight_necrotic_veil.cpp` | Unholy Death Knight damage-derived persistent magic absorb |
+| `src/mod_apocalipse_death_knight_rime_shards.cpp` | Frost Strike and Howling Blast damage-derived target-centered Frost burst |
+| `src/mod_apocalipse_death_knight_pestilent_eruption.cpp` | Passive-gated free stock Pestilence after Death Coil and Scourge Strike hits |
+| `src/mod_apocalipse_death_knight_rupture.cpp` | Blood Death Knight melee-hit stacking periodic bleed |
+| `src/mod_apocalipse_rogue_buckler_strike.cpp` | Shield-required Combat Rogue damage, combo point, high threat, and NPC interrupt active |
 | `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo |
-| `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR proc behavior beside another real seal |
-| `src/mod_apocalipse_paladin_divine_toll.cpp` | Sequenced half-damage Judgement impacts and proc controls |
+| `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR and pseudo-Vengeance proc behavior beside real seals |
+| `src/mod_apocalipse_paladin_divine_toll.cpp` | Five sequential 80-percent-damage Judgement impacts and proc controls |
 | `src/mod_apocalipse_paladin_divine_steed.cpp` | Display-only paladin horse sprint and lifecycle cleanup |
 | `src/mod_apocalipse_warlock_burning_conflagration.cpp` | Passive-gated Conflagrate spread of same-caster Immolate |
 | `src/mod_apocalipse_warlock_chaotic_inferno.cpp` | Passive-gated Chaos Bolt Inferno impacts and autonomous guardians |
 | `src/mod_apocalipse_warlock_demonic_equilibrium.cpp` | Passive-gated Soul Link damage transfer increase |
-| `src/mod_apocalipse_warlock_haunting_affliction.cpp` | Passive-gated Haunt DoT applications and caster-global cooldown |
+| `src/mod_apocalipse_warlock_haunting_affliction.cpp` | Passive-gated DoT applications on every successful Haunt hit |
 | `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp` | Passive-gated infinite Metamorphosis duration and lifecycle cleanup |
 | `src/battleground_stamina/` | Battleground stamina calculation, aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
@@ -80,7 +95,7 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 5. **State bot behavior explicitly.** Every gameplay feature must say whether it applies identically to bots, suppresses output, bypasses a restriction, or requires separate logic.
 6. **Use the correct database.** World definitions use `WorldDatabase`; per-character grant state uses `CharacterDatabase`. Preserve explicit `USE` boundaries in manual SQL.
 7. **Keep SQL mode clear.** Files outside `data/sql/db-world/` are manual unless documented otherwise. Files inside that directory are automatic world updates. Never apply production SQL without explicit approval.
-8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901047 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
+8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901090 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
 9. **Keep config defaults synchronized.** A setting's code fallback, distributed `.conf.dist`, validation, and documented default must agree. If they do not, record the drift until fixed.
 10. **Preserve gameplay cleanup.** Battleground-only state must be removed on unsupported maps/leave. Managed talents and hidden budgets must be revoked on tree transitions/reset. Do not add persistent auras accidentally.
 11. **Keep event work bounded.** Bot populations multiply login, talent, equipment, and combat-hook cost. Do not add database queries to combat or per-tick paths.

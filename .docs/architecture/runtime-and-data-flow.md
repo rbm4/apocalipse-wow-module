@@ -25,6 +25,37 @@ AzerothCore discovers Addapocalipse_wow_moduleScripts()
 
 ## Player lifecycle
 
+### Default rogue Shield acquisition
+
+```text
+worldserver startup
+  -> merges skillraceclassinfo_dbc row 10000 into the server DBC store
+  -> accepts rogue class mask 8 for Shield skill 433
+
+rogue character load before inventory validation
+  -> LearnDefaultSkills reads the separate rogue playercreateinfo_skills row
+  -> grants missing Shield skill 433
+  -> stock skill rewards reconstruct Shield Proficiency and Block capability
+```
+
+This path applies to existing and new rogues without a module login hook. Client DBC presentation, LFG shield eligibility, and playerbot equipment-selection policy remain separate concerns.
+
+### Bladeguard equipment lifecycle
+
+```text
+learned passive 901073 plus usable shield
+  -> core item-dependent passive handling applies Bladeguard
+  -> item armor gains 130 percent and block chance gains 15 points
+  -> successful block can trigger helper 901074 for 5 Energy
+     -> spell_proc enforces one trigger per 1000 ms
+
+shield removed or no longer usable
+  -> core item-dependent aura cleanup removes 901073 immediately
+  -> armor, block chance, and Energy proc all deactivate
+```
+
+Bladeguard uses native aura and proc paths and does not grant Shield skill, shield proficiency, or Block capability. Acquisition is external.
+
 ### Login and talent changes
 
 `ModSpecPlayer` reconciles the dominant talent tree on login and after each talent learn. It persists the granted spec and hidden talent budget in the character database. A per-GUID in-progress set prevents recursive reconciliation. Talent reset processing also has a one-second per-GUID throttle.
@@ -152,6 +183,95 @@ Frozen Retaliation rank 1 901012 or rank 2 901013
 The proc has no attacker, school, family, class, or phase filter. Melee, ranged, direct spell, periodic, and triggered combat damage can qualify when positive damage remains. Fully prevented damage and the separate environmental damage path do not dispatch the required positive combat-damage proc event. Humans and bots follow the same path.
 
 ```text
+Concentrated Venom passive 901061 observes a landed equipped weapon poison
+  -> AuraScript verifies Rogue poison family, hostile target, and real weapon CastItem
+  -> select the highest applicable Deadly Poison rank on either equipped weapon
+  -> reject while this target's aura-local 1000 ms throttle is active
+  -> spell_proc rolls 30 percent
+  -> cast the native Deadly Poison spell with its enchanted weapon
+  -> native script adds a stack or, at five prior stacks, procs the opposite weapon
+```
+
+The proc event excludes misses, full resists, immunities, and other non-landed results before the chance roll. The script arms the target throttle before casting and removes it if the request fails, so the native five-stack opposite-weapon cast cannot re-enter the passive in the same call chain. The extra Deadly Poison cast also names passive 901061 as its trigger and receives the core's same-aura recursion guard. Expired target entries are pruned during later qualifying checks, and removing the passive destroys the map. Humans and bots follow the same bounded path with no combat-time database access.
+
+```text
+Daring Challenge 901070 lands on one enemy
+  -> core matches the Rogue to highest threat and applies a 3-second taunt
+  -> AfterHit verifies the caster-owned taunt aura survived immunity handling
+  -> add one unmodified, unredirected point of threat
+  -> enemy applies non-saved helper 901071 to the Rogue for 6 seconds
+  -> positive Rogue damage against that exact enemy adds 50 percent damage threat
+```
+
+The bonus path uses the original damage spell when adding threat, so normal school threat modifiers and redirects compose with the extra contribution. Boss and encounter taunt immunity remain entirely core-owned. No damage value is changed, and no database query or global combat state is added.
+
+```text
+Buckler Strike 901078 cast with a usable offhand shield
+  -> calculate floor(20 percent AP plus 150 percent shield block value)
+  -> normal Physical melee resolution deals final damage
+  -> native effect awards one combo point on a successful hit
+  -> normal damage threat plus two-times final-damage bonus threat
+  -> native interrupt effect executes only when the target is not a player
+```
+
+The interrupt path uses the core cast-state, interrupt-flag, immunity, and three-second school-lockout contract. Player targets still receive damage and normal combo-point handling, but the script prevents the interrupt effect before default execution. The strike suppresses weapon item procs and creates no combat-time database or global state.
+
+```text
+Leeching Mixture passive 901075 observes owner-attributed Rogue poison damage
+  -> require Rogue family, poison dispel metadata, positive final damage, and another-unit victim
+  -> calculate floor(8 percent of final event damage)
+  -> clamp raw generated healing to floor(2 percent of current maximum health) per 1000 ms window
+  -> cast non-critical self-heal helper 901076
+  -> normal healing-taken reduction, dampening, absorption, and overheal resolve
+```
+
+The proc actor and `DamageInfo` attacker must both be the passive owner. Other Rogues, pets, guardians, environmental damage, self-damage, and reflected-hit events are rejected. Custom Rogue poison damage qualifies by preserving Rogue family and poison dispel metadata. The two-value window state is aura-local, performs no database access, and behaves identically for humans and bots.
+
+```text
+Gloomblade Infusion passive 901079 observes owner-attributed damage
+  -> accept positive auto-attack, direct, periodic, poison, and triggered damage events
+  -> reject self-damage, reflected damage, and helper 901080
+  -> calculate floor(10 percent of final event damage)
+  -> cast non-critical Shadow helper 901080 on the same living victim
+  -> normal Shadow mitigation, PvP balancing, threat, and combat logging resolve
+```
+
+The helper is a triggered generic-family cast and is excluded explicitly by ID, preventing recursion while also keeping internal damage out of Rogue-family consumers such as Shadow Execution. Other proc systems retain their own triggered-spell eligibility rules. Pet and guardian damage is excluded by actor and attacker ownership checks. The source event has already completed its own scaling and mitigation path, while helper 901080 independently traverses normal Shadow damage handling.
+
+```text
+Shadow Execution passive 901081 observes direct Rogue-family ability damage
+  -> require positive owner damage, another living unit, and a usable main-hand weapon
+  -> reject auto attacks, periodic ticks, reflected damage, and IDs 901081 and 901082
+  -> apply one native stack of periodic Shadow aura 901082 to that victim
+  -> refresh ten seconds without resetting its one-second periodic timer
+  -> calculate one percent of current AP-modified main-hand damage per stack
+```
+
+The periodic amount is recalculated when native stack application changes the aura. Core amount handling multiplies that one-stack amount by the current stack count, capped at 50, then normal Shadow periodic mitigation, PvP balancing, threat, and combat logging resolve. The existing external talent-tree flow must grant only single-rank passive 901081, and humans and bots share the same path.
+
+```text
+Relentless Finale passive 901084 applies visible infinite ready aura 901085
+  -> player begins a non-triggered Rogue finisher with exactly five combo points
+  -> transient aura 901086 disables combo-point clearing for that cast only
+  -> every successful five-point cast heals 5 percent maximum health through 901088
+  -> a retained cast removes ready and starts hidden recharge 901087 at 12000 ms
+  -> recharge expiration reapplies ready aura 901085
+```
+
+The strict-check hook duplicates the core's explicit-target combo ownership test and requires exactly five points before applying the one-second transient aura. The core then observes that aura in the same check and suppresses clearing for that cast. One-through-four-point, wrong-target, triggered, and copied finishers follow their normal path. The recharge begins after the activating cast rather than on a periodic passive schedule. Humans and bots share the mechanics, while intentional double-finisher sequencing remains AI policy.
+
+```text
+Rogue with Improved Feint passive 901089 successfully casts any Feint rank
+  -> stock Feint effects resolve without modification
+  -> rank-wide AfterCast hook triggers helper 901090 on the Rogue
+  -> helper applies or refreshes six seconds of 30 percent all-school reduction
+  -> non-AoE damage uses factor 0.70
+  -> AoE damage also uses stock Feint factor 0.60, producing factor 0.42
+```
+
+The helper reuses native `SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN` handling while stock Feint keeps its separate AoE avoidance aura. Their reductions therefore multiply to 58 percent total AoE reduction rather than adding to 70 percent. Helper 901090 is non-dispellable, cannot be stolen, is not saved across logout, and follows the same path for humans and bots.
+
+```text
 Ambush Trapper passive 901038 observes a Hunter trap activation
   -> finish-phase spell_proc requires Hunter family and the trap activation flag
   -> AuraScript requires the Hunter as actor and a trap triggerer as original target
@@ -173,6 +293,31 @@ Primal Resolve 901042 cast by a Hunter
 ```
 
 The cleanup uses the deployment core's `RemoveMovementImpairingAuras(false)` path. Damage reduction composes through the core's normal multiplicative damage-taken aura handling and adds no module damage hook or runtime state. Humans and bots receive identical mechanics when they cast the spell; acquisition and playerbot cast policy remain external.
+
+```text
+Alchemical Guard 901077 cast by a Rogue
+  -> native poison and disease immunities purge matching existing auras
+  -> new poison and disease applications are immune for 6 seconds
+  -> native all-school aura reduces damage taken by 20 percent
+  -> magic, curse, bleed, and other effect classifications remain unchanged
+  -> controlled-cast attributes permit use while stunned, feared, or confused
+  -> prevention type zero permits use while silenced or pacified
+  -> allow-while-stealthed preserves stealth and the normal GCD starts
+  -> parent spell retains its 60-second cooldown
+```
+
+All gameplay effects use native spell and aura handling. The bound AuraScript validates the graph but does not add per-event work or runtime state. Acquisition and playerbot cast decisions remain external.
+
+```text
+Crimson Vial 901083 cast by a Rogue
+  -> consume 20 Energy and start a 45-second cooldown and one-second GCD
+  -> apply one non-dispellable, non-saved six-second self aura
+  -> heal 5 percent current maximum health immediately
+  -> heal 5 percent current maximum health at seconds 1 through 6
+  -> resolve healing modifiers, dampening, absorption, and overheal per event
+```
+
+The data-only spell uses `SPELL_AURA_OBS_MOD_HEALTH` and the immediate-period attribute. The deployment core recalculates current maximum health for every tick and excludes this aura type from ordinary healing proc dispatch. No script, helper spell, scaling row, or combat-time database access is added. Humans and bots receive identical mechanics after external acquisition and cast.
 
 ```text
 Apex Bond 901046 cast by a Hunter
@@ -210,6 +355,81 @@ Melee Specialization passive 901047 is active
 The passive uses only native spell data and adds no script registration or combat-time database access. Range, weapon, resource, cooldown, target, silence, disarm, and other cast checks remain unchanged. Humans and bots follow the same path.
 
 ```text
+Blood Death Knight with Rupture passive 901048
+  -> normal or critical melee auto hit, or exact Blood Strike, Heart Strike, or Death Strike rank hit
+  -> apply one helper 901049 stack to that event target and refresh its 15-second duration
+  -> every two seconds native periodic calculation adds 0.5 percent melee AP per stack
+  -> physical and bleed modifiers, PERIODIC scaling, and PvP balancing compose on the tick
+```
+
+The helper caps at 200 stacks, ignores armor through bleed mechanic 15, and expires as one aura when applications stop for 15 seconds. Heart Strike secondary targets dispatch separate hit events. Humans and bots use identical mechanics, and the proc path performs no database work.
+
+```text
+Crimson Ward passive 901050 observes positive incoming combat damage
+  -> one aura-owned 60000 ms spell_proc cooldown accepts the event
+  -> triggering damage resolves before the helper is active
+  -> helper 901051 snapshots floor(20% * current maximum health)
+  -> all-school absorb remains for up to 15 seconds
+```
+
+The helper has no dispel type, is non-save, and does not dynamically resize after maximum-health changes. Zero-damage and environmental events do not enter this proc path. Crimson Ward has no Spell Scaling row, adds no module damage hook, and behaves identically for humans and bots.
+
+```text
+Frozen Resolve passive 901052 ticks every two seconds
+  -> out of combat: no action
+  -> in combat: trigger one self-cast of timed aura 901053
+  -> native stacking adds one stack up to 10 and refreshes the shared eight-second duration
+  -> the stacked aura adds 2 percent armor and 2 percentage points of all-school combat-damage reduction per stack
+```
+
+The permanent passive owns the periodic timer, so combat entry does not reset the cadence. At the cap, accepted ticks refresh duration without increasing stacks. Native stack calculation reaches +20 percent armor and one 0.80 all-school combat-damage multiplier at 10 stacks; separate damage-taken auras compose multiplicatively. Environmental self-damage follows the core's separate path and bypasses this multiplier. Leaving combat or losing the passive stops applications, and helper 901053 expires no later than eight seconds after its last accepted tick. The path is constant-time, performs no database access, and is identical for humans and bots.
+
+```text
+Rime Shards passive 901054 observes Frost Strike or Howling Blast damage
+  -> positive normal or critical event receives one 30 percent roll
+  -> snapshot 20 percent of event damage into helper 901055
+  -> center a 10-yard Frost burst on that event target
+  -> select no more than 10 enemies
+  -> each receives floor(base * (2N - 1) / N^2) before final Frost resolution
+```
+
+Each Howling Blast victim and Threat of Thassarian Frost Strike off-hand hit is an independent event. Aggregate helper output grows from 100 percent with one target to 190 percent with ten targets, while per-target output diminishes. The helper has no Spell Scaling row because its base amount already derives from source damage. Normal Frost modifiers and PvP balancing still apply when each helper hit resolves. Humans and bots follow the same path.
+
+```text
+Necrotic Veil passive 901056 observes direct-owner outgoing damage
+  -> snapshot floor(10 percent of positive post-mitigation event damage)
+  -> compute floor(35 percent of current maximum health)
+  -> create or increase helper 901057 without exceeding that cap
+  -> refresh the helper to 60 seconds after a positive contribution
+  -> school mask 126 absorbs magic damage but excludes Physical
+```
+
+Pet, guardian, self, zero-damage, healing, and environmental events do not contribute. Triggered direct or periodic damage can contribute when it emits a normal proc event with the Death Knight as the exact actor. The helper stores only its remaining absorb amount, performs no database access, has no separate Spell Scaling row, and behaves identically for humans and bots.
+
+```text
+Pestilent Eruption passive 901058 is active
+  -> a Death Coil or Scourge Strike rank completes a successful hostile hit
+  -> additive source-chain script retrieves passive effect 0
+  -> trigger long-range carrier 901059 on the hit target at no cost
+  -> existing spell_dk_pestilence spreads owned diseases and applies glyph refresh rules
+```
+
+Only parent rank chains 47541 and 55090 are bound. Death Coil damage helper 47632 and Scourge Strike Shadow helper 70890 cannot duplicate the trigger. Friendly Death Coil healing is rejected by the hostile-target gate. Carrier 901059 copies stock Pestilence effects and targeting, uses Death Coil's 30-yard range, and invokes the core Pestilence script for disease and glyph behavior. The path stores no custom runtime state, performs no database access, and behaves identically for humans and bots.
+
+```text
+Pestilent Knives 901069
+  -> charge 35 Energy and start a 20-second cooldown
+  -> select at most ten enemies within 10 yards
+  -> each successful effect deals 50 percent Physical weapon damage
+  -> resolve the main-hand temporary enchant's Deadly Poison combat spell
+  -> cast that poison twice below five caster-owned stacks
+     or once when the target already has five stacks
+  -> stock spell_rog_deadly_poison applies the rank and handles the other weapon
+```
+
+The cast snapshots the main-hand item and Deadly Poison spell before hit handling. A target beginning at four stacks reaches five on the first poison cast and triggers the normal full-stack interaction on the second. A target already at five receives only one poison cast, bounding the opposite poison to one trigger per enemy. The script stores no persistent state, performs no database access, and behaves identically for humans and bots after an active cast.
+
+```text
 Divine Storm 53385 with passive 901014
   -> AfterCast schedules a caster-owned one-second event
   -> event requires the player in world, alive, and still affected by 901014
@@ -224,12 +444,19 @@ The scheduler is bound only to 53385, so echo 901015 cannot recursively schedule
 Permanent Seal of Righteousness passive 901016
   -> explicit proc metadata selects melee and magic damage hit events
   -> AuraScript accepts melee auto-attacks, melee abilities, and paladin judgement damage
-  -> any active SoR-family dummy aura suppresses the overlay outside marked Divine Toll impacts
   -> stock AP, Holy power, target vulnerability, libram, and weapon-speed formula
   -> triggered SoR damage 25742, doubled on JotJ judgement events
+  -> real SoR and permanent SoR remain independently active when combined
+
+Permanent Seal of Vengeance passive 901060
+  -> stock Vengeance proc filters accept melee events and JotJ judgement damage
+  -> existing Holy Vengeance 31803 stack is read before application
+  -> stock damage 42463 scales from 6.6 to 33 percent weapon damage
+  -> auto-attacks and Hammer of the Righteous apply one 31803 stack
+  -> real Vengeance and permanent Vengeance both proc when combined
 ```
 
-The passive retains the Paladin family but has zero family masks, so it never enters `SPELL_SPECIFIC_SEAL` exclusivity, judgement selection, or judgement aura-state handling. Triggered events are enabled for judgement parity, while explicit 25742 and trigger-aura guards prevent recursion. Humans and bots follow the same bounded path.
+Both passives retain the Paladin family but have zero family masks, so they never enter `SPELL_SPECIFIC_SEAL` exclusivity, judgement selection, or judgement aura-state handling. Explicit seal-damage filters prevent recursion. Same-seal combinations are intentionally additive; the two Vengeance paths share the caster's normal five-stack 31803 aura and can add two stacks on one eligible attack. Humans and bots follow the same bounded paths.
 
 ```text
 Divine Steed 901017
@@ -269,13 +496,13 @@ The checked-in deployment DBC places Avenger's Shield in mask word 1 bit `0x0000
 
 ```text
 Divine Toll 901024 on a hostile target with a real seal
-  -> roll one through five impacts and apply sequence-state aura
+  -> schedule exactly five impacts and apply sequence-state aura
   -> execute immediately, then every 500 ms using GUID re-resolution
   -> invalid original target selects nearest valid hostile replacement
   -> transient marker 901025 guarantees ordinary hit checks and scopes exceptions
   -> Justice visual 901026 and debuff 20184
   -> current seal's stock Judgement damage with normal proc events
-  -> marked Judgement and seal damage reduced to 50 percent before mitigation
+  -> marked Judgement and seal damage reduced by 20 percent before mitigation
   -> first successful impact clears shared Judgement cooldown category
 ```
 
@@ -294,7 +521,7 @@ The capture hook runs before `Spell::EffectSchoolDamage`, while spread runs afte
 ```text
 Soul Link aura 25228 processes incoming damage
   -> calculate stock 20 percent split
-  -> if passive 901033 is active, replace it with 75 percent of current damage
+  -> if passive 901033 is active, replace it with 50 percent of current damage
   -> core caps the transfer to remaining damage
   -> core removes the transfer from the Warlock and damages the living demon
 ```
@@ -333,15 +560,13 @@ The module clone of stock Infernal 89 preserves its model, addon auras, level da
 
 ```text
 Haunt rank chain with passive 901028
-  -> successful AfterHit rejects active caster marker 901029
-  -> apply the non-saved 30-second marker to the caster
-  -> cast the highest ranks known in the active specialization
+  -> every successful AfterHit casts the highest ranks known in the active specialization
   -> preserve a different same-caster curse by skipping Curse of Agony
   -> preserve same-caster Seed of Corruption by skipping Corruption
   -> apply Unstable Affliction independently
 ```
 
-The marker makes the cooldown global per Warlock across every target and starts before the DoT applications. Triggered stock casts preserve caster ownership, normal refreshes, Unstable Affliction dispel behavior, and playerbot aura awareness. Humans and bots follow identical behavior, and acquisition remains external.
+There is no internal cooldown or runtime marker gate. Triggered stock casts preserve caster ownership, normal refreshes, Unstable Affliction dispel behavior, and playerbot aura awareness. Humans and bots follow identical behavior, and acquisition remains external.
 
 ```text
 Demonology Warlock with passive 901030 casts Metamorphosis 59672
@@ -384,22 +609,37 @@ The global mount cast check removes enhanced Metamorphosis before shapeshift val
 | 901007-901009 Frost Bomb graph | Automatic baseline plus follow-up updates under `data/sql/db-world/` | Application, explosion, and slow scripts on their exact IDs | Native Frost direct damage with 0.8 coefficient and Permafrost rank effects | Three matching client `Spell.dbc` rows; acquisition is separate |
 | 901010-901011 Automatic Ice Lance graph | Automatic `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql` | Passive proc and haste scripts on their exact IDs | Reuses Ice Lance 30455 and native spell-haste aura handling | Two matching client `Spell.dbc` rows; passive acquisition is separate |
 | 901012-901013 Frozen Retaliation rank chain | Automatic `data/sql/db-world/2026_09_17_05_frozen_retaliation.sql` | Negative -901012 binding covers both `spell_ranks` rows | Rank-specific taken-damage proc chance reuses Fingers of Frost aura 44544 | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
+| 901075-901076 Leeching Mixture graph | Automatic `data/sql/db-world/2026_09_22_03_rogue_leeching_mixture.sql` | `spell_apoc_rogue_leeching_mixture` on 901075 | Owner-attributed Rogue poison damage generates a non-critical self-heal with a one-second raw cap | Two matching client `Spell.dbc` rows; acquisition is separate |
+| 901078 Buckler Strike | Automatic `data/sql/db-world/2026_09_22_06_buckler_strike.sql` | `spell_apoc_rogue_buckler_strike` on 901078 | Physical melee damage, native combo point and interrupt, shield validation, and final-damage threat | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
+| 901079-901080 Gloomblade Infusion graph | Automatic `data/sql/db-world/2026_09_22_07_gloomblade_infusion.sql` | `spell_apoc_rogue_gloomblade_infusion` on 901079 | Broad owner-attributed damage produces a non-critical, zero-coefficient Shadow helper hit | Two matching client `Spell.dbc` rows; Subtlety acquisition is included |
+| 901081-901082 Shadow Execution graph | Automatic `data/sql/db-world/2026_09_22_08_shadow_execution.sql` | `spell_apoc_rogue_shadow_execution` on both IDs | Direct Rogue ability damage adds a ten-second, one-second-tick Shadow aura whose 50 stacks each use one percent AP-modified main-hand damage | Two matching client `Spell.dbc` rows; acquisition is separate |
+| 901083 Crimson Vial | Automatic `data/sql/db-world/2026_09_22_09_crimson_vial.sql` | No script binding | Native immediate plus six periodic 5 percent current-maximum-health healing events with no ordinary healing proc dispatch | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
+| 901089-901090 Improved Feint graph | Automatic `data/sql/db-world/2026_09_22_09_improved_feint.sql` | Negative -1966 binding covers all stock Feint ranks | Successful Feint casts trigger six seconds of native 30 percent all-school reduction while preserving stock AoE avoidance | Two matching client `Spell.dbc` rows; acquisition references only passive 901089 |
+| 901084-901088 Relentless Finale graph | Automatic `data/sql/db-world/2026_09_22_10_relentless_finale.sql` | `spell_apoc_rogue_relentless_finale` on 901084 and 901087 plus player and global spell hooks | Visible infinite readiness, cast-scoped native combo retention, 5 percent maximum-health healing, and post-use 12-second recharge | Five matching client `Spell.dbc` rows; acquisition references only passive 901084 |
 | 901038-901041 Ambush Trapper graph | Automatic `data/sql/db-world/2026_09_21_00_ambush_trapper.sql` | Trap passive and charged buff bindings on 901038 and 901039 | Native five charges, capped Physical helper with DAMAGE scaling, and percent mana energize | Four matching client `Spell.dbc` rows; acquisition references only passive 901038 |
 | 901042 Primal Resolve | Automatic `data/sql/db-world/2026_09_21_03_primal_resolve.sql` | `spell_apoc_hunter_primal_resolve` on 901042 | Native all-school damage reduction plus one-time scripted snare removal | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
+| 901077 Alchemical Guard | Automatic `data/sql/db-world/2026_09_22_04_alchemical_guard.sql` | `spell_apoc_rogue_alchemical_guard` on 901077 | Native all-school damage reduction and poison/disease purge and immunity | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
 | 901046 Apex Bond | Automatic `data/sql/db-world/2026_09_21_01_apex_bond.sql` | `spell_apoc_hunter_apex_bond` on 901046 | Native percent healing, pet target validation, cooldown, and all-damage pet aura | Matching client `Spell.dbc`; acquisition and bot cast policy are separate |
 | 901044-901045 Blood of the Hunt graph | Automatic `data/sql/db-world/2026_09_21_01_blood_of_the_hunt.sql` | `spell_apoc_hunter_blood_of_the_hunt` on 901044 | Shared melee/trap proc cooldown and direct helper with HEAL scaling | Two matching client `Spell.dbc` rows; acquisition references only passive 901044 |
 | 901047 Melee Specialization | Automatic `data/sql/db-world/2026_09_21_02_melee_specialization.sql` | No script binding; native aura-state and spell-modifier handlers | Exact Hunter family masks bypass declared aura states, currently only Counterattack, and apply 30 percent `SPELLMOD_DAMAGE` to the three selected families plus Wing Clip | Matching client `Spell.dbc`; acquisition is separate |
+| 901050-901051 Crimson Ward graph | Automatic `data/sql/db-world/2026_09_21_04_crimson_ward.sql` | Passive and absorb helper bindings on their exact IDs | Shared 60-second incoming-damage proc cooldown and 15-second all-school absorb equal to 20 percent maximum health | Two matching client `Spell.dbc` rows; Blood Spec Manager acquisition references only passive 901050 |
+| 901048-901049 Death Knight Rupture graph | Automatic `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql` | `spell_apoc_death_knight_rupture` on 901048 | Per-target 200-stack physical bleed with 0.005 AP coefficient and PERIODIC scaling | Two matching client `Spell.dbc` rows; Blood Spec Manager acquisition is included |
+| 901052-901053 Frozen Resolve graph | Automatic `data/sql/db-world/2026_09_21_05_frozen_resolve.sql` | `spell_apoc_death_knight_frozen_resolve` on 901052 | Combat-gated periodic self-cast reuses native stacking, Physical armor percentage, and all-school damage-taken handling | Two matching client `Spell.dbc` rows; acquisition references only passive 901052 |
+| 901054-901055 Rime Shards graph | Automatic `data/sql/db-world/2026_09_21_06_death_knight_rime_shards.sql` | Passive and target-centered helper bindings on their exact IDs | 30 percent source-event proc, 20 percent damage snapshot, ten-target diminishing Frost burst, and no separate scaling row | Two matching client `Spell.dbc` rows; Frost Spec Manager acquisition is included |
+| 901056-901057 Necrotic Veil graph | Automatic `data/sql/db-world/2026_09_21_07_death_knight_necrotic_veil.sql` | `spell_apoc_death_knight_necrotic_veil` on 901056 | Direct-owner outgoing damage accumulates a 60-second magic-only absorb capped at 35 percent maximum health | Two matching client `Spell.dbc` rows; Unholy Spec Manager acquisition references only passive 901056 |
+| 901058-901059 Pestilent Eruption graph | Automatic `data/sql/db-world/2026_09_21_07_death_knight_pestilent_eruption.sql` | Additive negative bindings on rank chains 47541 and 55090 plus `spell_dk_pestilence` on 901059 | Successful hostile source hits trigger a 30-yard carrier that reuses existing disease and glyph logic | Two matching client `Spell.dbc` rows; Unholy Spec Manager acquisition references only passive 901058 |
+| 901069 Pestilent Knives | Automatic `data/sql/db-world/2026_09_22_03_rogue_pestilent_knives.sql` | `spell_apoc_rogue_pestilent_knives` on 901069 | Bounded 50 percent weapon area effect reuses the main-hand Deadly Poison rank and stock full-stack interaction | Matching client `Spell.dbc`; Assassination Spec Manager acquisition is included and bot cast policy remains separate |
 | 901014-901015 Divine Storm Echo graph | Automatic `data/sql/db-world/2026_09_18_02_divine_storm_echo.sql` | Scheduler on 53385 and existing `spell_pal_divine_storm` on 901015 | Delayed normalized 55 percent weapon attack reuses Divine Storm target, proc, and healing paths | Two matching client `Spell.dbc` rows; acquisition references unranked passive 901014 only and echo acquisition is forbidden |
-| 901016 Permanent Seal of Righteousness | Automatic `data/sql/db-world/2026_09_18_03_permanent_seal_of_righteousness.sql` | `spell_apoc_paladin_permanent_seal_of_righteousness` on 901016 | Reuses stock SoR damage 25742 and calculation without entering real seal or judgement selection | Matching client `Spell.dbc`; acquisition is separate |
+| 901016 and 901060 Permanent Paladin seals | Automatic baseline plus `2026_09_22_01_permanent_paladin_seals.sql` | Exact pseudo-seal bindings on 901016 and 901060 | Reuses stock SoR damage 25742 and Vengeance effects 31803 and 42463 without entering real seal or judgement selection; same-seal combinations remain additive | Two matching client `Spell.dbc` rows; acquisition references either unranked passive and remains separate |
 | 901017 Divine Steed | Automatic baseline plus `2026_09_20_01_divine_steed_cast_cancel.sql` | `spell_apoc_paladin_divine_steed` on 901017 plus player cast and lifecycle cleanup | Normal run-speed aura with display-only faction charger, no mounted state, and cancellation after another non-triggered player spell | Matching client `Spell.dbc`; acquisition is separate |
 | 901018-901021 Paladin Vengeance variants | Automatic `data/sql/db-world/2026_09_18_04_paladin_vengeance_variants.sql` | No script binding; native proc-trigger auras and `spell_proc` rows | Three-stack Protection damage reduction/defense or Holy healing/mp5 buff | Four matching client `Spell.dbc` rows; acquisition references only passives 901018 and 901020 |
 | 901022-901023 Extended Arsenal rank chain | Automatic `data/sql/db-world/2026_09_18_05_extended_arsenal.sql` | No script binding; native flat spell modifiers | Adds 3/6 yards and 1/2 chain targets to Hammer of the Righteous and Avenger's Shield | Two matching client `Spell.dbc` rows with rank labels; acquisition is separate |
-| 901024-901026 Divine Toll graph | Automatic `data/sql/db-world/2026_09_18_05_divine_toll.sql` | Parent orchestration, -31876 JotW gate, and additive stock-damage bindings | Reuses active-seal Judgement formulas, reduces marked hit damage to 50 percent, and preserves downstream PvP and proc paths | External backend derives matching client data; acquisition and patch deployment are separate |
+| 901024-901026 Divine Toll graph | Automatic baseline plus `2026_09_22_00_spell_balance_adjustments.sql` | Parent orchestration, -31876 JotW gate, and additive stock-damage bindings | Reuses active-seal Judgement formulas for five impacts, reduces marked hit damage by 20 percent, and preserves downstream PvP and proc paths | External backend derives matching client data; acquisition and patch deployment are separate |
 | 901027 Burning Conflagration | Automatic `data/sql/db-world/2026_09_20_04_burning_conflagration.sql` | Additional `-17962` Conflagrate rank-chain binding | Reuses the captured stock Immolate rank with full initial and periodic damage behavior | Matching client row and separate talent acquisition data required |
-| 901028-901029 Haunting Affliction graph | Automatic `data/sql/db-world/2026_09_20_02_haunting_affliction.sql` | Additional `-48181` Haunt rank-chain binding | Resolves and casts learned stock DoT ranks with curse and Seed exclusions behind a caster marker | Two matching client rows; acquisition references only passive 901028 |
+| 901028-901029 Haunting Affliction graph | Automatic baseline plus `2026_09_22_00_spell_balance_adjustments.sql` | Additional `-48181` Haunt rank-chain binding | Resolves and casts learned stock DoT ranks on every Haunt with curse and Seed exclusions; legacy marker 901029 is unused | Two matching client rows; acquisition references only passive 901028 |
 | 901030 Permanent Metamorphosis | Automatic `data/sql/db-world/2026_09_20_03_permanent_metamorphosis.sql` | Global duration, mount pre-check, and player cleanup hooks | Makes stock aura 47241 infinite without replacing activation 59672 or its cooldown | Matching client row; Demonology Spec Manager acquisition is included |
 | 901031-901032 Chaotic Inferno graph | Automatic `data/sql/db-world/2026_09_20_05_chaotic_inferno.sql` | Additional `-50796` Chaos Bolt rank-chain binding plus guardian AI and stat hook | Reuses stock Inferno Effect 22703 and Infernal model/scaling through non-pet guardian 900002 | Two matching client rows; acquisition references only passive 901031 |
-| 901033 Demonic Equilibrium | Automatic `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql` | Additional stock aura 25228 split binding | Replaces Soul Link's current split amount with 75 percent while the passive is active | Matching client row and separate talent acquisition data required |
+| 901033 Demonic Equilibrium | Automatic baseline plus `2026_09_22_00_spell_balance_adjustments.sql` | Additional stock aura 25228 split binding | Replaces Soul Link's current split amount with 50 percent while the passive is active | Matching client row and separate talent acquisition data required |
 | 901034 Unquenchable Flames | Automatic `data/sql/db-world/2026_09_20_07_unquenchable_flames.sql` | No script binding; native flat spell modifier | Adds 100 percent resist-dispel chance to exact Immolate and Shadowflame family masks | Matching client row and separate talent acquisition data required |
 | 901035 Unyielding Shadows | Automatic `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | No script binding; native flat spell modifier | Adds 100 percent resist-dispel chance to matching curses and Shadow debuffs while excluding UA | Matching client row and separate talent acquisition data required |
 
@@ -425,11 +665,23 @@ A server-only row can provide mechanics but not complete client presentation. A 
 | Missing Divine Steed row, binding, or non-save attribute | Sprint validation fails, display lifecycle is absent, or the aura can persist unexpectedly | Check 901017, its exact script and custom-attribute rows, and client patch |
 | Missing Vengeance variant row or proc metadata | The corresponding passive cannot add or correctly scale its timed buff | Check 901018 through 901021, the exact `spell_proc` rows, non-save attributes, and client patch |
 | Missing Extended Arsenal row or rank metadata | The passive cannot modify range and target count or the higher rank may not replace the lower rank | Check 901022 and 901023, their exact effect masks, the `spell_ranks` rows, and client patch |
+| Missing Leeching Mixture graph, proc metadata, binding, or registration | Rogue poison damage cannot heal, attribution filtering drifts, or the one-second cap is absent | Check 901075 and 901076, Rogue poison metadata, helper coefficients, script binding, loader registration, and client export |
+| Missing Gloomblade Infusion graph, proc metadata, binding, or registration | Broad Rogue damage does not produce the separate Shadow hit or recursion safeguards are absent | Check 901079 and 901080, broad proc flags, zero coefficient, script binding, Subtlety acquisition, loader registration, and client export |
+| Missing Shadow Execution graph, proc metadata, either binding, or registration | Rogue abilities cannot add stacks or helper ticks use the unscaled base point | Check 901081 and 901082, direct Rogue proc flags, both exact bindings, zero coefficients, non-save metadata, loader registration, external single-rank acquisition, and client export |
+| Missing Crimson Vial row or client export | The self-heal is unavailable or the client presents an incorrect cost, cooldown, cadence, or stealth contract | Check 901083, immediate-period and non-critical attributes, aura type 20, one-second amplitude, non-save metadata, external acquisition, and client export |
+| Missing Improved Feint graph, rank-chain binding, or registration | Feint retains only stock behavior or the helper contract is incomplete | Check 901089 and 901090, negative -1966 binding, six-second native all-school aura, non-save metadata, loader registration, external passive acquisition, and client export |
 | Missing Ambush Trapper row, proc metadata, binding, or registration | Trap activation cannot grant charges, or melee specials cannot trigger damage and mana | Check 901038 through 901041, both proc rows, both bindings, loader registration, scaling row, and client export |
 | Missing Primal Resolve row, binding, or registration | Damage reduction or on-cast snare cleanup is unavailable | Check 901042, effect contracts, script binding, loader registration, and client export |
+| Missing Alchemical Guard row, binding, or registration | Validation fails or the defensive cannot provide its native reduction and immunities | Check 901077, all three aura effects, cast attributes, binding, loader registration, and client export |
 | Missing Apex Bond row, binding, or registration | Cast validation or effects are unavailable, or pet presence is not represented to the client | Check 901046, its implicit pet targets, script and custom-attribute rows, loader registration, and client export |
 | Missing Blood of the Hunt row, helper, proc metadata, binding, or registration | Eligible melee specials or trap activations cannot heal, or the shared cooldown is absent | Check 901044 and 901045, proc row, binding, loader registration, HEAL scaling row, and client export |
 | Missing Melee Specialization row or mismatched family masks | Reactive abilities remain gated or the damage modifier affects the wrong Hunter spells | Check 901047 effects, misc values, all six effect class-mask words, and client export |
+| Missing Crimson Ward row, helper, proc metadata, binding, or registration | Incoming damage cannot create the shield, the amount or duration is wrong, or the shared cooldown is absent | Check 901050 and 901051, proc row, both bindings, custom attribute, loader registration, and client export |
+| Missing Rupture graph, binding, bonus, or scaling row | Passive fails validation, does not apply, or helper damage and low-level scaling drift | Check 901048-901049 spell rows, proc and script rows, `spell_bonus_data`, `mod_spell_scaling`, and client export |
+| Missing Frozen Resolve row, helper, binding, or registration | Periodic validation fails, stacks do not apply, or armor and reduction amounts drift | Check 901052 and 901053, deterministic die sides and base points, script and custom-attribute rows, loader registration, and client export |
+| Missing Rime Shards graph, proc metadata, bindings, or registration | Source events do not proc, the burst is not target-centered, or the target curve drifts | Check 901054 and 901055, proc row, both bindings, maximum targets, visual lookup, loader registration, and client export |
+| Missing Necrotic Veil graph, proc metadata, binding, or registration | Damage cannot build the absorb, the cap or duration drifts, or Physical damage consumes it | Check 901056 and 901057, proc row, magic school mask, non-save metadata, loader registration, and client export |
+| Missing Pestilent Eruption graph, bindings, or registration | Eligible hits do not cast Pestilence, ranged Death Coil fails, or source helpers produce duplicates | Check 901058 and 901059, negative 47541 and 55090 bindings, core Pestilence binding, range 160, loader registration, and client export |
 | Missing Divine Toll row, marker, visual, or additive binding | The cast fails validation, loses sequencing, permits repeated JotW, or deals unscaled stock damage | Check 901024 through 901026, -31876, all listed damage bindings, and external client export |
 | Missing Burning Conflagration row or binding | The passive cannot validate or Conflagrate does not spread Immolate | Check 901027, binding -17962, loader registration, and matching client and talent data |
 | Missing Permanent Metamorphosis row or Spec Manager acquisition | Demonology players do not receive passive 901030 or clients cannot display it | Check the 901030 updater, `mod_spec_spells`, loader registration, and client export |

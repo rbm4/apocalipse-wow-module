@@ -9,7 +9,6 @@
 enum ApocalipseWarlockHauntingAfflictionSpells
 {
     SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION = 901028,
-    SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION_ICD = 901029,
     SPELL_WARLOCK_CURSE_OF_AGONY_R1 = 980,
     SPELL_WARLOCK_CORRUPTION_R1 = 172,
     SPELL_WARLOCK_SEED_OF_CORRUPTION_R1 = 27243,
@@ -30,7 +29,6 @@ public:
         {
             return ValidateSpellInfo({
                 SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION,
-                SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION_ICD,
                 SPELL_WARLOCK_CURSE_OF_AGONY_R1,
                 SPELL_WARLOCK_CORRUPTION_R1,
                 SPELL_WARLOCK_SEED_OF_CORRUPTION_R1,
@@ -75,15 +73,7 @@ public:
             Player* caster = casterUnit ? casterUnit->ToPlayer() : nullptr;
             Unit* target = GetHitUnit();
             if (!caster || !target || target == caster ||
-                !caster->HasAura(SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION) ||
-                caster->HasAura(
-                    SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION_ICD))
-                return;
-
-            if (caster->CastSpell(
-                caster, SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION_ICD, true) !=
-                SPELL_CAST_OK || !caster->HasAura(
-                    SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION_ICD))
+                !caster->HasAura(SPELL_APOC_WARLOCK_HAUNTING_AFFLICTION))
                 return;
 
             if (!HasDifferentCurse(target, caster->GetGUID()))

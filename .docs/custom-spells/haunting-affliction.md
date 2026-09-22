@@ -2,21 +2,21 @@
 
 Status: Implemented in source and data, build and runtime not verified
 
-Owners: `src/mod_apocalipse_warlock_haunting_affliction.cpp`, `data/sql/db-world/2026_09_20_02_haunting_affliction.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_warlock_haunting_affliction.cpp`, `data/sql/db-world/2026_09_20_02_haunting_affliction.sql`, `data/sql/db-world/2026_09_22_00_spell_balance_adjustments.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-20
+Last source review: 2026-09-22
 
 ## Purpose
 
-Haunting Affliction is an Affliction Warlock passive that lets a successful Haunt hit apply the caster's highest learned Curse of Agony, Corruption, and Unstable Affliction ranks once every 30 seconds.
+Haunting Affliction is an Affliction Warlock passive that makes every successful Haunt hit apply the caster's highest learned Curse of Agony, Corruption, and Unstable Affliction ranks with no internal cooldown.
 
 ## Acquisition boundary
 
-The module defines passive 901028 and hidden cooldown marker 901029. It does not teach 901028 or modify talent, trainer, item, specialization, or playerbot acquisition data. The acquisition owner must reference exactly 901028 as an unranked passive and provide matching client data. Marker 901029 must never be granted directly. No checked-in acquisition reference exists, so acquisition validation remains pending.
+The module defines passive 901028. The original migration also defines hidden cooldown marker 901029, but current code neither casts nor checks it. The module does not teach 901028 or modify talent, trainer, item, specialization, or playerbot acquisition data. The acquisition owner must reference exactly 901028 as an unranked passive and provide matching client data. Marker 901029 must never be granted directly. No checked-in acquisition reference exists, so acquisition validation remains pending.
 
 ## Human and bot applicability
 
-Human and bot-controlled Warlocks use the same Haunt hook, rank resolution, curse protection, Seed protection, and caster-global cooldown. The script performs no bot detection and no database work in combat. Existing Affliction bot triggers already observe caster-owned DoTs, so no playerbot action or trigger change is required.
+Human and bot-controlled Warlocks use the same Haunt hook, rank resolution, curse protection, and Seed protection on every successful hit. The script performs no bot detection and no database work in combat. Existing Affliction bot triggers already observe caster-owned DoTs, so no playerbot action or trigger change is required.
 
 ## Spell graph
 
@@ -24,7 +24,7 @@ Human and bot-controlled Warlocks use the same Haunt hook, rank resolution, curs
 |---:|---|---|
 | 48181 rank chain | Existing Haunt | A successful hit invokes the additive module script |
 | 901028 | Haunting Affliction passive | Permanent self dummy aura and talent acquisition ID |
-| 901029 | Haunting Affliction Cooldown | Non-saved 30-second self marker shared across all targets |
+| 901029 | Haunting Affliction Cooldown | Legacy non-saved marker retained in the original data graph but unused by current code |
 | 980 rank chain | Curse of Agony | Highest learned rank is applied unless the caster owns a different curse on the target |
 | 172 rank chain | Corruption | Highest learned rank is applied unless the caster owns Seed of Corruption on the target |
 | 30108 rank chain | Unstable Affliction | Highest learned rank is applied with normal refresh and dispel behavior |
@@ -33,15 +33,13 @@ Human and bot-controlled Warlocks use the same Haunt hook, rank resolution, curs
 
 ```text
 successful Haunt hit by a player with passive 901028
-  -> reject while caster has marker 901029
-  -> apply marker 901029 to the caster for 30 seconds
   -> resolve each DoT from the caster's active known spells
   -> apply Curse of Agony only when no different caster-owned Warlock curse exists
   -> apply Corruption only when no caster-owned Seed of Corruption exists
   -> apply Unstable Affliction
 ```
 
-The cooldown is global per caster, not per target. It starts before any DoT cast and remains active even when one or more spells are unknown or skipped by an exclusivity guard. Existing same-caster DoTs are refreshed through their normal spell casts.
+Every successful Haunt hit runs the bounded application path. Existing same-caster DoTs are refreshed through their normal spell casts.
 
 ## Exclusivity and rank contract
 
@@ -60,26 +58,27 @@ The automatic world update:
 3. Binds `spell_apoc_warlock_haunting_affliction` to negative spell ID `-48181`, covering every Haunt rank while preserving the existing core Haunt scripts.
 4. Marks 901029 with the non-save custom attribute.
 5. Synchronizes both backend name-cache rows.
+6. Applies the follow-up balance migration to remove cooldown wording from passive 901028. Marker 901029 remains installed for backward-compatible graph ownership but is unused.
 
-Matching client `Spell.dbc` rows are required. Only 901028 is acquisition-facing. Marker 901029 is implementation-only even though it requires server and client spell data.
+Matching client `Spell.dbc` rows are required. Only 901028 is acquisition-facing. Marker 901029 is legacy implementation data and must not be acquired.
 
 ## Performance
 
-Each eligible Haunt hit performs bounded aura and rank-chain scans. The target aura scan occurs at most once per successful trigger after the 30-second marker gate. There are no database queries, map scans, timers, or per-tick updates.
+Each eligible Haunt hit performs bounded aura and rank-chain scans once. There are no database queries, map scans, timers, or per-tick updates.
 
 ## Runtime verification matrix
 
 | Scenario | Expected result | Status |
 |---|---|---|
-| Warlock without passive 901028 lands Haunt | No additional DoT and no marker | Not run |
-| Warlock with passive lands Haunt while marker is absent | Marker starts and each known eligible DoT is applied | Not run |
-| Warlock lands Haunt during the 30-second marker | No DoT is applied or refreshed by the talent | Not run |
+| Warlock without passive 901028 lands Haunt | No additional DoT is applied | Not run |
+| Warlock with passive lands Haunt | Each known eligible DoT is applied | Not run |
+| Warlock lands consecutive Haunts | Every successful hit applies or refreshes each eligible DoT with no internal cooldown | Not run |
 | Low-level Warlock knows only lower DoT ranks | Highest actually known ranks are used | Not run |
 | Target has a different same-caster curse | Curse of Agony is skipped; Corruption and Unstable Affliction continue | Not run |
 | Target has same-caster Seed of Corruption | Corruption is skipped; eligible Curse of Agony and Unstable Affliction continue | Not run |
 | Target already has the same-caster DoTs | Normal casts refresh each eligible aura | Not run |
 | Human and playerbot Warlock | Identical mechanics and caster ownership | Not run |
-| Logout during the marker | Marker is not restored after login | Not run |
+| Legacy marker 901029 is present from an older runtime | It does not suppress Haunting Affliction | Not run |
 
 ## Rollback
 

@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module provides thirty systems:
+The module provides forty-eight systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -20,20 +20,38 @@ The module provides thirty systems:
 14. Apex Bond custom hunter spell
 15. Blood of the Hunt custom hunter passive
 16. Melee Specialization custom hunter passive
-17. Divine Storm Echo custom paladin passive
-18. Permanent Seal of Righteousness custom paladin passive
-19. Divine Steed custom paladin sprint
-20. Paladin Vengeance variant passives
-21. Extended Arsenal custom paladin passive
-22. Divine Toll custom paladin spell
-23. Burning Conflagration custom warlock passive
-24. Chaotic Inferno custom warlock passive
-25. Demonic Equilibrium custom warlock passive
-26. Unquenchable Flames custom warlock passive
-27. Unyielding Shadows custom warlock passive
-28. Haunting Affliction custom warlock passive
-29. Permanent Metamorphosis custom warlock passive
-30. Battleground stamina assistance and equipment control
+17. Rupture custom blood death knight passive
+18. Crimson Ward custom death knight passive
+19. Frozen Resolve custom death knight passive
+20. Rime Shards custom frost death knight passive
+21. Necrotic Veil custom unholy death knight passive
+22. Pestilent Eruption custom unholy death knight passive
+23. Divine Storm Echo custom paladin passive
+24. Permanent Seal of Righteousness and Vengeance custom paladin passives
+25. Divine Steed custom paladin sprint
+26. Paladin Vengeance variant passives
+27. Extended Arsenal custom paladin passive
+28. Divine Toll custom paladin spell
+29. Burning Conflagration custom warlock passive
+30. Chaotic Inferno custom warlock passive
+31. Demonic Equilibrium custom warlock passive
+32. Unquenchable Flames custom warlock passive
+33. Unyielding Shadows custom warlock passive
+34. Haunting Affliction custom warlock passive
+35. Permanent Metamorphosis custom warlock passive
+36. Baseline rogue shield proficiency and blocking
+37. Leeching Mixture custom rogue defensive passive
+38. Alchemical Guard custom combat rogue defensive
+39. Bladeguard custom combat rogue shield passive
+40. Pestilent Knives custom assassination rogue active
+41. Daring Challenge custom combat rogue taunt
+42. Buckler Strike custom combat rogue shield attack
+43. Gloomblade Infusion custom subtlety rogue offensive passive
+44. Shadow Execution custom rogue offensive passive
+45. Crimson Vial custom rogue self-heal
+46. Relentless Finale custom combat rogue meta passive
+47. Improved Feint custom rogue defensive passive
+48. Battleground stamina assistance and equipment control
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -84,7 +102,8 @@ apocalipse-wow-module/
 |       |-- 2026_09_21_00_ambush_trapper.sql
 |       |-- 2026_09_21_01_apex_bond.sql
 |       |-- 2026_09_21_01_blood_of_the_hunt.sql
-|       `-- 2026_09_21_02_melee_specialization.sql
+|       |-- 2026_09_21_02_melee_specialization.sql
+|       `-- 2026_09_21_04_death_knight_rupture.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -101,6 +120,7 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_hunter_ambush_trapper.cpp
 |   |-- mod_apocalipse_hunter_apex_bond.cpp
 |   |-- mod_apocalipse_hunter_blood_of_the_hunt.cpp
+|   |-- mod_apocalipse_death_knight_rupture.cpp
 |   |-- mod_apocalipse_paladin_divine_storm_echo.cpp
 |   |-- mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp
 |   |-- mod_apocalipse_paladin_divine_steed.cpp
@@ -290,6 +310,76 @@ The passive does not remove range, weapon, resource, cooldown, target, silence, 
 
 Detailed contract: [`.docs/custom-spells/melee-specialization.md`](.docs/custom-spells/melee-specialization.md)
 
+### Concentrated Venom
+
+Owners: `src/mod_apocalipse_rogue_concentrated_venom.cpp`, `data/sql/db-world/2026_09_22_03_concentrated_venom.sql`
+
+Custom Assassination Rogue passive 901061 gives each successful equipped weapon-poison application a 30 percent chance to apply one additional stack of the highest applicable Deadly Poison rank found on the Rogue's equipped weapons. Each target has an independent one-second throttle.
+
+The extra cast uses the native Deadly Poison spell and its enchanted weapon, preserving normal stack duration, damage, and five-stack opposite-weapon poison behavior. Assassination Spec Manager acquisition is included, a matching client row is required, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/concentrated-venom.md`](.docs/custom-spells/concentrated-venom.md)
+
+### Rupture
+
+Owners: `src/mod_apocalipse_death_knight_rupture.cpp`, `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql`
+
+Custom Blood Death Knight passive 901048 makes successful melee auto-attacks and each Blood Strike, Heart Strike, or Death Strike target apply one stack of helper 901049. The physical bleed ticks every two seconds, refreshes its 15-second duration, and scales each stack with 0.5 percent melee attack power up to 200 stacks.
+
+The helper uses native bleed and Death Knight damage paths, participates in `PERIODIC` level scaling and PvP balancing, and is granted through Blood Spec Manager acquisition. Matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/death-knight-rupture.md`](.docs/custom-spells/death-knight-rupture.md)
+
+### Crimson Ward
+
+Owners: `src/mod_apocalipse_death_knight_crimson_ward.cpp`, `data/sql/db-world/2026_09_21_04_crimson_ward.sql`
+
+Custom Blood Death Knight passive 901050 triggers from positive incoming combat damage and applies helper 901051, a non-dispellable all-school absorb equal to 20 percent of current maximum health. The shield lasts 15 seconds, and all qualifying damage sources share one 60-second internal cooldown.
+
+The triggering hit resolves before the shield is applied. The world update assigns passive 901050 to Blood specialization index 0 through Spec Manager; helper 901051 is never learned directly. Matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/crimson-ward.md`](.docs/custom-spells/crimson-ward.md)
+
+### Frozen Resolve
+
+Owners: `src/mod_apocalipse_death_knight_frozen_resolve.cpp`, `data/sql/db-world/2026_09_21_05_frozen_resolve.sql`
+
+Custom Death Knight passive 901052 checks combat state every 2 seconds and applies timed stack aura 901053 while in combat. Each 8-second stack increases armor by 2 percent and reduces all damage taken by 2 percent, up to 10 stacks. Continued combat refreshes the shared duration at the cap.
+
+The stack aura expires within 8 seconds after qualifying combat ticks stop. Acquisition remains external and must reference only 901052. Matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/frozen-resolve.md`](.docs/custom-spells/frozen-resolve.md)
+
+### Rime Shards
+
+Owners: `src/mod_apocalipse_death_knight_rime_shards.cpp`, `data/sql/db-world/2026_09_21_06_death_knight_rime_shards.sql`
+
+Custom Frost Death Knight passive 901054 gives each positive Frost Strike or Howling Blast damage event a 30 percent chance to trigger helper 901055 at that target. The helper starts from 20 percent of the triggering damage, hits up to 10 enemies within 10 yards, and uses a diminishing curve that gives two targets 75 percent each and caps ten-target aggregate output at 190 percent of the helper amount.
+
+The burst reuses the Howling Blast visual, has no separate level-scaling row because its amount derives from source damage, and follows normal Frost and PvP damage resolution. Frost Spec Manager acquisition is included, matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/rime-shards.md`](.docs/custom-spells/rime-shards.md)
+
+### Necrotic Veil
+
+Owners: `src/mod_apocalipse_death_knight_necrotic_veil.cpp`, `data/sql/db-world/2026_09_21_07_death_knight_necrotic_veil.sql`
+
+Custom Unholy Death Knight passive 901056 converts 10 percent of every positive post-mitigation damage event dealt directly by its owner into helper 901057. The helper accumulates remaining absorb up to 35 percent of current maximum health, refreshes to 60 seconds after each positive contribution, and absorbs magic schools while excluding Physical damage.
+
+Pet, guardian, self, zero-damage, and non-damage events do not contribute. The world update assigns passive 901056 to Unholy specialization index 2 through Spec Manager; helper 901057 is never learned directly. Matching client rows are required for both spells, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/necrotic-veil.md`](.docs/custom-spells/necrotic-veil.md)
+
+### Pestilent Eruption
+
+Owners: `src/mod_apocalipse_death_knight_pestilent_eruption.cpp`, `data/sql/db-world/2026_09_21_07_death_knight_pestilent_eruption.sql`
+
+Custom Unholy Death Knight passive 901058 makes every successful hostile Death Coil or Scourge Strike rank hit trigger internal Pestilence carrier 901059 on that target at no cost. The carrier uses Death Coil's 30-yard range, while source rank hooks exclude Death Coil healing and internal damage helpers so each eligible parent hit produces exactly one cast.
+
+Carrier 901059 reuses the complete core `spell_dk_pestilence` script, including owned Blood Plague and Frost Fever spread plus Glyph of Disease primary-target refresh behavior. Unholy Spec Manager acquisition is included, matching client rows are required for both IDs, and humans and bots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/pestilent-eruption.md`](.docs/custom-spells/pestilent-eruption.md)
+
 ### Divine Storm Echo
 
 Owner: `src/mod_apocalipse_paladin_divine_storm_echo.cpp`
@@ -300,13 +390,13 @@ The automatic module world update installs both custom rows and exact script bin
 
 Detailed contract: [`.docs/custom-spells/divine-storm-echo.md`](.docs/custom-spells/divine-storm-echo.md)
 
-### Permanent Seal of Righteousness
+### Permanent Paladin Seals
 
 Owner: `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp`
 
-Custom passive 901016 adds stock Seal of Righteousness damage to eligible melee attacks and judgements while another real seal remains active. It reuses damage spell 25742, the stock AP, Holy spell-power, target vulnerability, libram, and weapon-speed formula, including the Judgements of the Just double hit.
+Custom passive 901016 adds stock Seal of Righteousness damage to eligible melee attacks and judgements. Custom passive 901060 adds the stock Seal of Vengeance melee path, including Holy Vengeance 31803 stacks and stack-scaled weapon damage 42463. Seal of Corruption is intentionally outside this 3.3.5a feature contract.
 
-The passive has no seal family flags, so it does not enter real seal exclusivity or judgement selection. It suppresses itself while real Seal of Righteousness is active and rejects its own damage to prevent recursion. Acquisition remains external, a matching visible client spell row is required, and humans and bots use identical mechanics.
+Both passives have zero seal family masks, so they do not enter real seal exclusivity or judgement selection. A matching active seal does not suppress its permanent counterpart: both paths proc for an intentionally additive result. Acquisition for the Holy and Protection options remains external, Divine Toll remains a Retribution option, matching visible client rows are required, and humans and bots use identical mechanics.
 
 Detailed contract: [`.docs/custom-spells/permanent-seal-of-righteousness.md`](.docs/custom-spells/permanent-seal-of-righteousness.md)
 
@@ -344,13 +434,13 @@ Detailed contract: [`.docs/custom-spells/extended-arsenal.md`](.docs/custom-spel
 
 ### Divine Toll
 
-Owners: `src/mod_apocalipse_paladin_divine_toll.cpp`, `data/sql/db-world/2026_09_18_05_divine_toll.sql`
+Owners: `src/mod_apocalipse_paladin_divine_toll.cpp`, `data/sql/db-world/2026_09_18_05_divine_toll.sql`, `data/sql/db-world/2026_09_22_00_spell_balance_adjustments.sql`
 
-Custom active spell 901024 costs 10 percent base mana, uses the global cooldown, and has a 60-second cooldown. It rolls one through five impacts against the selected hostile target, beginning immediately and continuing every 500 ms. Invalid targets are replaced by the nearest valid enemy within normal Judgement range.
+Custom active spell 901024 costs 10 percent base mana, uses the global cooldown, and has a 60-second cooldown. It executes exactly five impacts against the selected hostile target, beginning immediately and continuing every 500 ms. Invalid targets are replaced by the nearest valid enemy within normal Judgement range.
 
-Each impact applies Judgement of Justice and executes the currently active real seal's stock Judgement behavior at 50 percent damage with independent critical strikes and normal downstream PvP and proc handling. Judgements of the Wise is limited to once per sequence, while Judgements of the Just, Heart of the Crusader, Righteous Vengeance, and generic procs retain their approved per-impact behavior. Passive 901016 can fire beside real Seal of Righteousness only during the bounded Divine Toll impact marker.
+Each impact applies Judgement of Justice and executes the currently active real seal's stock Judgement behavior at 80 percent damage, a 20 percent reduction, with independent critical strikes and normal downstream PvP and proc handling. Judgements of the Wise is limited to once per sequence, while Judgements of the Just, Heart of the Crusader, Righteous Vengeance, and generic procs retain their approved per-impact behavior. Seal of Command's Judgements of the Just cleave is explicitly cast on every successful impact. Passive 901016 fires independently beside real Seal of Righteousness, and the bounded Divine Toll marker reduces every resulting hit.
 
-Acquisition and client patch generation remain external. Humans and bots use identical mechanics.
+Acquisition and client patch generation remain external. The acquisition owner must reference 901024 only for Retribution. Humans and bots use identical mechanics.
 
 Detailed contract: [`.docs/custom-spells/divine-toll.md`](.docs/custom-spells/divine-toll.md)
 
@@ -378,9 +468,9 @@ Detailed contract: [`.docs/custom-spells/chaotic-inferno.md`](.docs/custom-spell
 
 ### Haunting Affliction
 
-Owners: `src/mod_apocalipse_warlock_haunting_affliction.cpp`, `data/sql/db-world/2026_09_20_02_haunting_affliction.sql`
+Owners: `src/mod_apocalipse_warlock_haunting_affliction.cpp`, `data/sql/db-world/2026_09_20_02_haunting_affliction.sql`, `data/sql/db-world/2026_09_22_00_spell_balance_adjustments.sql`
 
-Custom passive 901028 causes a successful Haunt hit to apply the Warlock's highest learned Curse of Agony, Corruption, and Unstable Affliction ranks. Hidden marker 901029 enforces a caster-global 30-second internal cooldown across every target and is not saved through logout.
+Custom passive 901028 causes every successful Haunt hit to apply the Warlock's highest learned Curse of Agony, Corruption, and Unstable Affliction ranks. There is no internal cooldown. Legacy marker 901029 remains in the original data graph but is no longer cast or checked.
 
 A different curse owned by the same Warlock suppresses only Curse of Agony. Same-caster Seed of Corruption suppresses only Corruption. Existing eligible DoTs refresh normally, Unstable Affliction retains its stock dispel behavior, and humans and bots use identical mechanics.
 
@@ -400,9 +490,9 @@ Detailed contract: [`.docs/custom-spells/permanent-metamorphosis.md`](.docs/cust
 
 ### Demonic Equilibrium
 
-Owners: `src/mod_apocalipse_warlock_demonic_equilibrium.cpp`, `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql`
+Owners: `src/mod_apocalipse_warlock_demonic_equilibrium.cpp`, `data/sql/db-world/2026_09_20_06_demonic_equilibrium.sql`, `data/sql/db-world/2026_09_22_00_spell_balance_adjustments.sql`
 
-Custom passive 901033 raises stock Soul Link's damage transfer from 20 percent to 75 percent while both auras are active. The per-hit split hook preserves stock Soul Link activation, demon eligibility, combat logs, proc handling, and its behavior when the passive is absent.
+Custom passive 901033 raises stock Soul Link's damage transfer from 20 percent to 50 percent while both auras are active. The per-hit split hook preserves stock Soul Link activation, demon eligibility, combat logs, proc handling, and its behavior when the passive is absent.
 
 The automatic module update defines the passive and binds its script to stock Soul Link aura 25228. Talent acquisition and matching client data remain external. Humans and bots use identical mechanics, and existing Soul Link actions need no AI changes.
 
@@ -428,6 +518,86 @@ The automatic module update defines the complete data-only passive and backend c
 
 Detailed contract: [`.docs/custom-spells/unyielding-shadows.md`](.docs/custom-spells/unyielding-shadows.md)
 
+### Rogue Shield Proficiency
+
+Owner: `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql`
+
+Rogues receive stock Shield skill 433 through AzerothCore's default-skill loading path before inventory validation. The migration adds a separate rogue-only eligibility override and default-skill row without changing the stock warrior, paladin, and shaman records. Stock Shield Proficiency and Block rewards are expected to provide equipment eligibility and normal block calculations for humans and bots.
+
+Client skill UI, LFG shield eligibility, and playerbot shield-selection policy remain follow-up concerns. No custom spell or module C++ hook is introduced.
+
+Detailed contract: [`.docs/features/rogue-shield-proficiency.md`](.docs/features/rogue-shield-proficiency.md)
+
+### Leeching Mixture
+
+Owners: `src/mod_apocalipse_rogue_leeching_mixture.cpp`, `data/sql/db-world/2026_09_22_03_rogue_leeching_mixture.sql`
+
+Custom passive 901075 heals its Rogue owner for 8 percent of directly attributed Rogue poison damage. Aura-local accounting caps raw generated healing at 2 percent of current maximum health per one-second window. Reflected, self, pet, guardian, environmental, and other-Rogue damage are excluded. Helper 901076 remains non-critical and passes through normal healing reduction, dampening, absorption, and overheal handling.
+
+Acquisition remains external. Matching server and client spell rows, the world update, and a module rebuild must ship together. Humans and playerbots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/leeching-mixture.md`](.docs/custom-spells/leeching-mixture.md)
+
+### Gloomblade Infusion
+
+Owners: `src/mod_apocalipse_rogue_gloomblade_infusion.cpp`, `data/sql/db-world/2026_09_22_07_gloomblade_infusion.sql`
+
+Custom Subtlety Rogue passive 901079 observes positive damage dealt directly by its owner, including auto attacks, direct abilities, periodic effects, and poisons. It triggers non-critical helper 901080 with base Shadow damage equal to 10 percent of the final source event. Pet, guardian, reflected, self, zero, and recursive helper damage are excluded.
+
+Subtlety Spec Manager acquisition is included. Matching server and client spell rows, the world update, and a module rebuild must ship together. Humans and playerbots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/gloomblade-infusion.md`](.docs/custom-spells/gloomblade-infusion.md)
+
+### Shadow Execution
+
+Owners: `src/mod_apocalipse_rogue_shadow_execution.cpp`, `data/sql/db-world/2026_09_22_08_shadow_execution.sql`
+
+Custom Rogue passive 901081 makes direct damaging Rogue-family abilities apply one stack of Shadow Execution Damage 901082 to each damaged target. The non-critical Shadow periodic effect lasts 10 seconds, ticks every second, refreshes on application, and stacks to 50. Each stack deals 1 percent of the Rogue's attack-power-modified main-hand weapon damage.
+
+The existing external talent-tree flow must grant single-rank passive 901081 only; helper 901082 is internal. Auto attacks and existing periodic ticks do not add stacks. Matching server and client spell rows, the world update, talent grant, and a module rebuild must ship together. Humans and playerbots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/shadow-execution.md`](.docs/custom-spells/shadow-execution.md)
+
+### Crimson Vial
+
+Owner: `data/sql/db-world/2026_09_22_09_crimson_vial.sql`
+
+Custom Rogue active 901083 costs 20 Energy and heals the caster for 5 percent current maximum health immediately and once per second for 6 seconds. The seven non-critical healing events total a nominal 35 percent, recalculate maximum health for every tick, preserve stealth, and use normal healing reductions, dampening, absorption, and overheal handling.
+
+Acquisition and playerbot cast policy remain external. Matching server and client spell rows and the automatic world update must ship together. No module C++ script or rebuild is required by this data-only spell alone.
+
+Detailed contract: [`.docs/custom-spells/crimson-vial.md`](.docs/custom-spells/crimson-vial.md)
+
+### Relentless Finale
+
+Owners: `src/mod_apocalipse_rogue_relentless_finale.cpp`, `data/sql/db-world/2026_09_22_10_relentless_finale.sql`
+
+Custom Combat Rogue passive 901084 makes every player-initiated five-combo-point Rogue finisher restore 5 percent maximum health. It also maintains a visible infinite ready buff that makes the next qualifying finisher retain all five points. Ready then returns exactly 12 seconds after that retention, enabling a predictable double-finisher sequence. Triggered and copied finishers cannot activate the effect.
+
+Acquisition remains external and must grant only passive 901084. Matching server and client rows for 901084 through 901088, the world update, and a module rebuild must ship together. Humans and playerbots use identical mechanics, while deliberate double-finisher planning remains AI policy.
+
+Detailed contract: [`.docs/custom-spells/relentless-finale.md`](.docs/custom-spells/relentless-finale.md)
+
+### Improved Feint
+
+Owners: `src/mod_apocalipse_rogue_improved_feint.cpp`, `data/sql/db-world/2026_09_22_09_improved_feint.sql`
+
+Custom Rogue passive 901089 makes every successful stock Feint rank cast apply or refresh six-second helper 901090. The helper reduces Physical, Holy, Fire, Nature, Frost, Shadow, and Arcane damage taken by 30 percent without changing stock Feint behavior.
+
+Ordinary damage uses factor 0.70. Stock Feint's 40 percent AoE reduction remains separate, so AoE damage uses `0.60 * 0.70 = 0.42`, for 58 percent total reduction rather than 70 percent. Acquisition remains external and must grant only passive 901089. Matching server and client rows, the world update, and a module rebuild must ship together. Humans and playerbots use identical mechanics.
+
+Detailed contract: [`.docs/custom-spells/improved-feint.md`](.docs/custom-spells/improved-feint.md)
+
+### Pestilent Knives
+
+Owners: `src/mod_apocalipse_rogue_pestilent_knives.cpp`, `data/sql/db-world/2026_09_22_03_rogue_pestilent_knives.sql`
+
+Custom Assassination Rogue active 901069 costs 35 Energy on a 20-second cooldown and deals 50 percent weapon damage to up to ten enemies within 10 yards. Each enemy hit receives two applications of the Rogue's main-hand Deadly Poison rank.
+
+The implementation reuses real poison casts and the stock full-stack script. Targets already at five stacks trigger the opposite weapon's poison only once per cast. Assassination Spec Manager acquisition is included, matching client data is required, and bot cast-decision policy remains external.
+
+Detailed contract: [`.docs/custom-spells/pestilent-knives.md`](.docs/custom-spells/pestilent-knives.md)
+
 ### Battleground Stamina Assistance
 
 Owners: `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`
@@ -448,7 +618,7 @@ Detailed contract: [`.docs/custom-spells/battleground-stamina-assistance.md`](.d
 - `mod-playerbots` enabled in the parent core deployment
 - World and character database access through AzerothCore
 - Effective module/worldserver configuration containing desired overrides
-- Server and client custom-spell data for spells 901001 through 901047
+- Server and client custom-spell data for managed spells through 901090
 - Matching talent data when a custom passive is granted through a talent
 
 Stock AzerothCore compatibility has not been validated.
@@ -470,9 +640,9 @@ SOURCE data/mod_spell_scaling.sql;
 SOURCE data/2026_09_16_01_blazing_barrier.sql;
 ```
 
-Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The 901003 through 901047 updates install the custom class spells, native modifiers, proc metadata, and script bindings.
+Files under `data/sql/db-world/` are automatic module world updates. They run on worldserver startup only when world database updates and module update discovery are enabled. Do not also import them manually when the updater will apply them. The 901002 update is idempotent for its recognized spell row and may be executed manually, with worldserver stopped and a current backup, to repair an already-recorded deployment. The updates through 901090 install custom class spells, native modifiers, proc metadata, and script bindings.
 
-Before the first custom-spell deployment, verify IDs 901001 through 901047 are free in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
+Before the first custom-spell deployment, verify IDs 901001 through 901090 are free or match the guarded module-owned rows in live `spell_dbc`, `wotlk_spells_full`, `wotlk_spells`, and the actual selected client/server `Spell.dbc`.
 
 See [`.docs/development/operations.md`](.docs/development/operations.md) for migration order, preflight queries, updater checks, client patch requirements, and rollback constraints.
 

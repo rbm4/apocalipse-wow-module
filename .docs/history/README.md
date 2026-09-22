@@ -21,6 +21,25 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-22 | Pestilent Knives | Partial | [`2026-09-22-pestilent-knives.md`](2026-09-22-pestilent-knives.md) |
+| 2026-09-22 | Daring Challenge | Partial | [`2026-09-22-daring-challenge.md`](2026-09-22-daring-challenge.md) |
+| 2026-09-22 | Buckler Strike | Partial | [`2026-09-22-buckler-strike.md`](2026-09-22-buckler-strike.md) |
+| 2026-09-22 | Gloomblade Infusion | Partial | [`2026-09-22-gloomblade-infusion.md`](2026-09-22-gloomblade-infusion.md) |
+| 2026-09-22 | Shadow Execution | Partial | [`2026-09-22-shadow-execution.md`](2026-09-22-shadow-execution.md) |
+| 2026-09-22 | Relentless Finale | Partial | [`2026-09-22-relentless-finale.md`](2026-09-22-relentless-finale.md) |
+| 2026-09-22 | Crimson Vial | Partial | [`2026-09-22-crimson-vial.md`](2026-09-22-crimson-vial.md) |
+| 2026-09-22 | Improved Feint | Partial | [`2026-09-22-improved-feint.md`](2026-09-22-improved-feint.md) |
+| 2026-09-22 | Leeching Mixture | Partial | [`2026-09-22-leeching-mixture.md`](2026-09-22-leeching-mixture.md) |
+| 2026-09-22 | Concentrated Venom | Partial | [`2026-09-22-concentrated-venom.md`](2026-09-22-concentrated-venom.md) |
+| 2026-09-22 | Alchemical Guard | Partial | [`2026-09-22-alchemical-guard.md`](2026-09-22-alchemical-guard.md) |
+| 2026-09-22 | Bladeguard | Partial | [`2026-09-22-bladeguard.md`](2026-09-22-bladeguard.md) |
+| 2026-09-22 | Warlock and Divine Toll balance | Partial | [`2026-09-22-warlock-and-divine-toll-balance.md`](2026-09-22-warlock-and-divine-toll-balance.md) |
+| 2026-09-21 | Pestilent Eruption | Partial | [`2026-09-21-pestilent-eruption.md`](2026-09-21-pestilent-eruption.md) |
+| 2026-09-21 | Necrotic Veil | Partial | [`2026-09-21-necrotic-veil.md`](2026-09-21-necrotic-veil.md) |
+| 2026-09-21 | Death Knight Rupture | Partial | [`2026-09-21-death-knight-rupture.md`](2026-09-21-death-knight-rupture.md) |
+| 2026-09-21 | Rime Shards | Partial | [`2026-09-21-rime-shards.md`](2026-09-21-rime-shards.md) |
+| 2026-09-21 | Frozen Resolve | Partial | [`2026-09-21-frozen-resolve.md`](2026-09-21-frozen-resolve.md) |
+| 2026-09-21 | Crimson Ward | Partial | [`2026-09-21-crimson-ward.md`](2026-09-21-crimson-ward.md) |
 | 2026-09-21 | Offline database policy | Completed | [`2026-09-21-offline-database-policy.md`](2026-09-21-offline-database-policy.md) |
 | 2026-09-21 | Primal Resolve | Partial | [`2026-09-21-primal-resolve.md`](2026-09-21-primal-resolve.md) |
 | 2026-09-21 | Melee Specialization | Partial | [`2026-09-21-melee-specialization.md`](2026-09-21-melee-specialization.md) |
@@ -32,6 +51,8 @@ History records do not replace current feature or subsystem documentation. Curre
 | 2026-09-20 | Demonic Equilibrium | Partial | [`2026-09-20-demonic-equilibrium.md`](2026-09-20-demonic-equilibrium.md) |
 | 2026-09-20 | Chaotic Inferno | Partial | [`2026-09-20-chaotic-inferno.md`](2026-09-20-chaotic-inferno.md) |
 | 2026-09-20 | Burning Conflagration | Partial | [`2026-09-20-burning-conflagration.md`](2026-09-20-burning-conflagration.md) |
+| 2026-09-22 | Permanent Paladin seals | Partial | [`2026-09-22-permanent-paladin-seals.md`](2026-09-22-permanent-paladin-seals.md) |
+| 2026-09-22 | Rogue shield proficiency | Partial | [`2026-09-22-rogue-shield-proficiency.md`](2026-09-22-rogue-shield-proficiency.md) |
 | 2026-09-20 | Permanent Metamorphosis | Partial | [`2026-09-20-permanent-metamorphosis.md`](2026-09-20-permanent-metamorphosis.md) |
 | 2026-09-20 | Haunting Affliction | Partial | [`2026-09-20-haunting-affliction.md`](2026-09-20-haunting-affliction.md) |
 | 2026-09-20 | Divine Steed cast cancellation | Partial | [`2026-09-20-divine-steed-cast-cancellation.md`](2026-09-20-divine-steed-cast-cancellation.md) |

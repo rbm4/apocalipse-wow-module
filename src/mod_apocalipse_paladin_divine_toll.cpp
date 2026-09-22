@@ -3,7 +3,6 @@
 #include "GridNotifiersImpl.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
-#include "Random.h"
 #include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
@@ -41,10 +40,9 @@ enum ApocalipsePaladinDivineTollSpells
 };
 
 constexpr uint32 PALADIN_ICON_JUDGEMENTS_OF_THE_JUST = 3015;
-constexpr uint32 DIVINE_TOLL_MIN_IMPACTS = 1;
-constexpr uint32 DIVINE_TOLL_MAX_IMPACTS = 5;
+constexpr uint32 DIVINE_TOLL_IMPACT_COUNT = 5;
 constexpr uint32 DIVINE_TOLL_IMPACT_INTERVAL_MS = 500;
-constexpr int32 DIVINE_TOLL_DAMAGE_PCT = 50;
+constexpr int32 DIVINE_TOLL_DAMAGE_PCT = 80;
 constexpr int32 DIVINE_TOLL_HIT_BONUS_PCT = 10000;
 constexpr int32 DIVINE_TOLL_WISE_CONSUMED = 0x01;
 constexpr int32 DIVINE_TOLL_JUDGEMENT_RESET = 0x02;
@@ -394,11 +392,10 @@ public:
             ObjectGuid casterGuid = caster->GetGUID();
             ObjectGuid targetGuid = target->GetGUID();
             uint32 mapId = caster->GetMapId();
-            uint32 impactCount = urand(
-                DIVINE_TOLL_MIN_IMPACTS, DIVINE_TOLL_MAX_IMPACTS);
-            for (uint32 index = 0; index < impactCount; ++index)
+            for (uint32 index = 0; index < DIVINE_TOLL_IMPACT_COUNT;
+                ++index)
             {
-                bool finalImpact = index + 1 == impactCount;
+                bool finalImpact = index + 1 == DIVINE_TOLL_IMPACT_COUNT;
                 if (!index)
                 {
                     ExecuteDivineTollImpact(

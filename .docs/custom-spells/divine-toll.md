@@ -2,17 +2,17 @@
 
 Status: Implemented in source and server data, build and runtime not verified
 
-Owners: `src/mod_apocalipse_paladin_divine_toll.cpp`, `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp`, `data/sql/db-world/2026_09_18_05_divine_toll.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_paladin_divine_toll.cpp`, `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp`, `data/sql/db-world/2026_09_18_05_divine_toll.sql`, `data/sql/db-world/2026_09_22_00_spell_balance_adjustments.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-18
+Last source review: 2026-09-22
 
 ## Purpose
 
-Divine Toll is a one-rank Paladin active spell that unleashes a uniformly random sequence of one through five half-damage Judgement impacts against one enemy. It applies Judgement of Justice and preserves selected seal, talent, critical-strike, and generic proc behavior without repeatedly casting a normal Judgement wrapper.
+Divine Toll is a one-rank Paladin active spell that unleashes exactly five Judgement impacts at 80 percent damage against one enemy. It applies Judgement of Justice and preserves selected seal, talent, critical-strike, and generic proc behavior without repeatedly casting a normal Judgement wrapper.
 
 ## Acquisition boundary
 
-The module defines acquisition-facing spell 901024 but does not teach it or modify talents, trainers, specialization data, items, or playerbot acquisition. A separate system owns acquisition. The external backend derives client spell data from server tables and owns client patch generation.
+The module defines acquisition-facing spell 901024 but does not teach it or modify talents, trainers, specialization data, items, or playerbot acquisition. A separate system must reference unranked spell 901024 only for Retribution. Protection and Holy use the separately acquired permanent-seal options 901060 and 901016. The external backend derives client spell data from server tables and owns client patch generation.
 
 ## Human and bot applicability
 
@@ -33,7 +33,7 @@ Only 901024 is acquisition-facing. Spells 901025 and 901026 are internal and mus
 
 ## Cast and sequence contract
 
-Divine Toll requires a living hostile selected target, line of sight, normal Judgement range, and any active real seal. Facing is not required. It rolls one through five impacts with equal probability, executes the first immediately, and schedules later impacts at 500 ms intervals.
+Divine Toll requires a living hostile selected target, line of sight, normal Judgement range, and any active real seal. Facing is not required. It executes exactly five impacts, with the first resolving immediately and later impacts scheduled at 500 ms intervals.
 
 Each event stores caster and original-target GUIDs. At execution it resolves objects again and requires the caster to be in world, alive, carrying the sequence aura, holding a real seal, and free from controlled, silence, pacify, and pacify-silence states. Failure of a caster requirement removes the sequence aura and cancels remaining events.
 
@@ -54,7 +54,7 @@ Every accepted impact:
 5. Clears the shared normal Judgement cooldown category on the first successful impact only, resolving that category through `SpellInfo::GetCategory()` as required by the deployment core.
 6. Executes the stock Seal of Command JotJ cleave when applicable.
 
-Scripts bound to the existing Judgement and seal damage spells reduce positive hit damage to 50 percent only while marker 901025 is present. The multiplier is applied to raw hit damage before critical bonus, PvP reduction, resistance, and absorbs because the deployment core exposes no module hook between resistance and absorb processing. This preserves normal downstream damage handling with possible integer-rounding differences from a post-resistance multiplier.
+Scripts bound to the existing Judgement and seal damage spells reduce positive hit damage to 80 percent only while marker 901025 is present. The multiplier is applied to raw hit damage before critical bonus, PvP reduction, resistance, and absorbs because the deployment core exposes no module hook between resistance and absorb processing. This preserves normal downstream damage handling with possible integer-rounding differences from a post-resistance multiplier.
 
 A fully absorbed non-immune impact counts as successful. An impact rejected by spell or damage immunity applies no Divine Toll debuff, damage proc, or Judgement cooldown reset. Remaining scheduled impacts continue.
 
@@ -64,8 +64,8 @@ A fully absorbed non-immune impact counts as successful. An impact rejected by s
 - Vengeance and Corruption receive a real stack before damage; their periodic aura behavior is unchanged and later ticks are not reduced by Divine Toll.
 - Blood and Martyr recoil derives from the reduced impact and therefore remains proportionate.
 - Seal of Command's JotJ cleave runs on every applicable impact and is reduced by the same marker-bound damage script.
-- Passive 901016 normally suppresses itself beside real SoR. During a marked Divine Toll Judgement only, it is allowed to fire beside real SoR.
-- Real SoR and passive 901016 both retain their JotJ second hit, with every 25742 result reduced to 50 percent while marked.
+- Real SoR and passive 901016 proc independently whether or not Divine Toll is active.
+- Real SoR and passive 901016 both retain their JotJ second hit, with every 25742 result reduced to 80 percent while marked.
 - Judgements of the Wise uses an additional check on rank chain 31876. Its first eligible marked event records a bit in the 901024 sequence aura; later marked events are rejected.
 - Judgements of the Just, Heart of the Crusader, Righteous Vengeance on eligible critical hits, and generic damage procs use their normal existing proc rows for every impact.
 - The Tier 5 Holy two-piece Improved Judgement energize does not run because Divine Toll bypasses the normal Judgement wrapper.
@@ -82,6 +82,7 @@ The automatic world update:
 4. Installs the parent, JotW gate, and additive stock-damage script bindings.
 5. Marks the parent and impact marker non-save.
 6. Synchronizes backend spell-name rows used by the external export workflow.
+7. Applies the follow-up balance migration to present exactly five impacts at 80 percent damage.
 
 The external backend owns generated client data and patch deployment. This repository does not generate or apply the client patch.
 
@@ -90,9 +91,9 @@ The external backend owns generated client data and patch deployment. This repos
 | Scenario | Expected result | Status |
 |---|---|---|
 | Cast with no real seal | Cast fails without spending mana or starting cooldown | Not run |
-| Cast on valid hostile target | Costs 10 percent base mana, starts 60-second cooldown, and rolls one through five impacts | Not run |
-| One through five roll sampling | Counts are approximately uniform across a large sample | Not run |
-| Target remains valid | Every rolled impact hits that target at 0, 500, 1000, 1500, or 2000 ms | Not run |
+| Cast on valid hostile target | Costs 10 percent base mana, starts 60-second cooldown, and schedules exactly five impacts | Not run |
+| Repeated casts | Every sequence contains exactly five scheduled impacts | Not run |
+| Target remains valid | Every impact hits that target at 0, 500, 1000, 1500, or 2000 ms | Not run |
 | Target dies or leaves range | Current event retargets nearest valid enemy; later events repeat validation | Not run |
 | No replacement exists | Current event is lost; later events search again | Not run |
 | Caster dies, changes map, loses seal, or becomes cast-locked | Remaining sequence cancels | Not run |
@@ -100,8 +101,8 @@ The external backend owns generated client data and patch deployment. This repos
 | Immune target | No impact side effects or Judgement reset for that event | Not run |
 | Fully absorbed target | Debuffs and successful-impact reset still occur | Not run |
 | Vengeance or Corruption | Stack is added before each impact and normal periodic behavior remains | Not run |
-| Real SoR with passive 901016 and JotJ | Both SoR paths fire twice per impact at half damage | Not run |
-| Seal of Command with JotJ | Every impact produces a half-damage stock cleave | Not run |
+| Real SoR with passive 901016 and JotJ | Both SoR paths fire twice per impact at 80 percent damage | Not run |
+| Seal of Command with JotJ | Every impact explicitly produces an 80-percent-damage stock cleave | Not run |
 | Judgements of the Wise | At most one mana and Replenishment proc occurs per sequence | Not run |
 | Independent critical hits | Each impact can separately trigger Righteous Vengeance | Not run |
 | Human and playerbot | Identical mechanics when 901024 is externally granted | Not run |

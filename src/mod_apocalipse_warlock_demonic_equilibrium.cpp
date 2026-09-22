@@ -11,7 +11,7 @@ enum ApocalipseWarlockDemonicEquilibriumSpells
     SPELL_WARLOCK_SOUL_LINK_AURA            = 25228
 };
 
-constexpr int32 DEMONIC_EQUILIBRIUM_SPLIT_PCT = 75;
+constexpr int32 DEMONIC_EQUILIBRIUM_SPLIT_PCT = 50;
 }
 
 class spell_apoc_warlock_demonic_equilibrium : public SpellScriptLoader
