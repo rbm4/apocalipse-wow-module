@@ -36,7 +36,7 @@ SET @rime_shards_burst_owned := (
       AND `RangeIndex` = 15
       AND `SchoolMask` = 16
       AND `SpellClassSet` = 15
-      AND `MaxAffectedTargets` = 10
+      AND `MaxTargets` = 10
       AND `EquippedItemClass` = -1
       AND `Effect_1` = 2
       AND `EffectDieSides_1` = 0
@@ -91,7 +91,7 @@ FROM DUAL
 WHERE @rime_shards_owned = 0;
 
 INSERT INTO `spell_dbc` (
-    `ID`, `RangeIndex`, `SchoolMask`, `SpellClassSet`, `MaxAffectedTargets`,
+    `ID`, `RangeIndex`, `SchoolMask`, `SpellClassSet`, `MaxTargets`,
     `EquippedItemClass`, `EquippedItemSubclass`, `EquippedItemInvTypes`,
     `Effect_1`, `EffectDieSides_1`, `EffectBasePoints_1`,
     `ImplicitTargetA_1`, `ImplicitTargetB_1`, `EffectRadiusIndex_1`,
@@ -134,7 +134,7 @@ SET @rime_shards_burst_managed := (
       AND `RangeIndex` = 15
       AND `SchoolMask` = 16
       AND `SpellClassSet` = 15
-      AND `MaxAffectedTargets` = 10
+      AND `MaxTargets` = 10
       AND `EquippedItemClass` = -1
       AND `Effect_1` = 2
       AND `EffectDieSides_1` = 0
