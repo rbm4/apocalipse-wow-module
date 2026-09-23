@@ -21,6 +21,7 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-22 | Crimson Ward amount-hook crash fix | Partial | [`2026-09-22-crimson-ward-amount-hook-crash-fix.md`](2026-09-22-crimson-ward-amount-hook-crash-fix.md) |
 | 2026-09-22 | Pestilent Knives | Partial | [`2026-09-22-pestilent-knives.md`](2026-09-22-pestilent-knives.md) |
 | 2026-09-22 | Daring Challenge | Partial | [`2026-09-22-daring-challenge.md`](2026-09-22-daring-challenge.md) |
 | 2026-09-22 | Buckler Strike | Partial | [`2026-09-22-buckler-strike.md`](2026-09-22-buckler-strike.md) |

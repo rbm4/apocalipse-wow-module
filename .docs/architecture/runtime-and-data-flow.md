@@ -587,6 +587,10 @@ The global mount cast check removes enhanced Metamorphosis before shapeshift val
 - Configured absorb auras are recalculated and scaled in `SpellScalingUnit::OnAuraApply`.
 - Blazing Barrier first derives its absorb from base amount plus fire spell power in its `AuraScript`; spell 901001 is also configured as an `ABSORB` scaling entry.
 
+### AuraScript hook context
+
+Aura accessors are hook-specific. In the deployment core, `AuraScript::GetTarget()` requires an active `AuraApplication` and returns `nullptr` from `DoEffectCalcAmount`; amount handlers that need the aura-bearing unit must use `GetUnitOwner()` instead. Before dereferencing an AuraScript accessor in a new hook, verify that hook in `SpellScript.cpp` and retain an appropriate null guard. Violating this rule caused Crimson Ward helper 901051 to dereference a null owner through `Object::GetUInt32Value` during absorb calculation.
+
 ## Data boundaries
 
 | Database | Objects | Access |

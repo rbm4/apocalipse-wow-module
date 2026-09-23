@@ -88,9 +88,11 @@ public:
         void CalculateAmount(
             AuraEffect const*, int32& amount, bool& canBeRecalculated)
         {
-            amount = GetTarget()->CountPctFromMaxHealth(
-                CRIMSON_WARD_MAX_HEALTH_PCT);
             canBeRecalculated = false;
+
+            if (Unit* target = GetUnitOwner())
+                amount = target->CountPctFromMaxHealth(
+                    CRIMSON_WARD_MAX_HEALTH_PCT);
         }
 
         void Register() override

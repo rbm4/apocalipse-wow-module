@@ -478,8 +478,8 @@ static void RevokeHiddenBudget(Player *player, uint8 specIndex)
     SetGrantedBudget(guid, specIndex, 0);
     SyncHiddenBudget(player);
 
-    LOG_INFO("module", "[ModApocalipse] Revoked hidden talent budget {} for guid {} spec {}.",
-             toRemove, guid, uint32(specIndex));
+    // LOG_INFO("module", "[ModApocalipse] Revoked hidden talent budget {} for guid {} spec {}.",
+    //          toRemove, guid, uint32(specIndex));
 }
 
 static void RevokeManagedTalents(Player *player, uint8 specIndex)
@@ -488,8 +488,8 @@ static void RevokeManagedTalents(Player *player, uint8 specIndex)
     uint8 cls = player->getClass();
     uint8 activeSpecMask = player->GetActiveSpecMask();
 
-    LOG_INFO("module", "[ModApocalipse] RevokeManagedTalents guid {} spec {}.",
-             guid, uint32(specIndex));
+    // LOG_INFO("module", "[ModApocalipse] RevokeManagedTalents guid {} spec {}.",
+    //          guid, uint32(specIndex));
 
     // Remove all configured managed talents for this tree, including passive effects.
     // This guarantees non-dominant signature talents stop working immediately.
@@ -522,8 +522,8 @@ static void RevokeManagedTalents(Player *player, uint8 specIndex)
             player->removeSpell(rankSpell, SPEC_MASK_ALL, true);
             player->SendLearnPacket(rankSpell, false);
 
-            LOG_INFO("module", "[ModApocalipse] Revoked managed talent guid {} spec {} spell {}.",
-                     guid, uint32(specIndex), rankSpell);
+            // LOG_INFO("module", "[ModApocalipse] Revoked managed talent guid {} spec {} spell {}.",
+            //          guid, uint32(specIndex), rankSpell);
         }
     }
 }
@@ -533,8 +533,8 @@ static void GrantManagedTalents(Player *player, uint8 specIndex, SpellIdSet cons
     uint32 guid = player->GetGUID().GetCounter();
     std::vector<uint32> plan = BuildTalentGrantPlan(player->getClass(), specIndex, specSpells);
 
-    LOG_INFO("module", "[ModApocalipse] GrantManagedTalents guid {} spec {} planSize {}.",
-             guid, uint32(specIndex), plan.size());
+    // LOG_INFO("module", "[ModApocalipse] GrantManagedTalents guid {} spec {} planSize {}.",
+    //          guid, uint32(specIndex), plan.size());
 
     if (plan.empty())
         return;
@@ -554,8 +554,8 @@ static void GrantManagedTalents(Player *player, uint8 specIndex, SpellIdSet cons
 
 static void EnsureSpecLayer(Player *player, uint8 specIndex, SpellIdSet const &specSpells)
 {
-    LOG_INFO("module", "[ModApocalipse] EnsureSpecLayer guid {} spec {} spellCount {}.",
-             player->GetGUID().GetCounter(), uint32(specIndex), specSpells.size());
+    // LOG_INFO("module", "[ModApocalipse] EnsureSpecLayer guid {} spec {} spellCount {}.",
+    //          player->GetGUID().GetCounter(), uint32(specIndex), specSpells.size());
     GrantManagedTalents(player, specIndex, specSpells);
 
     for (uint32 spellId : specSpells)
@@ -618,9 +618,9 @@ static uint8 GetDominantSpec(Player *player, int8 currentSpec = -1)
 
     if (dominant != 255)
     {
-        LOG_INFO("module", "[ModApocalipse] GetDominantSpec: [{}] [{}] [{}] -> spec {} (current {}).",
-                 uint32(specPoints[0]), uint32(specPoints[1]), uint32(specPoints[2]),
-                 uint32(dominant), int32(currentSpec));
+        // LOG_INFO("module", "[ModApocalipse] GetDominantSpec: [{}] [{}] [{}] -> spec {} (current {}).",
+        //          uint32(specPoints[0]), uint32(specPoints[1]), uint32(specPoints[2]),
+        //          uint32(dominant), int32(currentSpec));
     }
 
     return dominant;
@@ -634,8 +634,8 @@ static void GrantSpec(Player *player, uint8 newSpec)
 {
     uint8 cls = player->getClass();
     int8 oldSpec = GetGrantedSpec(player->GetGUID().GetCounter());
-    LOG_INFO("module", "[ModApocalipse] GrantSpec guid {} class {} oldSpec {} newSpec {}.",
-             player->GetGUID().GetCounter(), uint32(cls), int32(oldSpec), uint32(newSpec));
+    // LOG_INFO("module", "[ModApocalipse] GrantSpec guid {} class {} oldSpec {} newSpec {}.",
+    //          player->GetGUID().GetCounter(), uint32(cls), int32(oldSpec), uint32(newSpec));
 
     SpellIdSet newSpellSet = GetSpecSpellSet(cls, newSpec);
 
@@ -674,7 +674,7 @@ static void ReconcileSpecFromTalentPoints(Player *player)
         return;
 
     uint32 guid = player->GetGUID().GetCounter();
-    LOG_INFO("module", "[ModApocalipse] ReconcileSpecFromTalentPoints enter guid {}.", guid);
+    // LOG_INFO("module", "[ModApocalipse] ReconcileSpecFromTalentPoints enter guid {}.", guid);
     SyncHiddenBudget(player);
 
     {
@@ -700,14 +700,14 @@ static void ReconcileSpecFromTalentPoints(Player *player)
     uint8 cls = player->getClass();
     int8 current = GetGrantedSpec(guid);
     uint8 dominant = GetDominantSpec(player, current);
-    LOG_INFO("module", "[ModApocalipse] Spec state guid {} class {} dominant {} current {}.",
-             guid, uint32(cls), uint32(dominant), int32(current));
+    // LOG_INFO("module", "[ModApocalipse] Spec state guid {} class {} dominant {} current {}.",
+    //          guid, uint32(cls), uint32(dominant), int32(current));
 
     if (dominant == 255)
     {
         if (current < 0)
         {
-            LOG_INFO("module", "[ModApocalipse] No dominant spec for guid {} and no granted spec to clear.", guid);
+            // LOG_INFO("module", "[ModApocalipse] No dominant spec for guid {} and no granted spec to clear.", guid);
             return;
         }
 
@@ -728,7 +728,7 @@ static void ReconcileSpecFromTalentPoints(Player *player)
         }
 
         SetGrantedSpec(guid, -1);
-        LOG_INFO("module", "[ModApocalipse] Cleared granted spec state for guid {} (no dominant spec).", guid);
+        // LOG_INFO("module", "[ModApocalipse] Cleared granted spec state for guid {} (no dominant spec).", guid);
     }
     else if (current != (int8)dominant)
     {
@@ -834,7 +834,7 @@ public:
         if (!HasValidSpecManagerSession(player))
             return;
 
-        LOG_INFO("module", "[ModApocalipse] OnPlayerLogin guid {}.", player->GetGUID().GetCounter());
+        // LOG_INFO("module", "[ModApocalipse] OnPlayerLogin guid {}.", player->GetGUID().GetCounter());
         ReconcileSpecFromTalentPoints(player);
     }
 
@@ -845,8 +845,8 @@ public:
         if (!HasValidSpecManagerSession(player))
             return;
 
-        LOG_INFO("module", "[ModApocalipse] OnPlayerLearnTalents guid {} talentId {} talentRank {} spellId {}.",
-                 player->GetGUID().GetCounter(), talentId, talentRank, spellId);
+        // LOG_INFO("module", "[ModApocalipse] OnPlayerLearnTalents guid {} talentId {} talentRank {} spellId {}.",
+        //          player->GetGUID().GetCounter(), talentId, talentRank, spellId);
         ReconcileSpecFromTalentPoints(player);
     }
 
@@ -930,7 +930,7 @@ public:
 
     void OnStartup() override
     {
-        LOG_INFO("module", "[ModApocalipse] World OnStartup completed.");
+        // LOG_INFO("module", "[ModApocalipse] World OnStartup completed.");
     }
 };
 
