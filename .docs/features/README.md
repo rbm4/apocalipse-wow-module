@@ -55,6 +55,7 @@ Feature pages preserve end-to-end context for behavior that spans source code, h
 | Leeching Mixture | `src/mod_apocalipse_rogue_leeching_mixture.cpp`, `data/sql/db-world/2026_09_22_03_rogue_leeching_mixture.sql` | Implemented in source and data, build and runtime not verified | [`../custom-spells/leeching-mixture.md`](../custom-spells/leeching-mixture.md) |
 | Alchemical Guard | `src/mod_apocalipse_rogue_alchemical_guard.cpp`, `data/sql/db-world/2026_09_22_04_alchemical_guard.sql` | Implemented in source and data, build and runtime not verified | [`../custom-spells/alchemical-guard.md`](../custom-spells/alchemical-guard.md) |
 | Bladeguard | `data/sql/db-world/2026_09_22_04_bladeguard.sql` | Implemented in data, database, client, and runtime not verified | [`../custom-spells/bladeguard.md`](../custom-spells/bladeguard.md) |
+| Priest ability pack | `src/mod_apocalipse_priest_spells.cpp`, `data/sql/db-world/2026_09_24_01_priest_spell_pack.sql` | Implemented in source and data, build and runtime not verified | [`priest-ability-pack.md`](priest-ability-pack.md) |
 | Battleground stamina assistance | `src/battleground_stamina/`, `conf/BattlegroundStamina.conf.dist`, `data/sql/db-world/2026_09_16_00_battleground_stamina_spell.sql` | Implemented in source, runtime not verified | [`../custom-spells/battleground-stamina-assistance.md`](../custom-spells/battleground-stamina-assistance.md) |
 
 ## Adding a feature page

@@ -1,10 +1,10 @@
 # Crimson Ward
 
-Status: Implemented in source and data; amount-hook crash fixed; build and runtime re-verification pending
+Status: Implemented in source and data, build and runtime not verified
 
 Owners: `src/mod_apocalipse_death_knight_crimson_ward.cpp`, `data/sql/db-world/2026_09_21_04_crimson_ward.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-22
+Last source review: 2026-09-21
 
 ## Purpose
 
@@ -52,12 +52,6 @@ The triggering damage causes the proc and is resolved before the newly applied s
 
 The helper amount is calculated once when aura 901051 is applied. Later maximum-health changes do not resize the existing shield. The all-school mask is 127. Normal absorb ordering and integer handling remain core-owned. Reapplication cannot occur during the 60-second cooldown, which is longer than the 15-second helper duration.
 
-### Aura amount-hook safety
-
-`DoEffectCalcAmount` runs without an `AuraApplication`, so its handler must not call `AuraScript::GetTarget()`. The deployment core logs an error and returns `nullptr` for that accessor in this hook. Crimson Ward therefore resolves the unit through `GetUnitOwner()` and null-checks it before reading maximum health.
-
-This distinction is a crash-safety invariant for this spell and a required review point for future AuraScript amount handlers: use aura-owner or caster accessors supported by the selected hook, and verify their contract in `SpellScript.cpp` before dereferencing them. The 2026-09-22 production failure presented as `segfault at 0x68` in `Object::GetUInt32Value`; ELF relocation-aware symbolization traced it to the unsupported accessor in Crimson Ward rather than the initially suspected creature AI.
-
 Crimson Ward is not registered with `mod_spell_scaling`, so its 20 percent maximum-health formula remains identical at every level. PvP Balancing does not alter absorb creation.
 
 ## Database and client contract
@@ -79,7 +73,6 @@ The passive description states the 15-second duration, 20 percent formula, non-d
 | Normal dispel targets helper 901051 | Shield remains because it has no dispel type | Not run |
 | Maximum health changes after helper application | Existing absorb amount remains unchanged | Not run |
 | Human and playerbot Death Knight | Identical mechanics while passive 901050 is known | Not run |
-| Helper 901051 is applied after qualifying damage | Amount calculation uses the aura unit owner; no unsupported-hook warning or null dereference occurs | Source fixed; runtime re-verification pending |
 
 ## Rollback
 

@@ -81,6 +81,8 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 | `src/mod_apocalipse_warlock_demonic_equilibrium.cpp` | Passive-gated Soul Link damage transfer increase |
 | `src/mod_apocalipse_warlock_haunting_affliction.cpp` | Passive-gated DoT applications on every successful Haunt hit |
 | `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp` | Passive-gated infinite Metamorphosis duration and lifecycle cleanup |
+| `src/mod_apocalipse_shaman_spells.cpp` | Shaman elemental, tank, restoration, defensive, and offensive custom spell pack |
+| `src/mod_apocalipse_priest_spells.cpp` | Shared, Discipline, Holy, and Shadow Priest custom spell pack |
 | `src/battleground_stamina/` | Battleground stamina calculation, aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/` | Manual SQL baselines/migrations and automatic module updater SQL |
@@ -95,7 +97,7 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 5. **State bot behavior explicitly.** Every gameplay feature must say whether it applies identically to bots, suppresses output, bypasses a restriction, or requires separate logic.
 6. **Use the correct database.** World definitions use `WorldDatabase`; per-character grant state uses `CharacterDatabase`. Preserve explicit `USE` boundaries in manual SQL.
 7. **Keep SQL mode clear.** Files outside `data/sql/db-world/` are manual unless documented otherwise. Files inside that directory are automatic world updates. Never apply production SQL without explicit approval.
-8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901090 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
+8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901154 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
 9. **Keep config defaults synchronized.** A setting's code fallback, distributed `.conf.dist`, validation, and documented default must agree. If they do not, record the drift until fixed.
 10. **Preserve gameplay cleanup.** Battleground-only state must be removed on unsupported maps/leave. Managed talents and hidden budgets must be revoked on tree transitions/reset. Do not add persistent auras accidentally.
 11. **Keep event work bounded.** Bot populations multiply login, talent, equipment, and combat-hook cost. Do not add database queries to combat or per-tick paths.

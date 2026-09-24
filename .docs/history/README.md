@@ -21,6 +21,8 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-24 | Priest ability pack | Partial | [`2026-09-24-priest-ability-pack.md`](2026-09-24-priest-ability-pack.md) |
+| 2026-09-24 | Shaman spell pack | Partial | [`2026-09-24-shaman-spell-pack.md`](2026-09-24-shaman-spell-pack.md) |
 | 2026-09-22 | Crimson Ward amount-hook crash fix | Partial | [`2026-09-22-crimson-ward-amount-hook-crash-fix.md`](2026-09-22-crimson-ward-amount-hook-crash-fix.md) |
 | 2026-09-22 | Pestilent Knives | Partial | [`2026-09-22-pestilent-knives.md`](2026-09-22-pestilent-knives.md) |
 | 2026-09-22 | Daring Challenge | Partial | [`2026-09-22-daring-challenge.md`](2026-09-22-daring-challenge.md) |

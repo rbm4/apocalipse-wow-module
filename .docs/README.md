@@ -97,6 +97,8 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/improved-feint.md`](custom-spells/improved-feint.md)
 - [`custom-spells/alchemical-guard.md`](custom-spells/alchemical-guard.md)
 - [`custom-spells/bladeguard.md`](custom-spells/bladeguard.md)
+- [`custom-spells/shaman-spell-pack.md`](custom-spells/shaman-spell-pack.md)
+- [`features/priest-ability-pack.md`](features/priest-ability-pack.md)
 
 ## Source-of-truth order
 

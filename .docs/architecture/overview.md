@@ -59,6 +59,8 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `data/sql/db-world/2026_09_20_08_unyielding_shadows.sql` | Data-only native Shadow dispel resistance passive 901035 with Unstable Affliction excluded |
 | `src/mod_apocalipse_warlock_haunting_affliction.cpp` | Passive-gated DoT applications on every Haunt hit for spell 901028 |
 | `src/mod_apocalipse_warlock_permanent_metamorphosis.cpp` | Passive-gated infinite Metamorphosis duration and lifecycle cleanup for spell 901030 |
+| `src/mod_apocalipse_shaman_spells.cpp` | Elemental spread and echo, three stackable shields, restoration procs, cooldown modifiers, and shared actives for spells 901091 through 901117 |
+| `src/mod_apocalipse_priest_spells.cpp` | Shared, Discipline, Holy, and Shadow Priest mechanics for spells 901118 through 901154 |
 | `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql` | Server-side rogue Shield skill eligibility and default acquisition through stock proficiency and Block rewards |
 | `data/sql/db-world/2026_09_22_04_bladeguard.sql` | Data-only shield-gated Rogue item-armor, block-chance, and block-Energy passive 901073 with helper 901074 |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
@@ -66,7 +68,7 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
 | `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
-| `data/sql/db-world/` | AzerothCore module world-database updates, including managed spells through 901090 |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including managed spells through 901154 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -113,7 +115,9 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 38. `AddModApocalipseWarlockDemonicEquilibriumScripts()`
 39. `AddModApocalipseWarlockHauntingAfflictionScripts()`
 40. `AddModApocalipseWarlockPermanentMetamorphosisScripts()`
-41. `AddModApocalipseBattlegroundStaminaScripts()`
+41. `AddModApocalipseShamanSpellScripts()`
+42. `AddModApocalipsePriestSpellScripts()`
+43. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -285,7 +289,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001 through 901090 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001 through 901154 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

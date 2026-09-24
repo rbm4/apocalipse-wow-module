@@ -46,6 +46,8 @@ void AddModApocalipseWarlockChaoticInfernoScripts();
 void AddModApocalipseWarlockDemonicEquilibriumScripts();
 void AddModApocalipseWarlockHauntingAfflictionScripts();
 void AddModApocalipseWarlockPermanentMetamorphosisScripts();
+void AddModApocalipseShamanSpellScripts();
+void AddModApocalipsePriestSpellScripts();
 void AddModApocalipseBattlegroundStaminaScripts();
 
 void Addapocalipse_wow_moduleScripts()
@@ -90,5 +92,7 @@ void Addapocalipse_wow_moduleScripts()
     AddModApocalipseWarlockDemonicEquilibriumScripts();
     AddModApocalipseWarlockHauntingAfflictionScripts();
     AddModApocalipseWarlockPermanentMetamorphosisScripts();
+    AddModApocalipseShamanSpellScripts();
+    AddModApocalipsePriestSpellScripts();
     AddModApocalipseBattlegroundStaminaScripts();
 }

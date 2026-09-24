@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module provides forty-eight systems:
+The module provides fifty systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -51,7 +51,17 @@ The module provides forty-eight systems:
 45. Crimson Vial custom rogue self-heal
 46. Relentless Finale custom combat rogue meta passive
 47. Improved Feint custom rogue defensive passive
-48. Battleground stamina assistance and equipment control
+48. Twenty-ability Shaman elemental, tank, restoration, defensive, and offensive pack
+49. Twenty-ability Priest shared, Discipline, Holy, and Shadow pack
+50. Battleground stamina assistance and equipment control
+
+The Shaman pack reserves spells 901091 through 901117 and composes stock rank chains, native spell modifiers, bounded proc scripts, and fixed damage or healing helpers. Acquisition remains external for the entire pack. Humans and bots use identical mechanics, while the three new active spells require separate playerbot cast policy.
+
+Detailed contract: [`.docs/custom-spells/shaman-spell-pack.md`](.docs/custom-spells/shaman-spell-pack.md)
+
+The Priest pack reserves spells 901118 through 901154 and provides shared sustain, Penance-centered Discipline interactions, Holy damage and healing alternation, and fixed-duration hasted Shadow periodic mechanics. Acquisition remains external. Humans and bots share server mechanics, while Inner Renewal, Archangel, Apotheosis, and Void Eruption need separate playerbot cast policy.
+
+Detailed contract: [`.docs/features/priest-ability-pack.md`](.docs/features/priest-ability-pack.md)
 
 The module does not implement bot AI. Its AzerothCore hooks also receive bot-controlled `Player` objects, and selected rules use `WorldSession::IsBot()` for bot-specific behavior.
 
@@ -127,6 +137,7 @@ apocalipse-wow-module/
 |   |-- mod_apocalipse_warlock_burning_conflagration.cpp
 |   |-- mod_apocalipse_warlock_chaotic_inferno.cpp
 |   |-- mod_apocalipse_warlock_demonic_equilibrium.cpp
+|   |-- mod_apocalipse_priest_spells.cpp
 |   `-- battleground_stamina/
 `-- .docs/
     |-- architecture/

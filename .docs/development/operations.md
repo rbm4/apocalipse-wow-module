@@ -109,6 +109,8 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/sql/db-world/2026_09_22_09_crimson_vial.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901083, 20 Energy cost, 45-second cooldown, immediate plus six one-second current-maximum-health healing events, stealth and non-critical attributes, non-save metadata, and backend name; acquisition remains external |
 | `data/sql/db-world/2026_09_22_10_relentless_finale.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized five-spell graph | Spells 901084 through 901088, ready and recharge lifecycle bindings, transient non-save state, native combo-retention bypass, percent heal, and backend names; acquisition remains external |
 | `data/sql/db-world/2026_09_22_09_improved_feint.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and helper rows | Spells 901089 and 901090, stock Feint rank-chain binding, native all-school reduction, non-save helper metadata, and backend names; acquisition remains external |
+| `data/sql/db-world/2026_09_24_00_shaman_spell_pack.sql` | `acore_world` | AzerothCore module updater; guarded for the complete 27-row graph | Spells 901091 through 901117, stock-derived family masks, proc metadata, rank-chain bindings, fixed helpers, transient metadata, and backend names; acquisition remains external for the entire pack |
+| `data/sql/db-world/2026_09_24_01_priest_spell_pack.sql` | `acore_world` | AzerothCore module updater; guarded for the complete 37-row graph | Spells 901118 through 901154, stock-derived Priest family masks, proc metadata, rank-chain bindings, coefficients, transient metadata, and backend names; acquisition remains external for the entire pack |
 | `data/sql/db-world/2026_09_21_01_apex_bond.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901046, native percent heals, pet damage aura, script binding, non-save metadata, and backend name |
 | `data/sql/db-world/2026_09_21_01_blood_of_the_hunt.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and helper rows | Spells 901044 and 901045, shared melee/trap cooldown metadata, script binding, zero coefficients, HEAL scaling, and backend names |
 | `data/sql/db-world/2026_09_21_02_melee_specialization.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive row | Spell 901047, native family-filtered aura-state bypass, 30 percent melee-family damage modifier, and backend name |
@@ -148,11 +150,11 @@ The following sequence is for an authorized deployment operator in an environmen
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 through 901090 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001 through 901154 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901090 module updates can run.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901154 module updates can run.
 8. Confirm all updater records and module startup logs.
 9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells. Deploy the separate talent and acquisition data through their owned workflows.
 10. Run focused human and bot in-game scenarios.
@@ -182,9 +184,9 @@ Before first deployment, an authorized operator verifies all custom IDs in the r
 Verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901090;
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901090;
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901090;
+SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901117;
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901117;
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901117;
 SELECT `entry` FROM `creature_template` WHERE `entry` = 900002;
 SELECT `ID` FROM `summonproperties_dbc` WHERE `ID` = 901032;
 ```
