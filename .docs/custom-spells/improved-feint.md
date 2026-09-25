@@ -1,6 +1,6 @@
 # Improved Feint
 
-Status: Implemented in source and data, build and runtime not verified
+Status: Implemented in source and data; rank-chain validation fix applied, rebuild and runtime not verified
 
 Owners: `src/mod_apocalipse_rogue_improved_feint.cpp`, `data/sql/db-world/2026_09_22_09_improved_feint.sql`, `src/mod_apocalipse_loader.cpp`
 
@@ -28,7 +28,7 @@ Humans and playerbots use identical mechanics. Existing Feint actions trigger th
 | Dispel | `DISPEL_NONE` and cannot be stolen |
 | Persistence | Helper is marked non-save; the learned passive remains the acquisition contract |
 | Stock behavior | Feint cost, cooldown, threat behavior, and 40 percent AoE reduction remain unchanged |
-| Startup validation | Every bound Feint rank must expose native all-school `SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE` at -40 percent |
+| Startup validation | Every bound spell must belong to stock Feint rank chain 1966; stock effect layout is not assumed because early ranks contain only threat reduction while rank 8 also contains the AoE aura |
 | Registration | `AddModApocalipseRogueImprovedFeintScripts()` |
 
 ## Damage composition

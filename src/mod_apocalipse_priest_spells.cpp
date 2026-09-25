@@ -459,9 +459,9 @@ public:
         void Register() override
         {
             DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(script::CalculatePeriodic,
-                EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+                EFFECT_FIRST_FOUND, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             OnEffectPeriodic += AuraEffectPeriodicFn(script::HandlePeriodic,
-                EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+                EFFECT_FIRST_FOUND, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
         }
     };
 
@@ -551,7 +551,7 @@ public:
     {
         PrepareSpellScript(script);
 
-        void Handle(SpellEffIndex)
+        void HandlePrimary()
         {
             Player* caster = GetCaster()->ToPlayer();
             Unit* primary = GetHitUnit();
@@ -622,21 +622,34 @@ public:
 
         void AfterCastHandler()
         {
+            if (GetSpellInfo()->Id != SPELL_HOLY_WORD_RADIANCE)
+                return;
+
             Player* caster = GetCaster()->ToPlayer();
             if (caster && caster->HasAura(SPELL_APOTHEOSIS))
                 caster->ModifySpellCooldown(SPELL_HOLY_WORD_RADIANCE, -7500);
         }
 
+        void HandleHit()
+        {
+            switch (GetSpellInfo()->Id)
+            {
+                case SPELL_HOLY_WORD_RADIANCE:
+                    HandlePrimary();
+                    break;
+                case SPELL_RADIANCE_DAMAGE:
+                case SPELL_RADIANCE_HEAL:
+                    HandleSecondary();
+                    break;
+                default:
+                    break;
+            }
+        }
+
         void Register() override
         {
-            if (GetSpellInfo()->Id == SPELL_HOLY_WORD_RADIANCE)
-            {
-                OnEffectHitTarget += SpellEffectFn(script::Handle, EFFECT_0,
-                    SPELL_EFFECT_DUMMY);
-                AfterCast += SpellCastFn(script::AfterCastHandler);
-            }
-            else
-                OnHit += SpellHitFn(script::HandleSecondary);
+            OnHit += SpellHitFn(script::HandleHit);
+            AfterCast += SpellCastFn(script::AfterCastHandler);
         }
     };
 
@@ -725,19 +738,37 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            return spellInfo->Effects[EFFECT_0].IsAura(SPELL_AURA_PERIODIC_DAMAGE);
+            for (SpellEffectInfo const& effect : spellInfo->Effects)
+                if (effect.IsAura(SPELL_AURA_PERIODIC_DAMAGE) ||
+                    effect.IsAura(SPELL_AURA_PERIODIC_LEECH))
+                    return true;
+
+            return false;
         }
 
-        void CalculatePeriodic(AuraEffect const*, bool&, int32& amplitude)
+        static bool IsTrackedDotEffect(AuraEffect const* aurEff)
         {
+            AuraType type = aurEff->GetAuraType();
+            return type == SPELL_AURA_PERIODIC_DAMAGE ||
+                type == SPELL_AURA_PERIODIC_LEECH;
+        }
+
+        void CalculatePeriodic(AuraEffect const* aurEff, bool&, int32& amplitude)
+        {
+            if (!IsTrackedDotEffect(aurEff))
+                return;
+
             Unit* caster = GetCaster();
             if (caster && caster->HasAura(SPELL_ACCELERATED_MISERY))
                 amplitude = std::max<int32>(1,
                     int32(amplitude * caster->GetFloatValue(UNIT_MOD_CAST_SPEED)));
         }
 
-        void HandleApply(AuraEffect const*, AuraEffectHandleModes mode)
+        void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes mode)
         {
+            if (!IsTrackedDotEffect(aurEff))
+                return;
+
             Unit* caster = GetCaster();
             if (!caster)
                 return;
@@ -748,8 +779,11 @@ public:
                 EruptDevouringEcho(caster->ToPlayer(), GetTarget(), true);
         }
 
-        void HandleRemove(AuraEffect const*, AuraEffectHandleModes)
+        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes)
         {
+            if (!IsTrackedDotEffect(aurEff))
+                return;
+
             Unit* caster = GetCaster();
             Unit* target = GetTarget();
             if (!caster)
@@ -770,12 +804,12 @@ public:
         void Register() override
         {
             DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(script::CalculatePeriodic,
-                EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
-            AfterEffectApply += AuraEffectApplyFn(script::HandleApply, EFFECT_0,
-                SPELL_AURA_PERIODIC_DAMAGE,
+                EFFECT_ALL, SPELL_AURA_ANY);
+            AfterEffectApply += AuraEffectApplyFn(script::HandleApply, EFFECT_ALL,
+                SPELL_AURA_ANY,
                 AuraEffectHandleModes(AURA_EFFECT_HANDLE_REAL | AURA_EFFECT_HANDLE_REAPPLY));
-            AfterEffectRemove += AuraEffectRemoveFn(script::HandleRemove, EFFECT_0,
-                SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+            AfterEffectRemove += AuraEffectRemoveFn(script::HandleRemove, EFFECT_ALL,
+                SPELL_AURA_ANY, AURA_EFFECT_HANDLE_REAL);
         }
     };
 

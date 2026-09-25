@@ -1,6 +1,6 @@
 # Priest ability pack
 
-Status: Implemented in source and SQL; startup validation verified after the periodic-aura registration fix; pending migration, client export, playerbot policy, and gameplay validation
+Status: Implemented in source and SQL; registration and hook fixes applied after deployed startup diagnostics; pending rebuild, startup, client export, playerbot policy, and gameplay validation
 
 Owners: `src/mod_apocalipse_priest_spells.cpp`, `src/mod_apocalipse_loader.cpp`, `data/sql/db-world/2026_09_24_01_priest_spell_pack.sql`
 
@@ -110,7 +110,7 @@ Deployment requires an authorized live collision check, world updater execution,
 |---|---|
 | Static ID, binding, helper recursion, acquisition, patch-whitespace, and core Shadowfiend constant review | Passed on 2026-09-24 |
 | Custom-core build | Initial deployment build exposed and informed the duplicate Shadowfiend constant fix; rebuild not run locally |
-| Database updater and startup | Worldserver startup reached spell-script validation on 2026-09-25; GDB identified an invalid `AuraScript::GetSpellInfo()` call from `spell_apoc_priest_dot::script::Register()`. The registration now uses the fixed `SPELL_AURA_PERIODIC_DAMAGE` contract and validates effect 0 before registering hooks. |
+| Database updater and startup | Two successive GDB runs on 2026-09-25 identified registration-time `GetSpellInfo()` dereferences in the Priest DoT and Radiance scripts. Deployed `Spell.dbc` inspection then showed that the shared DoT bindings vary by effect slot and use periodic damage or periodic leech, while Penance uses effect 1. The local fixes avoid registration-time spell access and select/filter the actual aura effects; rebuild and startup verification remain pending. |
 | Client export | Not run |
 | Human gameplay | Not run |
 | Playerbot gameplay and active policy | Not run, AI source unavailable |
@@ -127,3 +127,4 @@ Deployment requires an authorized live collision check, world updater execution,
 | 2026-09-24 | Initial source and SQL implementation | [`../history/2026-09-24-priest-ability-pack.md`](../history/2026-09-24-priest-ability-pack.md) |
 | 2026-09-24 | Deployment-core compilation compatibility fix | [`../history/2026-09-24-shaman-priest-compilation-fix.md`](../history/2026-09-24-shaman-priest-compilation-fix.md) |
 | 2026-09-25 | Priest periodic-aura startup crash fix | [`../history/2026-09-25-priest-dot-registration-crash-fix.md`](../history/2026-09-25-priest-dot-registration-crash-fix.md) |
+| 2026-09-25 | Spell-script registration and validation follow-up | [`../history/2026-09-25-spell-script-registration-and-validation-fix.md`](../history/2026-09-25-spell-script-registration-and-validation-fix.md) |

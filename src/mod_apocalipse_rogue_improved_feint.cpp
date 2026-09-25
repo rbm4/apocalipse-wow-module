@@ -33,11 +33,6 @@ public:
             SpellInfo const* reductionInfo = sSpellMgr->GetSpellInfo(
                 SPELL_APOC_ROGUE_IMPROVED_FEINT_REDUCTION);
             return feintInfo && spellInfo->IsRankOf(feintInfo) &&
-                spellInfo->Effects[EFFECT_1].IsAura(
-                    SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE) &&
-                spellInfo->Effects[EFFECT_1].CalcValue() == -40 &&
-                spellInfo->Effects[EFFECT_1].MiscValue ==
-                    SPELL_SCHOOL_MASK_ALL &&
                 ValidateSpellInfo({
                     SPELL_APOC_ROGUE_IMPROVED_FEINT,
                     SPELL_APOC_ROGUE_IMPROVED_FEINT_REDUCTION

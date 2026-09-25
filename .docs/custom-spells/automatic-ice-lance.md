@@ -1,6 +1,6 @@
 # Automatic Ice Lance
 
-Status: Implemented in source, build and runtime not verified
+Status: Implemented in source; structural haste-aura validation fix applied, rebuild and runtime not verified
 
 Owners: `src/mod_apocalipse_mage_automatic_ice_lance.cpp`, `data/sql/db-world/2026_09_17_04_automatic_ice_lance.sql`, `src/mod_apocalipse_loader.cpp`
 
@@ -61,6 +61,8 @@ The target is resolved from `GetProcTarget()` with `GetActionTarget()` as fallba
 Aura 901011 owns a memory-only FIFO of monotonic expiration times. Applying or reapplying it first removes every overdue entry, then appends one expiration unless 20 remain active. The visible aura duration is set to the newest expiration without changing older entries. Each periodic tick removes all overdue entries and changes `SPELL_AURA_HASTE_SPELLS` effect 0 to the active count.
 
 The haste aura is marked non-save in `spell_custom_attr`. Removing passive 901010 also removes aura 901011. This clears temporary combat state on logout, stale login state, talent removal, and specialization removal without character-database persistence.
+
+Startup validation requires the haste aura and periodic dummy effects used by the hooks. Duration, contribution amount, and cleanup cadence remain enforced by the runtime script rather than rejecting an otherwise compatible installed row during script validation.
 
 ## Database contract
 

@@ -138,15 +138,10 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            return spellInfo->GetMaxDuration() == HASTE_DURATION_MS &&
-                spellInfo->Effects[EFFECT_0].IsAura(
+            return spellInfo->Effects[EFFECT_0].IsAura(
                     SPELL_AURA_HASTE_SPELLS) &&
-                spellInfo->Effects[EFFECT_0].CalcValue() ==
-                    HASTE_CONTRIBUTION_PCT &&
                 spellInfo->Effects[EFFECT_1].IsAura(
-                    SPELL_AURA_PERIODIC_DUMMY) &&
-                spellInfo->Effects[EFFECT_1].Amplitude ==
-                    HASTE_UPDATE_PERIOD_MS;
+                    SPELL_AURA_PERIODIC_DUMMY);
         }
 
         void RemoveExpired(ExpirationTime now)
