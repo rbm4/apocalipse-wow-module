@@ -437,7 +437,7 @@ public:
                     continue;
                 caster->CastSpell(target, lavaBurst,
                     TriggerCastFlags(TRIGGERED_FULL_MASK |
-                        TRIGGERED_IGNORE_LINE_OF_SIGHT), nullptr, aurEff);
+                        TRIGGERED_IGNORE_SET_FACING), nullptr, aurEff);
             }
             caster->RemoveAurasDueToSpell(SPELL_APOC_SHAMAN_ASCENSION_MARKER);
         }
