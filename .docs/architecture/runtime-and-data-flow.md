@@ -31,14 +31,16 @@ AzerothCore discovers Addapocalipse_wow_moduleScripts()
 worldserver startup
   -> merges skillraceclassinfo_dbc row 10000 into the server DBC store
   -> accepts rogue class mask 8 for Shield skill 433
+  -> loads rogue-only SkillLineAbility rows 10001 and 10002
 
 rogue character load before inventory validation
+  -> persisted skills reconcile newly eligible SkillLineAbility rewards
   -> LearnDefaultSkills reads the separate rogue playercreateinfo_skills row
   -> grants missing Shield skill 433
-  -> stock skill rewards reconstruct Shield Proficiency and Block capability
+  -> reward rows learn Shield Proficiency 9116 and Block 107
 ```
 
-This path applies to existing and new rogues without a module login hook. Client DBC presentation, LFG shield eligibility, and playerbot equipment-selection policy remain separate concerns.
+This path applies to existing and new rogues without a module login hook: `_LoadSkills()` re-evaluates rewards for persisted skills, while `LearnDefaultSkills()` handles a missing Shield skill. The backend patch build merges the same world overrides into `SkillRaceClassInfo.dbc` and `SkillLineAbility.dbc`, using the checked-in all-race/all-class overlay as the former's base. LFG shield eligibility and playerbot equipment-selection policy remain separate concerns.
 
 ### Bladeguard equipment lifecycle
 

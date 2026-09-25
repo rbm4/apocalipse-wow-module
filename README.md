@@ -531,11 +531,11 @@ Detailed contract: [`.docs/custom-spells/unyielding-shadows.md`](.docs/custom-sp
 
 ### Rogue Shield Proficiency
 
-Owner: `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql`
+Owners: `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql`, `data/sql/db-world/2026_09_25_00_rogue_shield_skill_rewards.sql`
 
-Rogues receive stock Shield skill 433 through AzerothCore's default-skill loading path before inventory validation. The migration adds a separate rogue-only eligibility override and default-skill row without changing the stock warrior, paladin, and shaman records. Stock Shield Proficiency and Block rewards are expected to provide equipment eligibility and normal block calculations for humans and bots.
+Rogues receive stock Shield skill 433 through AzerothCore's default-skill loading path before inventory validation. Separate guarded rows provide rogue eligibility, default acquisition, Shield Proficiency 9116, and Block 107 without changing the stock warrior, paladin, and shaman records. The backend client-patch build now emits matching `SkillRaceClassInfo.dbc` and `SkillLineAbility.dbc` files for humans and bots.
 
-Client skill UI, LFG shield eligibility, and playerbot shield-selection policy remain follow-up concerns. No custom spell or module C++ hook is introduced.
+LFG shield eligibility and playerbot shield-selection policy remain follow-up concerns. No custom spell or module C++ hook is introduced.
 
 Detailed contract: [`.docs/features/rogue-shield-proficiency.md`](.docs/features/rogue-shield-proficiency.md)
 

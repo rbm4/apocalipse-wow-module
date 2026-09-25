@@ -21,6 +21,7 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-25 | Rogue shield skill rewards and client DBC | Partial | [`2026-09-25-rogue-shield-skill-rewards-and-client-dbc.md`](2026-09-25-rogue-shield-skill-rewards-and-client-dbc.md) |
 | 2026-09-25 | Relentless Finale selected-target consumption fix | Partial | [`2026-09-25-relentless-finale-selected-target-fix.md`](2026-09-25-relentless-finale-selected-target-fix.md) |
 | 2026-09-25 | Spell-script registration and validation follow-up | Partial | [`2026-09-25-spell-script-registration-and-validation-fix.md`](2026-09-25-spell-script-registration-and-validation-fix.md) |
 | 2026-09-25 | Priest periodic-aura registration crash fix | Partial | [`2026-09-25-priest-dot-registration-crash-fix.md`](2026-09-25-priest-dot-registration-crash-fix.md) |
