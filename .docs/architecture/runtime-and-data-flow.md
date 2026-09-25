@@ -258,7 +258,7 @@ Relentless Finale passive 901084 applies visible infinite ready aura 901085
   -> recharge expiration reapplies ready aura 901085
 ```
 
-The strict-check hook duplicates the core's explicit-target combo ownership test and requires exactly five points before applying the one-second transient aura. The core then observes that aura in the same check and suppresses clearing for that cast. One-through-four-point, wrong-target, triggered, and copied finishers follow their normal path. The recharge begins after the activating cast rather than on a periodic passive schedule. Humans and bots share the mechanics, while intentional double-finisher sequencing remains AI policy.
+The strict-check hook duplicates the core's explicit-target combo ownership test and requires exactly five points before applying the one-second transient aura. It checks the original unit target when present. When the client omits that GUID, it mirrors `Spell::InitExplicitTargets()` by accepting the Rogue's current selection only when it is also the combo target. The core then observes that aura in the same check and suppresses clearing for that cast. One-through-four-point, wrong-target, triggered, and copied finishers follow their normal path. The recharge begins after the activating cast rather than on a periodic passive schedule. Humans and bots share the mechanics, while intentional double-finisher sequencing remains AI policy.
 
 ```text
 Rogue with Improved Feint passive 901089 successfully casts any Feint rank

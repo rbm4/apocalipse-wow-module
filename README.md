@@ -583,7 +583,7 @@ Detailed contract: [`.docs/custom-spells/crimson-vial.md`](.docs/custom-spells/c
 
 Owners: `src/mod_apocalipse_rogue_relentless_finale.cpp`, `data/sql/db-world/2026_09_22_10_relentless_finale.sql`
 
-Custom Combat Rogue passive 901084 makes every player-initiated five-combo-point Rogue finisher restore 5 percent maximum health. It also maintains a visible infinite ready buff that makes the next qualifying finisher retain all five points. Ready then returns exactly 12 seconds after that retention, enabling a predictable double-finisher sequence. Triggered and copied finishers cannot activate the effect.
+Custom Combat Rogue passive 901084 makes every player-initiated five-combo-point Rogue finisher restore 5 percent maximum health. It also maintains a visible infinite ready buff that makes the next qualifying finisher retain all five points, including explicit-target finishers resolved from the Rogue's current selection. Ready then returns exactly 12 seconds after that retention, enabling a predictable double-finisher sequence. Triggered and copied finishers cannot activate the effect.
 
 Acquisition remains external and must grant only passive 901084. Matching server and client rows for 901084 through 901088, the world update, and a module rebuild must ship together. Humans and playerbots use identical mechanics, while deliberate double-finisher planning remains AI policy.
 

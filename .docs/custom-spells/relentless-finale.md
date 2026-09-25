@@ -4,7 +4,7 @@ Status: Implemented in source and data, build and runtime not verified
 
 Owners: `src/mod_apocalipse_rogue_relentless_finale.cpp`, `data/sql/db-world/2026_09_22_10_relentless_finale.sql`, `src/mod_apocalipse_loader.cpp`
 
-Last source review: 2026-09-22
+Last source review: 2026-09-25
 
 ## Purpose
 
@@ -26,7 +26,7 @@ Humans and playerbots use identical mechanics. Existing finisher actions activat
 | 901087 Relentless Finale Recharge | Hidden non-saved timer set to 12000 ms at runtime |
 | 901088 Relentless Finale Heal | Non-critical native heal for 5 percent maximum health |
 
-The bypass uses `SPELL_AURA_ABILITY_IGNORE_AURASTATE`, which makes the core set `Spell::m_needComboPoints` false. The strict-check hook first duplicates the core's explicit-target combo ownership check and requires exactly five points, then applies the one-second bypass before the core evaluates aura-state overrides. Lower-point and wrong-target finishers never receive the bypass. `_handle_finish_phase()` therefore skips clearing only for the qualifying cast.
+The bypass uses `SPELL_AURA_ABILITY_IGNORE_AURASTATE`, which makes the core set `Spell::m_needComboPoints` false. The strict-check hook first duplicates the core's explicit-target combo ownership check and requires exactly five points. It accepts either the original unit target or, when the client omits that GUID and `Spell::InitExplicitTargets()` resolves the cast from the Rogue's current selection, a selected unit matching the combo target. It then applies the one-second bypass before the core evaluates aura-state overrides. Lower-point and wrong-target finishers never receive the bypass. `_handle_finish_phase()` therefore skips clearing only for the qualifying cast.
 
 ## Runtime flow
 
@@ -62,7 +62,8 @@ Matching client `Spell.dbc` rows are required. The server update, client patch, 
 |---|---|---|
 | Passive acquired with no recharge | Infinite ready buff appears | Not run |
 | Player-initiated finisher at one through four points | Normal consumption and no Relentless Finale healing or recharge | Not run |
-| Player-initiated five-point finisher while ready | Finisher executes, five points remain, and 5 percent maximum health is restored | Not run |
+| Player-initiated five-point explicit-target finisher while ready, with the target supplied or resolved from current selection | Finisher executes, five points remain, ready is consumed, recharge starts, and 5 percent maximum health is restored | Not run |
+| Player-initiated five-point Slice and Dice while ready | Slice and Dice executes, five points remain, ready is consumed, recharge starts, and 5 percent maximum health is restored | Not run |
 | Immediate second five-point finisher | Consumes retained points normally because ready is absent and restores another 5 percent maximum health | Not run |
 | Five-point finisher during recharge | Consumes points normally and restores 5 percent maximum health without restarting recharge | Not run |
 | Twelve seconds after activation | Ready returns once, measured from the activating finisher | Not run |

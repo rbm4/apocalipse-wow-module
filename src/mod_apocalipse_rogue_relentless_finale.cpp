@@ -36,9 +36,15 @@ bool IsQualifyingFinisher(Player const* player, Spell const* spell)
 
     if (spellInfo->NeedsExplicitUnitTarget())
     {
-        Unit* target = spell->GetOriginalTarget();
-        return target && player->GetComboPoints(target) ==
-            RELENTLESS_FINALE_REQUIRED_COMBO_POINTS;
+        Unit const* comboTarget = player->GetComboTarget();
+        if (!comboTarget || player->GetComboPoints(comboTarget) !=
+            RELENTLESS_FINALE_REQUIRED_COMBO_POINTS)
+            return false;
+
+        if (Unit* target = spell->GetOriginalTarget())
+            return target == comboTarget;
+
+        return player->GetTarget() == comboTarget->GetGUID();
     }
 
     return player->GetComboPoints() ==
