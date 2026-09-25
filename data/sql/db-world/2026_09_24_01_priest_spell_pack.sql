@@ -91,17 +91,17 @@ INSERT INTO `spell_dbc` (`ID`, `Attributes`, `ProcTypeMask`, `ProcChance`,
 SELECT `id`, 0x00000040, `proc_flags`, 100, 21, 1, 1, `school`, 6, 0, -1,
     6, 1, 4, @priest_icon, `name`, `description`, `aura_description`
 FROM (
-    SELECT 901118 AS `id`, 0x00055554 AS `proc_flags`, 3 AS `school`,
+    SELECT 901118 AS `id`, 349524 AS `proc_flags`, 3 AS `school`,
         'Spiritual Conservation' AS `name`,
         'Critical Priest spell damage and healing restores 0.75% maximum mana. 2 second internal cooldown. Periodic effects can trigger it.' AS `description`,
         'Critical Priest spells restore mana.' AS `aura_description`
-    UNION ALL SELECT 901123, 0x00055554, 3, 'Rapid Surge of Faith',
+    UNION ALL SELECT 901123, 349524, 3, 'Rapid Surge of Faith',
         'Critical direct Priest damage or healing has a 20% chance to grant 12% spell haste for 8 seconds. 20 second internal cooldown.',
         'Critical direct Priest spells can grant spell haste.'
-    UNION ALL SELECT 901131, 0x00015554, 2, 'Atonement',
+    UNION ALL SELECT 901131, 87380, 2, 'Atonement',
         'Smite, Holy Fire, and offensive Penance heal the lowest-health injured party or raid member within 15 yards of the enemy for 75% of final damage.',
         'Offensive Discipline spells heal nearby allies.'
-    UNION ALL SELECT 901142, 0x00055554, 2, 'Blessed Echoes',
+    UNION ALL SELECT 901142, 349524, 2, 'Blessed Echoes',
         'Direct Holy damage and direct healing have a 30% chance to repeat 40% of their final amount after 1 second. 500 millisecond internal cooldown.',
         'Direct Holy spells can echo after 1 second.'
 ) AS `proc_passives`
