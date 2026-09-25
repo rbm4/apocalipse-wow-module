@@ -438,7 +438,7 @@ SELECT `ID`, 0x01000000 FROM `spell_dbc`
 WHERE `ID` IN (901119, 901124, 901126, 901128, 901130, 901132, 901134,
     901137, 901138, 901140, 901141, 901143, 901144, 901148, 901150,
     901152, 901154)
-ON DUPLICATE KEY UPDATE `attributes` = `attributes` | VALUES(`attributes`);
+ON DUPLICATE KEY UPDATE `attributes` = `spell_custom_attr`.`attributes` | VALUES(`attributes`);
 
 INSERT INTO `wotlk_spells` (`ID`, `name`)
 SELECT `ID`, `Name_Lang_enUS` FROM `spell_dbc`
