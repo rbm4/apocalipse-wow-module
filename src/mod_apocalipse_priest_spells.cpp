@@ -723,6 +723,11 @@ public:
     {
         PrepareAuraScript(script);
 
+        bool Validate(SpellInfo const* spellInfo) override
+        {
+            return spellInfo->Effects[EFFECT_0].IsAura(SPELL_AURA_PERIODIC_DAMAGE);
+        }
+
         void CalculatePeriodic(AuraEffect const*, bool&, int32& amplitude)
         {
             Unit* caster = GetCaster();
@@ -764,13 +769,13 @@ public:
 
         void Register() override
         {
-            AuraType type = GetSpellInfo()->Effects[EFFECT_0].ApplyAuraName;
             DoEffectCalcPeriodic += AuraEffectCalcPeriodicFn(script::CalculatePeriodic,
-                EFFECT_0, type);
-            AfterEffectApply += AuraEffectApplyFn(script::HandleApply, EFFECT_0, type,
+                EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE);
+            AfterEffectApply += AuraEffectApplyFn(script::HandleApply, EFFECT_0,
+                SPELL_AURA_PERIODIC_DAMAGE,
                 AuraEffectHandleModes(AURA_EFFECT_HANDLE_REAL | AURA_EFFECT_HANDLE_REAPPLY));
-            AfterEffectRemove += AuraEffectRemoveFn(script::HandleRemove, EFFECT_0, type,
-                AURA_EFFECT_HANDLE_REAL);
+            AfterEffectRemove += AuraEffectRemoveFn(script::HandleRemove, EFFECT_0,
+                SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
         }
     };
 

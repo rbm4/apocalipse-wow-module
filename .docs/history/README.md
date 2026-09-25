@@ -21,6 +21,7 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-25 | Priest periodic-aura registration crash fix | Partial | [`2026-09-25-priest-dot-registration-crash-fix.md`](2026-09-25-priest-dot-registration-crash-fix.md) |
 | 2026-09-24 | Shaman and Priest compilation fix | Partial | [`2026-09-24-shaman-priest-compilation-fix.md`](2026-09-24-shaman-priest-compilation-fix.md) |
 | 2026-09-24 | Priest ability pack | Partial | [`2026-09-24-priest-ability-pack.md`](2026-09-24-priest-ability-pack.md) |
 | 2026-09-24 | Shaman spell pack | Partial | [`2026-09-24-shaman-spell-pack.md`](2026-09-24-shaman-spell-pack.md) |
