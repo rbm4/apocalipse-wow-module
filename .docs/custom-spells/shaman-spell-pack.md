@@ -79,9 +79,16 @@ Deployment still requires:
 
 | Layer | Status |
 |---|---|
-| Static source and SQL review | Passed for ID coverage, bindings, acquisition exclusion, documentation ranges, and patch whitespace |
-| Custom-core build | Not run under repository policy |
+| Static source and SQL review | Passed for ID coverage, bindings, acquisition exclusion, documentation ranges, patch whitespace, and deployment-core `CastCustomSpell` overload compatibility |
+| Custom-core build | Initial deployment build exposed and informed the Overflowing Tides overload fix; rebuild not run locally |
 | Database update and startup | Not run |
 | Client export | Not run |
 | Human gameplay | Not run |
 | Playerbot gameplay | Not run |
+
+## Change history
+
+| Date | Change | Code or history reference |
+|---|---|---|
+| 2026-09-24 | Initial source and SQL implementation | [`../history/2026-09-24-shaman-spell-pack.md`](../history/2026-09-24-shaman-spell-pack.md) |
+| 2026-09-24 | Deployment-core compilation compatibility fix | [`../history/2026-09-24-shaman-priest-compilation-fix.md`](../history/2026-09-24-shaman-priest-compilation-fix.md) |

@@ -5,6 +5,7 @@
 #include "GridNotifiersImpl.h"
 #include "Group.h"
 #include "ObjectAccessor.h"
+#include "PetDefines.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include "Spell.h"
@@ -80,8 +81,7 @@ enum PriestSpells
     SPELL_DEVOURING_PLAGUE_R1 = 2944,
     SPELL_PENANCE_R1 = 47540,
     SPELL_PENANCE_DAMAGE_R1 = 47758,
-    SPELL_PENANCE_HEAL_R1 = 47757,
-    NPC_SHADOWFIEND = 19668
+    SPELL_PENANCE_HEAL_R1 = 47757
 };
 
 constexpr float NEARBY_RADIUS = 10.0f;

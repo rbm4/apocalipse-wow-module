@@ -32,6 +32,8 @@ Module source must follow the declarations and include dependencies of the deplo
 - Include `SpellMgr.h` when using proc masks. `ProcEventInfo::GetHitMask()` uses the `PROC_HIT_*` contract, so use `PROC_HIT_ABSORB` rather than the legacy `PROC_EX_ABSORB` name when filtering absorbed hits.
 - Access a spell category through `SpellInfo::GetCategory()`. This custom core stores the category through `CategoryEntry` and does not expose a public `SpellInfo::Category` member.
 - Before adding or copying spell code, search the matching custom core for the exact symbol and a current call site. Treat code from stock AzerothCore, TrinityCore, or another branch as a behavioral reference only.
+- Use the deployment core's spell-first `CastCustomSpell(spellId, mod, value, victim, ...)` overload for single-value custom casts. The victim-first overload accepts base-point pointers instead.
+- Reuse core constants such as `NPC_SHADOWFIEND` through their declaring header instead of redeclaring an identically named module constant.
 - Keep module builds valid with and without core or script precompiled headers when the deployment build supports both modes. Missing direct includes often remain hidden until a non-PCH translation unit or a different build configuration compiles the file.
 
 ## Configuration

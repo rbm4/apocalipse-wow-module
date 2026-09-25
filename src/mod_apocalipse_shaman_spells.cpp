@@ -774,10 +774,10 @@ public:
                 GetTarget()->GetGUID());
             if (!shield)
             {
-                GetTarget()->CastCustomSpell(target,
+                GetTarget()->CastCustomSpell(
                     SPELL_APOC_SHAMAN_OVERFLOWING_TIDES_ABSORB,
                     SPELLVALUE_BASE_POINT0, int32(std::min(contribution, cap)),
-                    true, nullptr, aurEff);
+                    target, true, nullptr, aurEff);
                 return;
             }
             AuraEffect* absorb = shield->GetEffect(EFFECT_0);

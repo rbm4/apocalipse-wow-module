@@ -108,8 +108,8 @@ Deployment requires an authorized live collision check, world updater execution,
 
 | Check | Status |
 |---|---|
-| Static ID, binding, helper recursion, acquisition, and patch-whitespace review | Passed on 2026-09-24 |
-| Custom-core build | Not run under repository instruction |
+| Static ID, binding, helper recursion, acquisition, patch-whitespace, and core Shadowfiend constant review | Passed on 2026-09-24 |
+| Custom-core build | Initial deployment build exposed and informed the duplicate Shadowfiend constant fix; rebuild not run locally |
 | Database updater and startup | Not run |
 | Client export | Not run |
 | Human gameplay | Not run |
@@ -125,3 +125,4 @@ Deployment requires an authorized live collision check, world updater execution,
 | Date | Change | Code or history reference |
 |---|---|---|
 | 2026-09-24 | Initial source and SQL implementation | [`../history/2026-09-24-priest-ability-pack.md`](../history/2026-09-24-priest-ability-pack.md) |
+| 2026-09-24 | Deployment-core compilation compatibility fix | [`../history/2026-09-24-shaman-priest-compilation-fix.md`](../history/2026-09-24-shaman-priest-compilation-fix.md) |
