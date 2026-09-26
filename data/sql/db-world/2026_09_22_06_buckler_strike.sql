@@ -22,7 +22,7 @@ SET @buckler_strike_owned := (
       AND `Attributes` = 0x00010010
       AND `AttributesEx` = 0x00000210
       AND `AttributesEx4` = 0x00800000
-      AND `RecoveryTime` = 20000
+      AND `RecoveryTime` = 6000
       AND `DurationIndex` = 27
       AND `PowerType` = 3
       AND `ManaCost` = 25
@@ -80,7 +80,7 @@ INSERT INTO `spell_dbc` (
     `EffectChainAmplitude_3`, `SchoolMask`
 ) SELECT
     901078, 0x00010010, 0x00000210, 0x00800000,
-    1, 20000, 15, 101,
+    1, 6000, 15, 101,
     1, 1, 27, 3, 25,
     @buckler_strike_range, 0, 4, 64,
     16384, 2, 80, 68,
@@ -88,7 +88,7 @@ INSERT INTO `spell_dbc` (
     -1, 0, 0,
     6, 6, 6,
     @buckler_strike_visual, @buckler_strike_icon, 'Buckler Strike',
-    'Strikes with your equipped shield for Physical damage equal to 110% of attack power plus 150% of shield block value, applies Blade Twisting, awards 1 combo point, and generates high threat. Interrupts non-player spellcasting for 3 sec. Requires a shield.',
+    'Strikes with your equipped shield for Physical damage equal to 20% of attack power plus 150% of shield block value, awards 1 combo point, and generates high threat. Interrupts non-player spellcasting for 3 sec. Requires a shield.',
     133, 1000,
     8, 2, 1,
     1.0, 1.0,
@@ -104,7 +104,7 @@ SET @buckler_strike_managed := (
       AND `Attributes` = 0x00010010
       AND `AttributesEx` = 0x00000210
       AND `AttributesEx4` = 0x00800000
-      AND `RecoveryTime` = 20000
+      AND `RecoveryTime` = 6000
       AND `DurationIndex` = 27
       AND `PowerType` = 3
       AND `ManaCost` = 25

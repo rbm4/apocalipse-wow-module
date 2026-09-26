@@ -21,6 +21,7 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-25 | Buckler Strike migration reapply fix | Completed | [`2026-09-25-buckler-strike-migration-reapply-fix.md`](2026-09-25-buckler-strike-migration-reapply-fix.md) |
 | 2026-09-25 | Death Knight Rupture AP scaling | Partial | [`2026-09-25-death-knight-rupture-ap-scaling.md`](2026-09-25-death-knight-rupture-ap-scaling.md) |
 | 2026-09-25 | Custom spell proc mask cleanup | Partial | [`2026-09-25-spell-proc-mask-cleanup.md`](2026-09-25-spell-proc-mask-cleanup.md) |
 | 2026-09-25 | Shielded Reflexes | Partial | [`2026-09-25-shielded-reflexes.md`](2026-09-25-shielded-reflexes.md) |

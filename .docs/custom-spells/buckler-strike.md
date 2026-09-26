@@ -59,7 +59,7 @@ Buckler Strike creates no custom aura, delayed event, global map, periodic updat
 
 ## Database and client contract
 
-The original automatic world update collision-checks 901078 in `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`. It installs the current complete spell row, script binding, and backend name. Range is derived from stock Shield Bash 72. Visual and icon data are derived from stock Shield Slam 23922 with guarded fallbacks.
+The original automatic world update collision-checks 901078 in `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`. It retains the original 6000 ms cooldown and description so its checksum stays stable for databases that already applied it, and installs the spell row, script binding, and backend name on fresh databases. Range is derived from stock Shield Bash 72. Visual and icon data are derived from stock Shield Slam 23922 with guarded fallbacks.
 
 Automatic follow-up `2026_09_25_00_buckler_strike_balance.sql` recognizes the managed existing row by identity, equipment contract, and effect graph, then changes its cooldown from 6000 ms to 20000 ms and updates the export description. The AP coefficient and guaranteed Blade Twisting application are C++ behavior. The deployed client row must also receive the 20000 ms cooldown and current description; stock spell 51585 already exists in the WotLK client.
 
