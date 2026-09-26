@@ -80,8 +80,8 @@ INSERT INTO `spell_dbc` (
     -1, 0, 0,
     6, 0, 0,
     1, 4, @death_knight_rupture_icon, 'Rupture',
-    'Your melee hits, including critical hits, rupture the target for a small amount of Physical damage every 2 sec for 15 sec. Blood Strike, Heart Strike, and Death Strike apply Rupture to every target hit.',
-    'Melee attacks and selected Blood strikes apply a stacking Physical bleed.'
+    'Every melee hit ruptures the target for a small amount of Physical damage every 2 sec for 15 sec. Fully absorbed hits still apply Rupture.',
+    'Every melee hit applies a stacking Physical bleed, even when fully absorbed.'
 FROM DUAL
 WHERE @death_knight_rupture_owned = 0;
 
@@ -151,7 +151,7 @@ INSERT INTO `spell_proc` (
 ) SELECT
     901048, 0, 0, 0,
     0, 0, 0x00000014, 1,
-    2, 3, 2, 0,
+    2, 0, 2, 0,
     0, 100, 0, 0
 FROM DUAL
 WHERE @death_knight_rupture_managed = 1

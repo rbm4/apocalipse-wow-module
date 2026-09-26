@@ -2,13 +2,13 @@
 
 Status: Implemented in source and data, build and runtime not verified
 
-Owners: `src/mod_apocalipse_death_knight_threat_of_thassarian.cpp`, `data/sql/db-world/2026_09_25_02_threat_of_thassarian_extension.sql`, `src/mod_apocalipse_loader.cpp`
+Owners: `src/mod_apocalipse_death_knight_threat_of_thassarian.cpp`, `data/sql/db-world/2026_09_25_02_threat_of_thassarian_extension.sql`, `data/sql/db-world/2026_09_26_01_threat_of_thassarian_healing.sql`, `src/mod_apocalipse_loader.cpp`, and deployment-core `src/server/scripts/Spells/spell_dk.cpp`
 
-Last source review: 2026-09-25
+Last source review: 2026-09-26
 
 ## Purpose
 
-The extension preserves stock Threat of Thassarian and adds off-hand Heart Strike and Scourge Strike attacks. It also reduces the one stock Death Strike heal by 50 percent while the talented Death Knight has a usable off-hand weapon.
+The extension preserves stock Threat of Thassarian and adds off-hand Heart Strike and Scourge Strike attacks. A successful off-hand Death Strike now produces its own stock Death Strike heal, and every Death Strike heal retains 70 percent strength while the talented Death Knight has a usable off-hand weapon.
 
 ## Acquisition and ranks
 
@@ -30,7 +30,7 @@ The existing talent-tree and acquisition flow must continue to reference these t
 | 901156 | Hidden zero-cost off-hand Scourge Strike helper |
 | 901157 | Hidden zero-cost two-target off-hand Heart Strike helper |
 | 70890 | Existing disease-scaled Scourge Strike Shadow helper |
-| 45470 | Existing single Death Strike heal helper |
+| 45470 | Existing Death Strike heal helper, cast once by each successful main-hand or off-hand Death Strike |
 
 The repository-owned contiguous range is 901156 through 901157. Offline module migrations, module source, custom-core source, checked-in SQL, and the read-only local `Spell.dbc` showed no prior allocation. Live world-database and deployed-client collision checks remain pending operator work.
 
@@ -62,9 +62,11 @@ Both helpers require the off-hand attack type, suppress caster procs, and are ca
 
 ## Death Strike healing
 
-Script `spell_apoc_death_knight_death_strike_heal` is additive on stock heal 45470. It halves the final pre-resolution heal with integer truncation when the caster has a Death Knight dummy aura with Threat of Thassarian icon 2023 and a usable off-hand weapon.
+The deployment core's `spell_dk_death_strike` script supports both the main-hand rank chain beginning at 49998 and the off-hand rank chain beginning at 66188. World binding `-66188` applies the stock disease count, minimum-health percentage, and Improved Death Strike calculation to a successful off-hand Death Strike. Because the handler runs on the dummy hit effect, an off-hand miss, dodge, parry, or immune result does not produce the second heal.
 
-This rule is equipment and talent-state based, not proc-result based. Ranks 1 and 2 therefore receive half healing on every qualifying dual-wield Death Strike cast even when their off-hand chance fails. The stock off-hand Death Strike helper remains unbound from `spell_dk_death_strike`, so there is exactly one heal.
+Script `spell_apoc_death_knight_death_strike_heal` remains additive on stock heal 45470. It retains 70 percent of each final pre-resolution heal with integer truncation when the caster has a Death Knight dummy aura with Threat of Thassarian icon 2023 and a usable off-hand weapon. This rule is equipment and talent-state based, so the main-hand heal is reduced even when a rank 1 or 2 off-hand chance fails.
+
+Ignoring off-hand avoidance, the expected total healing relative to an untalented stock Death Strike is 91 percent at rank 1, 112 percent at rank 2, and 140 percent at rank 3. Each actual successful strike heals independently at 70 percent strength.
 
 No talent or no usable off-hand weapon leaves Death Strike healing unchanged. Off-hand disarm and broken-weapon handling use the deployment core's normal `HasOffhandWeaponForAttack()` contract.
 
@@ -75,7 +77,7 @@ The automatic world update:
 - collision-guards helpers 901156 and 901157 across `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`
 - clones the complete three stock talent rows into `spell_dbc` before changing their English descriptions
 - installs both complete helper rows and their backend `wotlk_spells` names
-- binds the additive talent aura, Scourge Strike helper, and Death Strike heal scripts
+- binds the additive talent aura, Scourge Strike helper, Death Strike heal modifier, and stock Death Strike handler on the off-hand rank chain
 - replaces only proc row `-65661` after validating its complete recognized stock or managed contract
 - preserves the existing rank IDs, talent position, and acquisition
 
@@ -97,7 +99,9 @@ Humans and playerbots use the same aura, equipment, spell, and heal paths. No `W
 | Heart Strike main-hand miss, dodge, or parry | Off-hand chance still rolls and resolves independently | Not run |
 | Scourge Strike with diseases | Each successful Physical strike derives its own Shadow component | Not run |
 | Scourge Strike without diseases | Physical strikes occur with no disease-derived Shadow damage | Not run |
-| Dual-wield Death Strike | Existing main and off-hand damage plus exactly one heal at 50 percent | Not run |
+| Rank 1, 2, or 3 dual-wield Death Strike with a landed off-hand proc | Main-hand and off-hand damage plus two independent heals at 70 percent each | Not run |
+| Rank 1 or 2 Death Strike with no off-hand proc | Main-hand damage and one heal at 70 percent | Not run |
+| Off-hand Death Strike miss, dodge, parry, or immune | Main-hand heal remains; failed off-hand strike adds no heal | Not run |
 | Two-handed, broken off-hand, or off-hand-disarmed Death Strike | Full stock heal | Not run |
 | No talent | No new helpers and full Death Strike heal | Not run |
 | Human and equivalent bot | Identical results | Not run |
@@ -106,4 +110,9 @@ Humans and playerbots use the same aura, equipment, spell, and heal paths. No `W
 
 ## Rollback
 
-Stop worldserver and take the normal world-database backup. Remove the module bindings, restore proc row `-65661` to masks `0x00400011` and `0x20020004`, remove helper names and rows 901156 and 901157, restore or remove the three module-created talent overrides, restore the previous client patch, and rebuild without the source and loader registration before restarting.
+Stop worldserver and take the normal world-database backup. Remove the module bindings including `spell_dk_death_strike` on `-66188`, restore proc row `-65661` to masks `0x00400011` and `0x20020004`, remove helper names and rows 901156 and 901157, restore or remove the three module-created talent overrides, restore the 50-percent heal modifier and previous client patch, and rebuild without the deployment-core support and module source before restarting.
+
+## Change history
+
+- [`2026-09-25: Threat of Thassarian extension`](../history/2026-09-25-threat-of-thassarian-extension.md)
+- [`2026-09-26: Threat of Thassarian Death Strike healing`](../history/2026-09-26-threat-of-thassarian-death-strike-healing.md)

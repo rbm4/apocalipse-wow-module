@@ -61,7 +61,7 @@ Shielded Reflexes reserves passive 901158. A Rogue with a usable offhand shield 
 
 Detailed contract: [`.docs/custom-spells/shielded-reflexes.md`](.docs/custom-spells/shielded-reflexes.md)
 
-The Threat of Thassarian extension reserves helpers 901156 and 901157. Existing talent ranks 65661, 66191, and 66192 add independently resolving off-hand Heart Strike and Scourge Strike attacks at 30, 60, or 100 percent, while talented Death Strike with a usable off-hand keeps one heal at 50 percent strength. Acquisition remains unchanged, and humans and bots share the mechanic.
+The Threat of Thassarian extension reserves helpers 901156 and 901157. Existing talent ranks 65661, 66191, and 66192 add independently resolving off-hand Heart Strike and Scourge Strike attacks at 30, 60, or 100 percent. Every landed Death Strike hand heals independently at 70 percent strength while a usable off-hand is equipped. Acquisition remains unchanged, and humans and bots share the mechanic.
 
 Detailed contract: [`.docs/custom-spells/threat-of-thassarian-extension.md`](.docs/custom-spells/threat-of-thassarian-extension.md)
 
@@ -123,7 +123,9 @@ apocalipse-wow-module/
 |       |-- 2026_09_21_01_apex_bond.sql
 |       |-- 2026_09_21_01_blood_of_the_hunt.sql
 |       |-- 2026_09_21_02_melee_specialization.sql
-|       `-- 2026_09_21_04_death_knight_rupture.sql
+|       |-- 2026_09_21_04_death_knight_rupture.sql
+|       |-- 2026_09_25_05_death_knight_rupture_ap_scaling.sql
+|       `-- 2026_09_26_00_death_knight_rupture_melee_hits.sql
 |-- src/
 |   |-- mod_apocalipse_loader.cpp
 |   |-- mod_apocalipse.cpp
@@ -343,9 +345,9 @@ Detailed contract: [`.docs/custom-spells/concentrated-venom.md`](.docs/custom-sp
 
 ### Rupture
 
-Owners: `src/mod_apocalipse_death_knight_rupture.cpp`, `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql`, and `data/sql/db-world/2026_09_25_05_death_knight_rupture_ap_scaling.sql`
+Owners: `src/mod_apocalipse_death_knight_rupture.cpp`, `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql`, `data/sql/db-world/2026_09_25_05_death_knight_rupture_ap_scaling.sql`, and `data/sql/db-world/2026_09_26_00_death_knight_rupture_melee_hits.sql`
 
-Custom Blood Death Knight passive 901048 makes successful melee auto-attacks and each Blood Strike, Heart Strike, or Death Strike target apply one stack of helper 901049. The physical bleed ticks every two seconds, refreshes its 15-second duration, and scales each stack with 1 percent melee attack power up to 200 stacks.
+Custom Blood Death Knight passive 901048 makes every landed melee auto-attack or melee-class ability hit apply one stack of helper 901049. Fully absorbed hits qualify. The physical bleed ticks every two seconds, refreshes its 15-second duration, and scales each stack with 1 percent melee attack power up to 200 stacks.
 
 The helper uses native bleed and Death Knight damage paths, participates in `PERIODIC` level scaling and PvP balancing, and is granted through Blood Spec Manager acquisition. Matching client rows are required for both spells, and humans and bots use identical mechanics.
 

@@ -1,6 +1,6 @@
-SET @thassarian_rank_1_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike have a 30% chance to also deal damage with your off-hand weapon. Death Strike healing is reduced by 50% while a usable off-hand weapon is equipped.';
-SET @thassarian_rank_2_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike have a 60% chance to also deal damage with your off-hand weapon. Death Strike healing is reduced by 50% while a usable off-hand weapon is equipped.';
-SET @thassarian_rank_3_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike also deal damage with your off-hand weapon. Death Strike healing is reduced by 50% while a usable off-hand weapon is equipped.';
+SET @thassarian_rank_1_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike have a 30% chance to also strike with your off-hand weapon. A successful off-hand Death Strike also heals you. Each Death Strike heal is reduced by 30% while a usable off-hand weapon is equipped.';
+SET @thassarian_rank_2_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike have a 60% chance to also strike with your off-hand weapon. A successful off-hand Death Strike also heals you. Each Death Strike heal is reduced by 30% while a usable off-hand weapon is equipped.';
+SET @thassarian_rank_3_description := 'When dual-wielding, your Death Strike, Obliterate, Plague Strike, Rune Strike, Blood Strike, Frost Strike, Heart Strike, and Scourge Strike also strike with your off-hand weapon. A successful off-hand Death Strike also heals you. Each Death Strike heal is reduced by 30% while a usable off-hand weapon is equipped.';
 
 SET @thassarian_scourge_owned := (
     SELECT COUNT(*) = 1
@@ -286,6 +286,10 @@ DELETE FROM `spell_script_names`
 WHERE `spell_id` = 901156
   AND `ScriptName` = 'spell_dk_scourge_strike';
 
+DELETE FROM `spell_script_names`
+WHERE `spell_id` = -66188
+  AND `ScriptName` = 'spell_dk_death_strike';
+
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`)
 SELECT -65661, 'spell_apoc_death_knight_threat_of_thassarian'
 FROM DUAL
@@ -300,6 +304,11 @@ WHERE @thassarian_scourge_managed = 1;
 
 INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`)
 SELECT 45470, 'spell_apoc_death_knight_death_strike_heal'
+FROM DUAL
+WHERE @thassarian_talents_managed = 1;
+
+INSERT INTO `spell_script_names` (`spell_id`, `ScriptName`)
+SELECT -66188, 'spell_dk_death_strike'
 FROM DUAL
 WHERE @thassarian_talents_managed = 1;
 

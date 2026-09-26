@@ -27,6 +27,8 @@ enum ApocalipseDeathKnightThreatOfThassarianIcons
     ICON_DEATH_KNIGHT_THREAT_OF_THASSARIAN = 2023
 };
 
+constexpr uint32 DEATH_STRIKE_HEAL_RETAIN_PCT = 70;
+
 bool HasUsableOffhandWeapon(Unit const* unit)
 {
     Player const* player = unit ? unit->ToPlayer() : nullptr;
@@ -141,7 +143,8 @@ public:
             if (HasUsableOffhandWeapon(caster) &&
                 caster->GetDummyAuraEffect(SPELLFAMILY_DEATHKNIGHT,
                     ICON_DEATH_KNIGHT_THREAT_OF_THASSARIAN, EFFECT_0))
-                SetHitHeal(GetHitHeal() / 2);
+                SetHitHeal(CalculatePct(
+                    GetHitHeal(), DEATH_STRIKE_HEAL_RETAIN_PCT));
         }
 
         void Register() override
