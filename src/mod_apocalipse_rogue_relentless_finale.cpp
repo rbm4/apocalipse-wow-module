@@ -25,6 +25,7 @@ constexpr uint8 RELENTLESS_FINALE_REQUIRED_COMBO_POINTS = 5;
 constexpr int32 RELENTLESS_FINALE_BYPASS_MS = 1000;
 constexpr int32 RELENTLESS_FINALE_RECHARGE_MS = 12000;
 thread_local std::unordered_set<Spell const*> g_qualifyingFinisherCasts;
+thread_local std::unordered_set<Spell const*> g_retainedFinisherCasts;
 
 bool IsQualifyingFinisher(Player const* player, Spell const* spell)
 {
@@ -186,6 +187,9 @@ public:
             return;
 
         g_qualifyingFinisherCasts.insert(spell);
+        if (player->HasAura(SPELL_APOC_ROGUE_RELENTLESS_FINALE_READY) &&
+            player->HasAura(SPELL_APOC_ROGUE_RELENTLESS_FINALE_BYPASS))
+            g_retainedFinisherCasts.insert(spell);
     }
 };
 
@@ -206,15 +210,14 @@ public:
         if (!player)
             return;
 
-        player->RemoveAurasDueToSpell(
-            SPELL_APOC_ROGUE_RELENTLESS_FINALE_BYPASS);
-        if (spell->IsTriggered())
+        if (spell->IsTriggered() || !strict)
             return;
 
-        if (strict)
-            g_qualifyingFinisherCasts.clear();
-        if (strict &&
-            player->HasAura(SPELL_APOC_ROGUE_RELENTLESS_FINALE_READY) &&
+        g_qualifyingFinisherCasts.erase(spell);
+        g_retainedFinisherCasts.erase(spell);
+        player->RemoveAurasDueToSpell(
+            SPELL_APOC_ROGUE_RELENTLESS_FINALE_BYPASS);
+        if (player->HasAura(SPELL_APOC_ROGUE_RELENTLESS_FINALE_READY) &&
             IsQualifyingFinisher(player, spell))
             ApplyBypass(player);
     }
@@ -222,7 +225,9 @@ public:
     void OnSpellCastCancel(
         Spell* spell, Unit* caster, SpellInfo const*, bool) override
     {
-        if (g_qualifyingFinisherCasts.erase(spell) == 0)
+        bool qualifyingCast = g_qualifyingFinisherCasts.erase(spell) != 0;
+        bool retainedCast = g_retainedFinisherCasts.erase(spell) != 0;
+        if (!qualifyingCast && !retainedCast)
             return;
 
         if (Player* player = caster->ToPlayer())
@@ -233,18 +238,17 @@ public:
     void OnSpellCast(
         Spell* spell, Unit* caster, SpellInfo const*, bool) override
     {
+        bool qualifyingCast = g_qualifyingFinisherCasts.erase(spell) != 0;
+        bool retainedCast = g_retainedFinisherCasts.erase(spell) != 0;
         Player* player = caster->ToPlayer();
-        if (!player || spell->IsTriggered() ||
-            g_qualifyingFinisherCasts.erase(spell) == 0)
+        if (!player || spell->IsTriggered() || !qualifyingCast)
             return;
 
-        bool retainedComboPoints = player->HasAura(
-            SPELL_APOC_ROGUE_RELENTLESS_FINALE_BYPASS);
         player->RemoveAurasDueToSpell(
             SPELL_APOC_ROGUE_RELENTLESS_FINALE_BYPASS);
         player->CastSpell(player,
             SPELL_APOC_ROGUE_RELENTLESS_FINALE_HEAL, true);
-        if (retainedComboPoints)
+        if (retainedCast)
         {
             player->RemoveAurasDueToSpell(
                 SPELL_APOC_ROGUE_RELENTLESS_FINALE_READY);

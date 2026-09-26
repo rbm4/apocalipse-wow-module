@@ -44,9 +44,12 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_apocalipse_death_knight_frozen_resolve.cpp` | Combat-gated stacking armor and damage reduction for spells 901052 and 901053 |
 | `src/mod_apocalipse_death_knight_necrotic_veil.cpp` | Damage-derived persistent magic absorb for spells 901056 and 901057 |
 | `src/mod_apocalipse_death_knight_pestilent_eruption.cpp` | Passive-gated free Pestilence carrier for spells 901058 and 901059 |
+| `src/mod_apocalipse_death_knight_threat_of_thassarian.cpp` | Additive Heart Strike and Scourge Strike off-hand helpers 901156 and 901157 plus dual-wield Death Strike heal reduction |
 | `src/mod_apocalipse_death_knight_rime_shards.cpp` | Damage-derived target-centered Frost burst for spells 901054 and 901055 |
 | `src/mod_apocalipse_rogue_pestilent_knives.cpp` | Active bounded area weapon attack and main-hand Deadly Poison applications for spell 901069 |
 | `src/mod_apocalipse_rogue_daring_challenge.cpp` | Native taunt composition and target-specific bonus threat for spells 901070 and 901071 |
+| `src/mod_apocalipse_rogue_bladeguard.cpp` | Shield-gated lifecycle for Rogue-family threat helper 901155 |
+| `src/mod_apocalipse_rogue_shielded_reflexes.cpp` | Shield-block proc that grants short stock Evasion and Blade Flurry windows for passive 901158 |
 | `src/mod_apocalipse_rogue_buckler_strike.cpp` | Shield-required Physical melee strike, combo point, bonus threat, and NPC-only interrupt for spell 901078 |
 | `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo for spells 901014 and 901015 |
 | `src/mod_apocalipse_paladin_permanent_seal_of_righteousness.cpp` | Permanent pseudo-SoR and pseudo-Vengeance proc behavior for passives 901016 and 901060 |
@@ -62,13 +65,14 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 | `src/mod_apocalipse_shaman_spells.cpp` | Elemental spread and echo, three stackable shields, restoration procs, cooldown modifiers, and shared actives for spells 901091 through 901117 |
 | `src/mod_apocalipse_priest_spells.cpp` | Shared, Discipline, Holy, and Shadow Priest mechanics for spells 901118 through 901154 |
 | `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql` | Server-side rogue Shield skill eligibility and default acquisition through stock proficiency and Block rewards |
-| `data/sql/db-world/2026_09_22_04_bladeguard.sql` | Data-only shield-gated Rogue item-armor, block-chance, and block-Energy passive 901073 with helper 901074 |
+| `data/sql/db-world/2026_09_22_04_bladeguard.sql` | Shield-gated Rogue item-armor, block-chance, and block-Energy passive 901073 with helper 901074 |
+| `data/sql/db-world/2026_09_25_01_bladeguard_threat.sql` | Rogue-family 75 percent threat helper 901155 and parent lifecycle binding |
 | `src/battleground_stamina/` | Battleground stamina calculation, custom aura lifecycle, and equipment lock |
 | `conf/` | Distributed module configuration |
 | `data/mod_apocalipse.sql` | Manual Spec Manager schema, seed data, NPC, and Blazing Barrier script binding |
 | `data/mod_spell_scaling.sql` | Manual spell-scaling schema and seed data |
 | `data/2026_09_16_01_blazing_barrier.sql` | Manual server-side Blazing Barrier spell migration |
-| `data/sql/db-world/` | AzerothCore module world-database updates, including managed spells through 901154 |
+| `data/sql/db-world/` | AzerothCore module world-database updates, including managed spells through 901158 |
 | `.docs/` | Persistent engineering and operational context |
 
 ## Registered subsystem order
@@ -93,31 +97,34 @@ The deployment also runs `mod-playerbots` and its custom AzerothCore branch. Thi
 16. `AddModApocalipseRogueRelentlessFinaleScripts()`
 17. `AddModApocalipseRogueImprovedFeintScripts()`
 18. `AddModApocalipseRogueDaringChallengeScripts()`
-19. `AddModApocalipseRogueBucklerStrikeScripts()`
-20. `AddModApocalipseHunterAmbushTrapperScripts()`
-21. `AddModApocalipseHunterApexBondScripts()`
-22. `AddModApocalipseHunterBloodOfTheHuntScripts()`
-23. `AddModApocalipseHunterPrimalResolveScripts()`
-24. `AddModApocalipseRogueAlchemicalGuardScripts()`
-25. `AddModApocalipseDeathKnightCrimsonWardScripts()`
-26. `AddModApocalipseDeathKnightFrozenResolveScripts()`
-27. `AddModApocalipseDeathKnightNecroticVeilScripts()`
-28. `AddModApocalipseDeathKnightPestilentEruptionScripts()`
-29. `AddModApocalipseDeathKnightRimeShardsScripts()`
-30. `AddModApocalipseDeathKnightRuptureScripts()`
-31. `AddModApocalipseRoguePestilentKnivesScripts()`
-32. `AddModApocalipsePaladinDivineStormEchoScripts()`
-33. `AddModApocalipsePaladinPermanentSealOfRighteousnessScripts()`
-34. `AddModApocalipsePaladinDivineTollScripts()`
-35. `AddModApocalipsePaladinDivineSteedScripts()`
-36. `AddModApocalipseWarlockBurningConflagrationScripts()`
-37. `AddModApocalipseWarlockChaoticInfernoScripts()`
-38. `AddModApocalipseWarlockDemonicEquilibriumScripts()`
-39. `AddModApocalipseWarlockHauntingAfflictionScripts()`
-40. `AddModApocalipseWarlockPermanentMetamorphosisScripts()`
-41. `AddModApocalipseShamanSpellScripts()`
-42. `AddModApocalipsePriestSpellScripts()`
-43. `AddModApocalipseBattlegroundStaminaScripts()`
+19. `AddModApocalipseRogueBladeguardScripts()`
+20. `AddModApocalipseRogueShieldedReflexesScripts()`
+21. `AddModApocalipseRogueBucklerStrikeScripts()`
+22. `AddModApocalipseHunterAmbushTrapperScripts()`
+23. `AddModApocalipseHunterApexBondScripts()`
+24. `AddModApocalipseHunterBloodOfTheHuntScripts()`
+25. `AddModApocalipseHunterPrimalResolveScripts()`
+26. `AddModApocalipseRogueAlchemicalGuardScripts()`
+27. `AddModApocalipseDeathKnightCrimsonWardScripts()`
+28. `AddModApocalipseDeathKnightFrozenResolveScripts()`
+29. `AddModApocalipseDeathKnightNecroticVeilScripts()`
+30. `AddModApocalipseDeathKnightPestilentEruptionScripts()`
+31. `AddModApocalipseDeathKnightThreatOfThassarianScripts()`
+32. `AddModApocalipseDeathKnightRimeShardsScripts()`
+33. `AddModApocalipseDeathKnightRuptureScripts()`
+34. `AddModApocalipseRoguePestilentKnivesScripts()`
+35. `AddModApocalipsePaladinDivineStormEchoScripts()`
+36. `AddModApocalipsePaladinPermanentSealOfRighteousnessScripts()`
+37. `AddModApocalipsePaladinDivineTollScripts()`
+38. `AddModApocalipsePaladinDivineSteedScripts()`
+39. `AddModApocalipseWarlockBurningConflagrationScripts()`
+40. `AddModApocalipseWarlockChaoticInfernoScripts()`
+41. `AddModApocalipseWarlockDemonicEquilibriumScripts()`
+42. `AddModApocalipseWarlockHauntingAfflictionScripts()`
+43. `AddModApocalipseWarlockPermanentMetamorphosisScripts()`
+44. `AddModApocalipseShamanSpellScripts()`
+45. `AddModApocalipsePriestSpellScripts()`
+46. `AddModApocalipseBattlegroundStaminaScripts()`
 
 The entry-point name is derived from the module directory `apocalipse-wow-module`, with hyphens converted to underscores. Renaming the directory requires changing the entry point.
 
@@ -154,10 +161,12 @@ The entry-point name is derived from the module directory `apocalipse-wow-module
 | Frozen Resolve | Passive 901052, combat-gated two-second cadence, native stack cap, timed aura 901053, armor, and all-damage reduction | Acquisition, client patch generation, Icebound Fortitude behavior, or playerbot action policy |
 | Necrotic Veil | Unholy-managed passive 901056, direct-owner damage filtering, bounded absorb accumulation, duration refresh, and magic-only helper 901057 | Client patch generation, pet damage, source damage calculation, or playerbot action policy |
 | Pestilent Eruption | Unholy-managed passive 901058, exact source-rank hit hooks, hostile target gate, and free long-range carrier 901059 | Client patch generation, core Pestilence script mechanics, or playerbot action policy |
+| Threat of Thassarian extension | Additive talent proc for off-hand Heart Strike 901157 and Scourge Strike 901156 plus one dual-wield Death Strike heal reduction | Talent acquisition, stock six-ability behavior, `Talent.dbc` structure, or playerbot action policy |
 | Rime Shards | Passive 901054, exact source filtering, damage snapshot, target count, diminishing curve, and helper 901055 | Client patch generation, source spell behavior, or playerbot action policy |
 | Pestilent Knives | Active 901069, bounded area selection, main-hand Deadly Poison rank resolution, two applications, and per-target full-stack proc cap | Client patch generation, stock poison mechanics, opposite-weapon enchant ownership, or playerbot cast policy |
-| Bladeguard | Shield-gated passive 901073, item-armor and block-chance modifiers, block-only proc cooldown, and Energy helper 901074 | Acquisition, Shield skill, Block capability, client patch generation, or playerbot shield-selection policy |
-| Buckler Strike | Shield-gated active 901078, AP and shield-block-value damage, one combo point, final-damage threat, and non-player interrupt restriction | Acquisition, Shield skill, client patch generation, or playerbot shield-selection and cast policy |
+| Bladeguard | Shield-gated passive 901073, item-armor and block-chance modifiers, block-only Energy helper 901074, and native 75 percent threat helper 901155 for all Rogue-family abilities | Acquisition, Shield skill, Block capability, client patch generation, or playerbot shield-selection policy |
+| Shielded Reflexes | Shield-gated passive 901158, exact block filtering, 30-second native cooldown, and six-second minimum stock Evasion 5277 and Blade Flurry 13877 windows | Acquisition, Shield skill, Block capability, stock active cooldowns, client patch generation, or playerbot shield-selection policy |
+| Buckler Strike | Shield-gated active 901078, 110 percent AP and shield-block-value damage, guaranteed stock Blade Twisting 51585, one combo point, final-damage threat, and non-player interrupt restriction | Acquisition, Shield skill, client patch generation, or playerbot shield-selection and cast policy |
 | Divine Storm Echo | Passive 901014, echo 901015, delayed scheduling, execution guards, and recursion prevention | Acquisition, client assets, original Divine Storm behavior, or playerbot rotation policy |
 | Permanent Paladin seals | Passives 901016 and 901060, stock SoR and Vengeance behavior, same-seal additive procs, filtering, and recursion prevention | Acquisition, client assets, real seal exclusivity, judgement selection, Divine Toll specialization assignment, or playerbot rotation policy |
 | Divine Steed | Active 901017, faction display choice, run-speed aura, safe removal, and logout/map cleanup | Acquisition, client export, real mounted state, vehicles, or playerbot rotation policy |
@@ -289,7 +298,7 @@ Subsystems do not call each other's C++ functions. Their integration is event-dr
 1. Every subsystem must be registered from `Addapocalipse_wow_moduleScripts()`.
 2. Bot-specific behavior must use the custom core's `WorldSession::IsBot()` contract rather than guessing from names, accounts, or AI pointers.
 3. World data belongs in `WorldDatabase`; per-character state belongs in `CharacterDatabase`.
-4. Spell IDs 901001 through 901154 are provisional deployment contracts and must be collision-checked in server and client data.
+4. Spell IDs 901001 through 901158 are provisional deployment contracts and must be collision-checked in server and client data.
 5. Server `spell_dbc` rows and client `Spell.dbc` rows must agree for custom spells.
 6. Damage modifiers stack through shared mutable hook arguments. New modifiers must document hook overlap and rounding order.
 7. Configuration defaults in code and distributed `.conf.dist` files must remain synchronized.

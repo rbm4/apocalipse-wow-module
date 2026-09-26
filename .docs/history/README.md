@@ -21,6 +21,13 @@ History records do not replace current feature or subsystem documentation. Curre
 
 | Date | Change | Status | Current context |
 |---|---|---|---|
+| 2026-09-25 | Death Knight Rupture AP scaling | Partial | [`2026-09-25-death-knight-rupture-ap-scaling.md`](2026-09-25-death-knight-rupture-ap-scaling.md) |
+| 2026-09-25 | Custom spell proc mask cleanup | Partial | [`2026-09-25-spell-proc-mask-cleanup.md`](2026-09-25-spell-proc-mask-cleanup.md) |
+| 2026-09-25 | Shielded Reflexes | Partial | [`2026-09-25-shielded-reflexes.md`](2026-09-25-shielded-reflexes.md) |
+| 2026-09-25 | Threat of Thassarian extension | Partial | [`2026-09-25-threat-of-thassarian-extension.md`](2026-09-25-threat-of-thassarian-extension.md) |
+| 2026-09-25 | Bladeguard Rogue-family threat | Partial | [`2026-09-25-bladeguard-threat.md`](2026-09-25-bladeguard-threat.md) |
+| 2026-09-25 | Buckler Strike damage, cooldown, and Blade Twisting balance | Partial | [`2026-09-25-buckler-strike-balance.md`](2026-09-25-buckler-strike-balance.md) |
+| 2026-09-25 | Relentless Finale activation tracking fix | Partial | [`2026-09-25-relentless-finale-activation-tracking-fix.md`](2026-09-25-relentless-finale-activation-tracking-fix.md) |
 | 2026-09-25 | Rogue shield skill rewards and client DBC | Partial | [`2026-09-25-rogue-shield-skill-rewards-and-client-dbc.md`](2026-09-25-rogue-shield-skill-rewards-and-client-dbc.md) |
 | 2026-09-25 | Relentless Finale selected-target consumption fix | Partial | [`2026-09-25-relentless-finale-selected-target-fix.md`](2026-09-25-relentless-finale-selected-target-fix.md) |
 | 2026-09-25 | Spell-script registration and validation follow-up | Partial | [`2026-09-25-spell-script-registration-and-validation-fix.md`](2026-09-25-spell-script-registration-and-validation-fix.md) |

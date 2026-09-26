@@ -26,7 +26,7 @@ Humans and playerbots use identical mechanics. Existing finisher actions activat
 | 901087 Relentless Finale Recharge | Hidden non-saved timer set to 12000 ms at runtime |
 | 901088 Relentless Finale Heal | Non-critical native heal for 5 percent maximum health |
 
-The bypass uses `SPELL_AURA_ABILITY_IGNORE_AURASTATE`, which makes the core set `Spell::m_needComboPoints` false. The strict-check hook first duplicates the core's explicit-target combo ownership check and requires exactly five points. It accepts either the original unit target or, when the client omits that GUID and `Spell::InitExplicitTargets()` resolves the cast from the Rogue's current selection, a selected unit matching the combo target. It then applies the one-second bypass before the core evaluates aura-state overrides. Lower-point and wrong-target finishers never receive the bypass. `_handle_finish_phase()` therefore skips clearing only for the qualifying cast.
+The bypass uses `SPELL_AURA_ABILITY_IGNORE_AURASTATE`, which makes the core set `Spell::m_needComboPoints` false. The strict-check hook first duplicates the core's explicit-target combo ownership check and requires exactly five points. It accepts either the original unit target or, when the client omits that GUID and `Spell::InitExplicitTargets()` resolves the cast from the Rogue's current selection, a selected unit matching the combo target. It then applies the one-second bypass before the core evaluates aura-state overrides. After the strict check succeeds, player cast preparation records that exact `Spell` instance as the retention activation. Lower-point and wrong-target finishers never receive the bypass. `_handle_finish_phase()` therefore skips clearing only for the qualifying cast. Successful completion consumes Ready from the recorded activation instead of checking whether the transient bypass aura is still observable after spell effects.
 
 ## Runtime flow
 
@@ -37,16 +37,17 @@ passive 901084 applies
 player begins a non-triggered Rogue finisher with exactly five combo points
   -> mark the qualifying cast
   -> when ready aura 901085 is present, apply transient bypass 901086
+  -> record that exact cast as the retention activation
   -> core executes the finisher, retaining points only when bypass is present
   -> every successful qualifying cast triggers 901088 for 5 percent maximum-health healing
-  -> a retained cast removes bypass and ready
+  -> a recorded retained cast removes bypass and ready
   -> apply hidden recharge 901087 and set its duration to 12000 ms
 
 recharge expires
   -> apply infinite ready aura 901085 again
 ```
 
-Triggered and copied finishers have triggered cast flags and are rejected before bypass application. Canceled tracked casts remove the transient bypass, while an early failed check leaves at most the bypass's one-second runtime duration; both leave the ready aura available. A cast that completes but misses still counts as using the finisher: it heals, consumes ready, and starts recharge. The 12-second timer is created only after cast completion and is not periodic or anchored to passive application.
+Triggered and copied finishers have triggered cast flags and are rejected before bypass application. Triggered child spells produced while a qualifying parent finisher resolves return before transient cleanup, so poison and proc chains cannot remove the parent's bypass. Canceled tracked casts clear both cast markers and remove the transient bypass, while an early failed check leaves at most the bypass's one-second runtime duration; both leave the ready aura available. A non-strict recheck does not remove the prepared bypass. A cast that completes but misses still counts as using the finisher: it heals, consumes ready through its recorded activation, and starts recharge. The 12-second timer is created only after cast completion and is not periodic or anchored to passive application.
 
 The path is constant-time and performs no combat-time database access.
 
@@ -62,7 +63,7 @@ Matching client `Spell.dbc` rows are required. The server update, client patch, 
 |---|---|---|
 | Passive acquired with no recharge | Infinite ready buff appears | Not run |
 | Player-initiated finisher at one through four points | Normal consumption and no Relentless Finale healing or recharge | Not run |
-| Player-initiated five-point explicit-target finisher while ready, with the target supplied or resolved from current selection | Finisher executes, five points remain, ready is consumed, recharge starts, and 5 percent maximum health is restored | Not run |
+| Player-initiated five-point explicit-target finisher while ready, with poison and proc child spells and with the target supplied or resolved from current selection | Finisher and triggered children execute, five points remain, ready is consumed once, recharge starts once, and 5 percent maximum health is restored | Not run |
 | Player-initiated five-point Slice and Dice while ready | Slice and Dice executes, five points remain, ready is consumed, recharge starts, and 5 percent maximum health is restored | Not run |
 | Immediate second five-point finisher | Consumes retained points normally because ready is absent and restores another 5 percent maximum health | Not run |
 | Five-point finisher during recharge | Consumes points normally and restores 5 percent maximum health without restarting recharge | Not run |

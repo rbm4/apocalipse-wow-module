@@ -72,6 +72,7 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/frozen-resolve.md`](custom-spells/frozen-resolve.md)
 - [`custom-spells/necrotic-veil.md`](custom-spells/necrotic-veil.md)
 - [`custom-spells/rime-shards.md`](custom-spells/rime-shards.md)
+- [`custom-spells/threat-of-thassarian-extension.md`](custom-spells/threat-of-thassarian-extension.md)
 - [`custom-spells/pestilent-eruption.md`](custom-spells/pestilent-eruption.md)
 - [`custom-spells/pestilent-knives.md`](custom-spells/pestilent-knives.md)
 - [`custom-spells/daring-challenge.md`](custom-spells/daring-challenge.md)
@@ -97,6 +98,7 @@ Existing deep dives remain valid entry points:
 - [`custom-spells/improved-feint.md`](custom-spells/improved-feint.md)
 - [`custom-spells/alchemical-guard.md`](custom-spells/alchemical-guard.md)
 - [`custom-spells/bladeguard.md`](custom-spells/bladeguard.md)
+- [`custom-spells/shielded-reflexes.md`](custom-spells/shielded-reflexes.md)
 - [`custom-spells/shaman-spell-pack.md`](custom-spells/shaman-spell-pack.md)
 - [`features/priest-ability-pack.md`](features/priest-ability-pack.md)
 

@@ -12,10 +12,11 @@ namespace
 {
 enum ApocalipseRogueBucklerStrikeSpells
 {
+    SPELL_ROGUE_BLADE_TWISTING_TRIGGER = 51585,
     SPELL_APOC_ROGUE_BUCKLER_STRIKE = 901078
 };
 
-constexpr float BUCKLER_STRIKE_ATTACK_POWER_COEFFICIENT = 0.20f;
+constexpr float BUCKLER_STRIKE_ATTACK_POWER_COEFFICIENT = 1.10f;
 constexpr float BUCKLER_STRIKE_BLOCK_VALUE_COEFFICIENT = 1.50f;
 constexpr float BUCKLER_STRIKE_BONUS_THREAT_MULTIPLIER = 2.0f;
 
@@ -42,8 +43,11 @@ public:
 
         bool Validate(SpellInfo const* spellInfo) override
         {
-            return spellInfo->Id == SPELL_APOC_ROGUE_BUCKLER_STRIKE &&
-                spellInfo->GetRecoveryTime() == 6000 &&
+            return ValidateSpellInfo({
+                    SPELL_ROGUE_BLADE_TWISTING_TRIGGER
+                }) &&
+                spellInfo->Id == SPELL_APOC_ROGUE_BUCKLER_STRIKE &&
+                spellInfo->GetRecoveryTime() == 20000 &&
                 spellInfo->GetMaxDuration() == 3000 &&
                 spellInfo->PowerType == POWER_ENERGY &&
                 spellInfo->ManaCost == 25 &&
@@ -103,6 +107,13 @@ public:
                 PreventHitDefaultEffect(effectIndex);
         }
 
+        void ApplyBladeTwisting(SpellEffIndex)
+        {
+            if (Unit* target = GetHitUnit())
+                GetCaster()->CastSpell(
+                    target, SPELL_ROGUE_BLADE_TWISTING_TRIGGER, true);
+        }
+
         void AddBonusThreat()
         {
             Player* rogue = GetCaster()->ToPlayer();
@@ -124,6 +135,9 @@ public:
                 buckler_strike_SpellScript::CheckCast);
             OnEffectLaunchTarget += SpellEffectFn(
                 buckler_strike_SpellScript::CalculateDamage, EFFECT_0,
+                SPELL_EFFECT_SCHOOL_DAMAGE);
+            OnEffectHitTarget += SpellEffectFn(
+                buckler_strike_SpellScript::ApplyBladeTwisting, EFFECT_0,
                 SPELL_EFFECT_SCHOOL_DAMAGE);
             OnEffectLaunchTarget += SpellEffectFn(
                 buckler_strike_SpellScript::RestrictInterrupt, EFFECT_2,

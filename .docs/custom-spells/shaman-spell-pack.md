@@ -65,7 +65,7 @@ The three Aegis spells have generic family metadata so AzerothCore does not clas
 
 ## Data and deployment
 
-The world update guards all IDs against `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`, derives family masks from stock backend rows, installs proc metadata and script bindings, removes coefficients from fixed helpers, marks transient helpers non-save, and adds backend names. It deliberately inserts no `mod_spec_spells` rows.
+The primary world update guards all IDs against `spell_dbc`, `wotlk_spells_full`, and `wotlk_spells`, derives family masks from stock backend rows, installs proc metadata and script bindings, removes coefficients from fixed helpers, marks transient helpers non-save, and adds backend names. The idempotent follow-up `2026_09_25_04_spell_proc_mask_cleanup.sql` clears the inapplicable taken-event phase masks from 901099 through 901102 and 901115, and clears the redundant damage type masks from generic taken-damage auras 901099 through 901101. It deliberately inserts no `mod_spec_spells` rows.
 
 Deployment still requires:
 
@@ -90,5 +90,6 @@ Deployment still requires:
 
 | Date | Change | Code or history reference |
 |---|---|---|
+| 2026-09-25 | Removed inapplicable proc type and phase masks that produced startup validation errors | [`../history/2026-09-25-spell-proc-mask-cleanup.md`](../history/2026-09-25-spell-proc-mask-cleanup.md) |
 | 2026-09-24 | Initial source and SQL implementation | [`../history/2026-09-24-shaman-spell-pack.md`](../history/2026-09-24-shaman-spell-pack.md) |
 | 2026-09-24 | Deployment-core compilation compatibility fix | [`../history/2026-09-24-shaman-priest-compilation-fix.md`](../history/2026-09-24-shaman-priest-compilation-fix.md) |

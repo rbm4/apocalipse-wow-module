@@ -106,7 +106,13 @@ A config reload updates cached values and revalidates aura 901002. It does not s
 | `data/sql/db-world/2026_09_21_03_primal_resolve.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901042, all-school damage reduction, snare-removal binding, non-save metadata, and backend name |
 | `data/sql/db-world/2026_09_22_04_alchemical_guard.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901077, all-school damage reduction, poison/disease purge and immunity, controlled-cast and stealth attributes, binding, non-save metadata, and backend name |
 | `data/sql/db-world/2026_09_22_04_bladeguard.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and helper rows | Spells 901073 and 901074, shield equipment masks, native armor and block auras, block-only proc metadata, 1000 ms cooldown, and backend names |
-| `data/sql/db-world/2026_09_22_06_buckler_strike.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901078, shield equipment masks, Physical melee damage, combo-point and interrupt effects, script binding, and backend name |
+| `data/sql/db-world/2026_09_25_01_bladeguard_threat.sql` | `acore_world` | AzerothCore module updater; guarded for parent 901073 and helper 901155 ownership | Adds non-saved all-Rogue-family 75 percent threat helper 901155, parent script binding and descriptions, and backend name |
+| `data/sql/db-world/2026_09_25_02_threat_of_thassarian_extension.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for two helper rows, three talent overrides, and the recognized stock or managed proc row | Adds off-hand Scourge Strike 901156 and Heart Strike 901157, additive talent and heal bindings, extended proc masks, talent descriptions, and backend names; acquisition remains unchanged |
+| `data/sql/db-world/2026_09_25_03_shielded_reflexes.sql` | `acore_world` | AzerothCore module updater; guarded and rerunnable for recognized passive 901158 | Adds shield-dependent block proc metadata, 30-second internal cooldown, script binding, backend name, and complete client-export input; acquisition remains external |
+| `data/sql/db-world/2026_09_25_04_spell_proc_mask_cleanup.sql` | `acore_world` | AzerothCore module updater; ID-scoped and idempotent for existing proc rows | Clears inapplicable phase masks from 901073, 901099 through 901102, and 901115, and clears redundant type masks from 901099 through 901101 to remove startup validation errors without changing proc flags |
+| `data/sql/db-world/2026_09_25_05_death_knight_rupture_ap_scaling.sql` | `acore_world` | AzerothCore module updater; ID-scoped and idempotent for existing bonus row 901049 | Doubles Rupture Bleed's per-stack periodic attack-power coefficient from 0.005 to 0.01 without changing its base damage, stack, duration, tick, proc, or modifier contracts |
+| `data/sql/db-world/2026_09_22_06_buckler_strike.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Current spell 901078, shield equipment masks, 20-second cooldown, Physical melee damage, combo-point and interrupt effects, script binding, and backend name |
+| `data/sql/db-world/2026_09_25_00_buckler_strike_balance.sql` | `acore_world` | AzerothCore module updater; guarded for the recognized existing 901078 graph | Updates existing Buckler Strike rows from six to 20 seconds and exports the 110 percent AP and guaranteed Blade Twisting description |
 | `data/sql/db-world/2026_09_22_07_gloomblade_infusion.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and damage helper rows | Spells 901079 and 901080, broad outgoing-damage proc metadata, script binding, zero coefficient, Subtlety acquisition, and backend names |
 | `data/sql/db-world/2026_09_22_08_shadow_execution.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized passive and periodic rows | Spells 901081 and 901082, direct Rogue spell proc metadata, 50-stack one-second Shadow periodic behavior, zero coefficients, script bindings, and backend names; acquisition remains external |
 | `data/sql/db-world/2026_09_22_09_crimson_vial.sql` | `acore_world` | AzerothCore module updater; guarded for its recognized active row | Spell 901083, 20 Energy cost, 45-second cooldown, immediate plus six one-second current-maximum-health healing events, stealth and non-critical attributes, non-save metadata, and backend name; acquisition remains external |
@@ -133,6 +139,8 @@ The `mod_player_spec_talent_grant` table is currently created but not used by th
 
 Custom-spell updater files require the externally managed `wotlk_spells_full` and `wotlk_spells` tables in `acore_world`. They use those tables for collision guards, stock spell metadata, backend names, and client-export ownership. Missing tables are a hard migration failure and must be restored through the backend schema workflow before worldserver startup.
 
+The Threat of Thassarian update copies complete stock rows 65661, 66191, and 66192 from `wotlk_spells_full` into `spell_dbc` before changing descriptions. Helpers 901156 and 901157 are complete `spell_dbc` overrides with `wotlk_spells` names. The existing backend release builder consumes these overrides directly when producing `Spell.dbc`; it does not require custom rows to be inserted into `wotlk_spells_full`. `Talent.dbc` remains unchanged.
+
 ## Agent offline-only database policy
 
 Agent sessions must always assume that MySQL is unavailable. Agents must not attempt connections, service or port probes, container startup, credential discovery, database MCP access, or SQL execution. SQL review is static only.
@@ -153,11 +161,11 @@ The following sequence is for an authorized deployment operator in an environmen
 
 1. Stop `worldserver`.
 2. Back up affected databases according to the server's normal procedure.
-3. Collision-check custom spell IDs 901001 through 901154 in live server tables and the selected client `Spell.dbc`.
+3. Collision-check custom spell IDs 901001 through 901158 in live server tables and the selected client `Spell.dbc`.
 4. Apply `data/mod_apocalipse.sql` and `data/mod_spell_scaling.sql` to their named databases.
 5. Apply the manual Blazing Barrier migration if spell 901001 is being deployed.
 6. Build and install the module under the custom core.
-7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901154 module updates can run.
+7. Ensure world database updates are enabled, then start `worldserver` so the 901002 through 901158 module updates can run.
 8. Confirm all updater records and module startup logs.
 9. Deploy matching client `Spell.dbc` data and patch artifacts for custom spells. Deploy the separate talent and acquisition data through their owned workflows.
 10. Run focused human and bot in-game scenarios.
@@ -187,9 +195,9 @@ Before first deployment, an authorized operator verifies all custom IDs in the r
 Verify all custom IDs are unallocated in:
 
 ```sql
-SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901117;
-SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901117;
-SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901117;
+SELECT `ID` FROM `spell_dbc` WHERE `ID` BETWEEN 901001 AND 901158;
+SELECT `ID` FROM `wotlk_spells_full` WHERE `ID` BETWEEN 901001 AND 901158;
+SELECT `ID` FROM `wotlk_spells` WHERE `ID` BETWEEN 901001 AND 901158;
 SELECT `entry` FROM `creature_template` WHERE `entry` = 900002;
 SELECT `ID` FROM `summonproperties_dbc` WHERE `ID` = 901032;
 ```
@@ -222,7 +230,8 @@ At minimum test:
 - Automatic Ice Lance direct, periodic, and triggered Mage Frost eligibility, Ice Lance recursion exclusion, 10 percent chance, one-second cooldown, wall and pillar line-of-sight rejection, target guards, Fingers of Frost consumption, independent 10-second expirations, 20 percent cap, passive removal cleanup, and identical human/playerbot results.
 - Frozen Retaliation ranks 1 and 2, 1.5 and 3 percent chances, melee, ranged, direct spell, periodic, triggered, fully prevented, environmental, existing Fingers of Frost, rank upgrade, and identical human/playerbot results.
 - Daring Challenge 30-yard range, 10-second cooldown, native three-second taunt and immunity, highest-threat match plus one-point lead, six-second exact-target 50 percent damage-threat bonus, zero damage and combo points, redirects, and identical human/playerbot mechanics.
-- Buckler Strike offhand shield validation, 25 Energy cost, six-second cooldown, AP and block-value formula, Physical melee resolution, one combo point, three-times final-damage threat, three-second non-player interrupt, player interrupt suppression, Daring Challenge composition, and identical human/playerbot mechanics.
+- Shielded Reflexes without passive, without a shield, partial and full blocks, non-block outcomes, broken shield rejection, six-second minimum duration, preservation of longer stock auras, 30-second internal cooldown, and identical human/playerbot mechanics.
+- Buckler Strike offhand shield validation, 25 Energy cost, 20-second cooldown, 110 percent AP plus 150 percent block-value formula, Physical melee resolution, guaranteed stock Blade Twisting 51585 on successful damage-effect hits without talent 31126, miss and immunity exclusion, one combo point, three-times final-damage threat, three-second non-player interrupt, player interrupt suppression, Daring Challenge composition, and identical human/playerbot mechanics.
 - Gloomblade Infusion auto attacks, direct abilities, periodic effects, poison damage, triggered damage, owner attribution, reflected and self-damage rejection, 10 percent floor rounding, independent Shadow mitigation, non-critical helper behavior, recursion suppression, Subtlety revocation, and identical human/playerbot mechanics.
 - Shadow Execution direct Rogue-family abilities, multi-target application, usable main-hand requirement, one-through-50 stack growth, one-second cadence, ten-second refresh without timer reset, per-stack integer rounding, auto-attack and periodic exclusions, external acquisition referencing only passive 901081, and identical human/playerbot mechanics.
 - Improved Feint without passive, every stock rank, six-second apply and refresh, Physical and all magical schools, ordinary 30 percent reduction, multiplicative 58 percent total AoE reduction with stock Feint, dispel and steal rejection, logout cleanup, and identical human/playerbot mechanics.

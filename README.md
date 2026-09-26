@@ -2,7 +2,7 @@
 
 AzerothCore WotLK 3.3.5a gameplay module for the Apocalipse WoW private-server infrastructure. It is deployed with `mod-playerbots` and the custom playerbot AzerothCore branch.
 
-The module provides fifty systems:
+The module provides fifty-two systems:
 
 1. Specialization signature spell management
 2. Level-based spell scaling
@@ -26,34 +26,44 @@ The module provides fifty systems:
 20. Rime Shards custom frost death knight passive
 21. Necrotic Veil custom unholy death knight passive
 22. Pestilent Eruption custom unholy death knight passive
-23. Divine Storm Echo custom paladin passive
-24. Permanent Seal of Righteousness and Vengeance custom paladin passives
-25. Divine Steed custom paladin sprint
-26. Paladin Vengeance variant passives
-27. Extended Arsenal custom paladin passive
-28. Divine Toll custom paladin spell
-29. Burning Conflagration custom warlock passive
-30. Chaotic Inferno custom warlock passive
-31. Demonic Equilibrium custom warlock passive
-32. Unquenchable Flames custom warlock passive
-33. Unyielding Shadows custom warlock passive
-34. Haunting Affliction custom warlock passive
-35. Permanent Metamorphosis custom warlock passive
-36. Baseline rogue shield proficiency and blocking
-37. Leeching Mixture custom rogue defensive passive
-38. Alchemical Guard custom combat rogue defensive
-39. Bladeguard custom combat rogue shield passive
-40. Pestilent Knives custom assassination rogue active
-41. Daring Challenge custom combat rogue taunt
-42. Buckler Strike custom combat rogue shield attack
-43. Gloomblade Infusion custom subtlety rogue offensive passive
-44. Shadow Execution custom rogue offensive passive
-45. Crimson Vial custom rogue self-heal
-46. Relentless Finale custom combat rogue meta passive
-47. Improved Feint custom rogue defensive passive
-48. Twenty-ability Shaman elemental, tank, restoration, defensive, and offensive pack
-49. Twenty-ability Priest shared, Discipline, Holy, and Shadow pack
-50. Battleground stamina assistance and equipment control
+23. Threat of Thassarian Heart Strike and Scourge Strike off-hand extension
+24. Divine Storm Echo custom paladin passive
+25. Permanent Seal of Righteousness and Vengeance custom paladin passives
+26. Divine Steed custom paladin sprint
+27. Paladin Vengeance variant passives
+28. Extended Arsenal custom paladin passive
+29. Divine Toll custom paladin spell
+30. Burning Conflagration custom warlock passive
+31. Chaotic Inferno custom warlock passive
+32. Demonic Equilibrium custom warlock passive
+33. Unquenchable Flames custom warlock passive
+34. Unyielding Shadows custom warlock passive
+35. Haunting Affliction custom warlock passive
+36. Permanent Metamorphosis custom warlock passive
+37. Baseline rogue shield proficiency and blocking
+38. Leeching Mixture custom rogue defensive passive
+39. Alchemical Guard custom combat rogue defensive
+40. Bladeguard custom combat rogue shield passive with 75 percent Rogue-ability threat
+41. Shielded Reflexes custom rogue shield-block passive
+42. Pestilent Knives custom assassination rogue active
+43. Daring Challenge custom combat rogue taunt
+44. Buckler Strike custom combat rogue shield attack with guaranteed Blade Twisting
+45. Gloomblade Infusion custom subtlety rogue offensive passive
+46. Shadow Execution custom rogue offensive passive
+47. Crimson Vial custom rogue self-heal
+48. Relentless Finale custom combat rogue meta passive
+49. Improved Feint custom rogue defensive passive
+50. Twenty-ability Shaman elemental, tank, restoration, defensive, and offensive pack
+51. Twenty-ability Priest shared, Discipline, Holy, and Shadow pack
+52. Battleground stamina assistance and equipment control
+
+Shielded Reflexes reserves passive 901158. A Rogue with a usable offhand shield who blocks a melee or ranged attack gains stock Evasion 5277 and Blade Flurry 13877 for at least six seconds, once per 30 seconds. Acquisition remains external, and humans and bots share the mechanic.
+
+Detailed contract: [`.docs/custom-spells/shielded-reflexes.md`](.docs/custom-spells/shielded-reflexes.md)
+
+The Threat of Thassarian extension reserves helpers 901156 and 901157. Existing talent ranks 65661, 66191, and 66192 add independently resolving off-hand Heart Strike and Scourge Strike attacks at 30, 60, or 100 percent, while talented Death Strike with a usable off-hand keeps one heal at 50 percent strength. Acquisition remains unchanged, and humans and bots share the mechanic.
+
+Detailed contract: [`.docs/custom-spells/threat-of-thassarian-extension.md`](.docs/custom-spells/threat-of-thassarian-extension.md)
 
 The Shaman pack reserves spells 901091 through 901117 and composes stock rank chains, native spell modifiers, bounded proc scripts, and fixed damage or healing helpers. Acquisition remains external for the entire pack. Humans and bots use identical mechanics, while the three new active spells require separate playerbot cast policy.
 
@@ -333,9 +343,9 @@ Detailed contract: [`.docs/custom-spells/concentrated-venom.md`](.docs/custom-sp
 
 ### Rupture
 
-Owners: `src/mod_apocalipse_death_knight_rupture.cpp`, `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql`
+Owners: `src/mod_apocalipse_death_knight_rupture.cpp`, `data/sql/db-world/2026_09_21_04_death_knight_rupture.sql`, and `data/sql/db-world/2026_09_25_05_death_knight_rupture_ap_scaling.sql`
 
-Custom Blood Death Knight passive 901048 makes successful melee auto-attacks and each Blood Strike, Heart Strike, or Death Strike target apply one stack of helper 901049. The physical bleed ticks every two seconds, refreshes its 15-second duration, and scales each stack with 0.5 percent melee attack power up to 200 stacks.
+Custom Blood Death Knight passive 901048 makes successful melee auto-attacks and each Blood Strike, Heart Strike, or Death Strike target apply one stack of helper 901049. The physical bleed ticks every two seconds, refreshes its 15-second duration, and scales each stack with 1 percent melee attack power up to 200 stacks.
 
 The helper uses native bleed and Death Knight damage paths, participates in `PERIODIC` level scaling and PvP balancing, and is granted through Blood Spec Manager acquisition. Matching client rows are required for both spells, and humans and bots use identical mechanics.
 
@@ -531,11 +541,11 @@ Detailed contract: [`.docs/custom-spells/unyielding-shadows.md`](.docs/custom-sp
 
 ### Rogue Shield Proficiency
 
-Owners: `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql`, `data/sql/db-world/2026_09_25_00_rogue_shield_skill_rewards.sql`
+Owner: `data/sql/db-world/2026_09_22_02_rogue_shield_proficiency.sql`
 
-Rogues receive stock Shield skill 433 through AzerothCore's default-skill loading path before inventory validation. Separate guarded rows provide rogue eligibility, default acquisition, Shield Proficiency 9116, and Block 107 without changing the stock warrior, paladin, and shaman records. The backend client-patch build now emits matching `SkillRaceClassInfo.dbc` and `SkillLineAbility.dbc` files for humans and bots.
+Rogues receive stock Shield skill 433 through AzerothCore's default-skill loading path before inventory validation. The migration adds a separate rogue-only eligibility override and default-skill row without changing the stock warrior, paladin, and shaman records. Stock Shield Proficiency and Block rewards are expected to provide equipment eligibility and normal block calculations for humans and bots.
 
-LFG shield eligibility and playerbot shield-selection policy remain follow-up concerns. No custom spell or module C++ hook is introduced.
+Client skill UI, LFG shield eligibility, and playerbot shield-selection policy remain follow-up concerns. No custom spell or module C++ hook is introduced.
 
 Detailed contract: [`.docs/features/rogue-shield-proficiency.md`](.docs/features/rogue-shield-proficiency.md)
 

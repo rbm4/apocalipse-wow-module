@@ -60,6 +60,8 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 | `src/mod_apocalipse_rogue_relentless_finale.cpp` | Five-point finisher healing, cast-scoped combo retention, visible readiness, and post-use recharge |
 | `src/mod_apocalipse_rogue_improved_feint.cpp` | Rank-wide Feint-triggered all-school damage reduction passive |
 | `src/mod_apocalipse_rogue_daring_challenge.cpp` | Combat Rogue taunt, threat lead, and target-specific threat amplification |
+| `src/mod_apocalipse_rogue_bladeguard.cpp` | Shield-gated Rogue-family threat helper lifecycle |
+| `src/mod_apocalipse_rogue_shielded_reflexes.cpp` | Shield-block proc that grants short stock Evasion and Blade Flurry windows |
 | `src/mod_apocalipse_hunter_ambush_trapper.cpp` | Trap-activation buff and charged Hunter melee-special behavior |
 | `src/mod_apocalipse_hunter_primal_resolve.cpp` | Active Hunter damage reduction and snare cleanup |
 | `src/mod_apocalipse_hunter_apex_bond.cpp` | Active Hunter and pet healing with a temporary pet damage buff |
@@ -70,6 +72,7 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 | `src/mod_apocalipse_death_knight_necrotic_veil.cpp` | Unholy Death Knight damage-derived persistent magic absorb |
 | `src/mod_apocalipse_death_knight_rime_shards.cpp` | Frost Strike and Howling Blast damage-derived target-centered Frost burst |
 | `src/mod_apocalipse_death_knight_pestilent_eruption.cpp` | Passive-gated free stock Pestilence after Death Coil and Scourge Strike hits |
+| `src/mod_apocalipse_death_knight_threat_of_thassarian.cpp` | Original-talent Heart Strike and Scourge Strike off-hand extension plus Death Strike heal reduction |
 | `src/mod_apocalipse_death_knight_rupture.cpp` | Blood Death Knight melee-hit stacking periodic bleed |
 | `src/mod_apocalipse_rogue_buckler_strike.cpp` | Shield-required Combat Rogue damage, combo point, high threat, and NPC interrupt active |
 | `src/mod_apocalipse_paladin_divine_storm_echo.cpp` | Passive-gated delayed Divine Storm echo |
@@ -97,7 +100,7 @@ If these offline sources cannot prove that an ID is globally free, use the next 
 5. **State bot behavior explicitly.** Every gameplay feature must say whether it applies identically to bots, suppresses output, bypasses a restriction, or requires separate logic.
 6. **Use the correct database.** World definitions use `WorldDatabase`; per-character grant state uses `CharacterDatabase`. Preserve explicit `USE` boundaries in manual SQL.
 7. **Keep SQL mode clear.** Files outside `data/sql/db-world/` are manual unless documented otherwise. Files inside that directory are automatic world updates. Never apply production SQL without explicit approval.
-8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901154 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
+8. **Keep custom spell graphs atomic.** Changing any spell from 901001 through 901158 requires checking C++ constants/config, server spell rows, script bindings, scaling rows, backend caches, client `Spell.dbc`, collision guards, talent data where applicable, and documentation.
 9. **Keep config defaults synchronized.** A setting's code fallback, distributed `.conf.dist`, validation, and documented default must agree. If they do not, record the drift until fixed.
 10. **Preserve gameplay cleanup.** Battleground-only state must be removed on unsupported maps/leave. Managed talents and hidden budgets must be revoked on tree transitions/reset. Do not add persistent auras accidentally.
 11. **Keep event work bounded.** Bot populations multiply login, talent, equipment, and combat-hook cost. Do not add database queries to combat or per-tick paths.
